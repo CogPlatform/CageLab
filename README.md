@@ -26,10 +26,10 @@ CageLab is a low cost in-cage touchscreen training device that prioritises the f
 1. **Open Source**: The device software should be open source and easy to contribute to.
 1. **Common Software Path**: The device should be easy to use and maintain; we use [PsychToolbox (PTB)](https://psychtoolbox.org) for easy integration with existing code common in most labs where PTB is prevalent. PTB offers best-in-class experiment timing and a wide range of specialised hardware support.
 1. **Modular**: We have the following modules to use with the device:
-	a. **Fluid Pump**: Peristaltic pump, HID interface and costs about $10.
-	b. **Food Dispenser**: A pellet dispenser using an arduino driver.
-	c. **Camera**: A camera to record the animal's behaviour and stream it over the network.
-	d. **Speaker**: A speaker to play sounds.
+    - **Fluid Pump**: Peristaltic pump, HID interface and costs about $10.
+    - **Food Dispenser**: A pellet dispenser using an arduino driver.
+    - **Camera**: A camera to record the animal's behaviour and stream it over the network.
+    - **Speaker**: A speaker to play sounds.
 1. **Remote Control**: The device must be controllable remotely. We use the fast moonlight remote desktop protocol and server + client protocols where useful.
 
 

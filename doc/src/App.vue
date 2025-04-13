@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import AppSidebar from '@/components/AppSidebar.vue'
 import { useColorMode } from '@vueuse/core'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import CagelabConfig from './components/CagelabConfig.vue'
 
-useColorMode('auto')
+const mode = useColorMode()
+mode.value = 'dark'
 </script>
 
 <template>
-  <SidebarProvider>
-    <AppSidebar />
-    <main>
-      <SidebarTrigger />
-    </main>
-  </SidebarProvider>
+  <div class="flex justify-center items-center h-screen">
+    <Card class=" w-2xl ">
+      <CardHeader>
+        <CardTitle>Cagelab configuration</CardTitle>
+        <CardDescription>Please input your cage infomation</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <CagelabConfig />
+      </CardContent>
+    </Card>
+  </div>
 </template>

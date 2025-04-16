@@ -9,6 +9,7 @@ author: Ian Max Andolina
 1. [Installation](#installation)
 1. [Usage](#usage)
 1. [Parts List](#parts-list)
+1. [Architecture](#architecture)
 1. [Contributing](#contributing)
 1. [License](#license)
 
@@ -48,6 +49,78 @@ CageLab is designed to be used in a multi-cage setup. Each CageLab instance is c
 You need Octave / MATLAB, PTB and the [opticka toolbox](https://github.com/iandol/opticka)  installed as dependencies. For remote desktop, you need to install moonlight on the device and the client. 
 
 # Parts List
+
+# Architecture
+
+## Power supply architecture
+
+### Poe solution
+
+In previous version, we need to use power bank to power the device, but it is limiting the time of use. So we try to use poe to power the device.
+
+> need poe IEEE 802.3bt and 802.3at protocol
+
+> Expermimental feature!!!
+
+> DC HUB was dangeous!!!
+
+```mermaid
+---
+title: Power supply architecture with poe
+---
+graph LR
+    subgraph Poe Router / Power Supply
+    A
+    F
+    end
+    A[IEEE 802.3bt terminal] -->|60 wt| B[poe++ splitter]
+    A -->|Net connection| B
+    B -->|24v| C[24v to 19v]
+    B -->|Net connection| E[Mini PC]
+    C -->|19v| D[DC UPS]
+    D -->|19v| E
+    F[IEEE 802.3at terminal] -->|30 wt| G[poe+ splitter]
+    G -->|12v 2.5A MAX| H[DC HUB]
+    H -->|12v| I[Pump]
+    H -->|12v| J[Display]
+    H -->|12v| K[speaker]
+    H -->|12v| L[Sensors]
+    F -->|Net connection| M@{ icon: "material-symbols:auto-delete"}
+    subgraph payload
+    E
+    I
+    J
+    K
+    L
+    end
+```
+
+### Power bank solution
+
+```mermaid
+---
+title: Power supply architecture with power bank
+---
+graph LR
+    subgraph Power Bank / Power Supply
+    A[PD power bank]
+    E[DC power bank]
+    end
+    A[PD power bank] --> B[PD to dc]
+    B -->|19v| C[DC UPS]
+    C -->|19v| D[Mini PC]
+    E[DC power bank] -->|12v| F[Pump]
+    E -->|12v| G[Display]
+    E -->|12v| H[Sensors]
+    E -->|12v| I[speaker]
+    subgraph payload
+    D[Mini PC]
+    F[Pump]
+    G[Display]
+    H[Sensors]
+    I[speaker]
+    end
+```
 
 
 # Contributing

@@ -1,4 +1,5 @@
 function startTouchTraining(tr)
+	pth = fileparts(which(mfilename));
 	if ~exist('tr','var')
 		tr.phase = 1;
 		tr.density = 70;
@@ -7,18 +8,20 @@ function startTouchTraining(tr)
 		tr.bg = [0.5 0.5 0.5];
 		tr.maxSize = 30;
 		tr.minSize = 1;
-		tr.folder = '~/optickaFiles/';
+		tr.folder = [pth filesep 'images'];
 		tr.fg = [1 1 0.75];
 		tr.debug = true;
 		tr.dummy = true;
 		tr.audio = true;
 		tr.soundvol = 0.7;
-		tr.stimulus = 1;
+		tr.stimulus = 2;
 		tr.task = 2;
 		tr.name = 'simulcra';
 		tr.rewardmode = 1;
 		tr.volume = 250;
 		tr.random = 1;
+		tr.screen = 0;
+		tr.smartBackground = true;
 	end
 	pixelsPerCm = tr.density;
 	distance = tr.distance;
@@ -29,20 +32,20 @@ function startTouchTraining(tr)
 
 	% =========================== debug mode?
 	if tr.debug
-		if max(Screen('Screens'))==0; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
+		if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
 	end
 
 	%if IsOctave; try pkg load instrument-control; end; end
 
 	try
 		% ============================screen
-		s = screenManager('blend',true,'pixelsPerCm',pixelsPerCm, 'distance', distance,...
+		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',pixelsPerCm, 'distance', distance,...
 		'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
-		rtarget = imageStimulus('size', 10, 'colour', [0 1 0], 'fileName', [s.paths.root filesep 'stimuli' filesep 'star.png']);
+		rtarget = imageStimulus('size', 10, 'colour', [0 1 0], 'filePath', 'star.png');
 		if tr.stimulus == 2
-			target = imageStimulus('size', tr.maxSize, 'fileName', tr.folder, 'crop', 'square');
+			target = imageStimulus('size', tr.maxSize, 'filePath', [tr.folder filesep 'objects'], 'crop', 'square','circularMask',true);
 		else
 			target = discStimulus('size', tr.maxSize, 'colour', tr.fg);
 		end
@@ -63,8 +66,8 @@ function startTouchTraining(tr)
 		t.window.doNegation = true;
 		t.window.negationBuffer = 1.5;
 		t.drainEvents = true;
-		t.verbose=true;
 		if tr.debug; t.verbose = true; end
+
 
 		% ============================reward
 		rM = arduinoManager;
@@ -73,14 +76,14 @@ function startTouchTraining(tr)
 		rM.reward.pin = 2;
 		rM.reward.time = tr.volume; % 250ms
 		if tr.debug; rM.verbose = true; end
-		try open(rM); end
+		try open(rM); end %#ok<*TRYNC>
 
 		% ============================steps table
 		sz = linspace(tr.maxSize, tr.minSize, 5);
 
 		if tr.task == 1 % simple task
 			if tr.phase > 9; tr.phase = 9; end
-			pn = 1;
+			pn = 1; p = [];
 			%size
 			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
 			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
@@ -123,9 +126,15 @@ function startTouchTraining(tr)
 		% ============================setup
 		sv = open(s);
 		drawText(s,'Initialising...');flip(s);
+		if tr.smartBackground
+			sbg = imageStimulus('alpha',0.5, 'filePath', [tr.folder filesep 'background' filesep 'abstract1.jpg']);
+		else 
+			sbg = [];
+		end
 		aspect = sv.width / sv.height;
 		setup(rtarget, s);
 		setup(target, s);
+		if ~isempty(sbg); setup(sbg, s); end
 		setup(t, s);
 		createQueue(t);
 		start(t);
@@ -212,6 +221,7 @@ function startTouchTraining(tr)
 			WaitSecs(0.01);
 			vbl = flip(s); vblInit = vbl;
 			while ~touchStart && vbl < vblInit + 4
+				if ~isempty(sbg); draw(sbg); end
 				if ~hldtime; draw(target); end
 				if tr.debug && ~isempty(t.x) && ~isempty(t.y)
 					drawText(s, txt);
@@ -226,7 +236,10 @@ function startTouchTraining(tr)
 				txt = sprintf('Step=%i Touch=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
 					phase,touchResponse,t.x,t.y,hld, hldtime, rel, reli, se,...
 					t.window.radius,t.window.init,t.window.hold,t.window.release);
-				if ~isempty(touchResponse); touchStart = true; break; end
+				if ~isempty(touchResponse) 
+					touchStart = true; 
+					break; 
+				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); keepRunning = false; break; end
 			end
@@ -234,6 +247,7 @@ function startTouchTraining(tr)
 			vblEnd = flip(s);
 			WaitSecs(0.05);
 
+			% lets check the result:
 			if anyTouch == false
 				tt = vblEnd - rTime;
 				if tr.random > 0 && tt > tr.random && rand > 0.25
@@ -351,10 +365,7 @@ function startTouchTraining(tr)
 		sca;
 
 	catch ME
-		getReport(ME);
-		if exist('pid','var') && ~isempty(pid)
-			try system(['pkill ' pid]); end %#ok<*TRYNC>
-		end
+		getReport(ME)
 		try reset(target); end
 		try close(s); end
 		try close(t); end

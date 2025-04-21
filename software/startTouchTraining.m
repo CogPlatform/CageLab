@@ -13,7 +13,7 @@ function startTouchTraining(tr)
 		tr.debug = true;
 		tr.dummy = true;
 		tr.audio = true;
-		tr.soundvol = 0.7;
+		tr.soundvol = 0.9;
 		tr.stimulus = 2;
 		tr.task = 2;
 		tr.name = 'simulcra';
@@ -34,8 +34,6 @@ function startTouchTraining(tr)
 	if tr.debug
 		if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
 	end
-
-	%if IsOctave; try pkg load instrument-control; end; end
 
 	try
 		% ============================screen
@@ -67,7 +65,6 @@ function startTouchTraining(tr)
 		t.window.negationBuffer = 1.5;
 		t.drainEvents = true;
 		if tr.debug; t.verbose = true; end
-
 
 		% ============================reward
 		rM = arduinoManager;
@@ -127,7 +124,7 @@ function startTouchTraining(tr)
 		sv = open(s);
 		drawText(s,'Initialising...');flip(s);
 		if tr.smartBackground
-			sbg = imageStimulus('alpha',0.5, 'filePath', [tr.folder filesep 'background' filesep 'abstract1.jpg']);
+			sbg = imageStimulus('alpha',1, 'filePath', [tr.folder filesep 'background' filesep 'abstract1.jpg']);
 		else 
 			sbg = [];
 		end
@@ -251,7 +248,7 @@ function startTouchTraining(tr)
 			if anyTouch == false
 				tt = vblEnd - rTime;
 				if tr.random > 0 && tt > tr.random && rand > 0.25
-					drawBackground(s);
+					if ~isempty(sbg); draw(sbg); end
 					WaitSecs(rand/2);
 					for i = 0:round(s.screenVals.fps/3)
 						draw(rtarget);
@@ -283,6 +280,7 @@ function startTouchTraining(tr)
 				beep(a,2000,0.1,0.1);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
 				phaseN = phaseN + 1;
+				if ~isempty(sbg); draw(sbg); end
 				drawText(s,['CORRECT! phase: ' num2str(phase)]);
 				flip(s);
 				WaitSecs(0.5+rand);
@@ -299,6 +297,7 @@ function startTouchTraining(tr)
 			else
 				fprintf('===> UNKNOWN :-|\n');
 				drawText(s,'UNKNOWN!');
+				if ~isempty(sbg); draw(sbg); end
 				flip(s);
 				WaitSecs(0.5+rand);
 			end
@@ -323,7 +322,7 @@ function startTouchTraining(tr)
 			end
 
 			if keepRunning == false; break; end
-			drawBackground(s);
+			if ~isempty(sbg); draw(sbg); end
 			flip(s);
 		end % while keepRunning
 
@@ -352,7 +351,7 @@ function startTouchTraining(tr)
 		fprintf('  Free Rewards: %i\n',dt.data.random);
 		fprintf('  Correct Volume: %.2f ml\n',tVol);
 		fprintf('  Free Volume: %i ml\n\n\n',fVol);
-		try dt.plot(dt); end
+		%try dt.plot(dt); end
 
 		% save trial data
 		disp('=========================================');

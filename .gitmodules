@@ -1,0 +1,3 @@
+[submodule "software/resources"]
+	path = software/resources
+	url = https://github.com/CogPlatform/TaskResources.git

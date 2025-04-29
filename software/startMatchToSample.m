@@ -1,4 +1,4 @@
-function startTouchTraining(tr)
+function startMatchToSample(tr)
 	pth = fileparts(which(mfilename));
 	if ~exist('tr','var')
 		tr.phase = 1;
@@ -13,7 +13,7 @@ function startTouchTraining(tr)
 		tr.debug = true;
 		tr.dummy = true;
 		tr.audio = true;
-		tr.audioVolume = 0.9;
+		tr.audioVolume = 0.2;
 		tr.stimulus = 'Picture';
 		tr.task = 'Normal';
 		tr.name = 'simulcra';
@@ -37,7 +37,7 @@ function startTouchTraining(tr)
 	sf = [];
 
 	% =========================== debug mode?
-	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
+	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
 	
 	try
 		% ============================screen
@@ -45,15 +45,22 @@ function startTouchTraining(tr)
 		'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
+		pedestal = discStimulus('size', 6,'colour',[1 1 0],'alpha',0.3);
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
-		if matches(tr.stimulus, 'Picture')
-			target = imageStimulus('size', tr.maxSize, 'filePath', [tr.folder filesep 'objects'], 'crop', 'square','circularMask',true);
-		else
-			target = discStimulus('size', tr.maxSize, 'colour', tr.fg);
-		end
-		if tr.debug; target.verbose = true; end
+		target1 = imageStimulus('size', 5, 'randomiseSelection', true, 'filePath', [tr.folder filesep 'fractals' filesep 'B']);
+		target2 = clone(target1);
+		distractor1 = clone(target1);
+		distractor1.filePath = [tr.folder filesep 'fractals' filesep 'C'];
+		distractor2 = clone(target1);
+		distractor2.filePath = [tr.folder filesep 'fractals' filesep 'D'];
+		distractor3 = clone(target1);
+		distractor3.filePath = [tr.folder filesep 'fractals' filesep 'E'];
+		distractor4 = clone(target1);
+		distractor4.filePath = [tr.folder filesep 'fractals' filesep 'H'];
+		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
+		
 		if tr.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [tr.folder filesep 'background' filesep 'abstract2.jpg']);
+			sbg = imageStimulus('alpha', 1, 'filePath', [tr.folder filesep 'background' filesep 'abstract3.jpg']);
 		else 
 			sbg = [];
 		end
@@ -83,58 +90,13 @@ function startTouchTraining(tr)
 		rM.reward.time = tr.rewardTime; % 250ms
 		if tr.debug; rM.verbose = true; end
 		try open(rM); end %#ok<*TRYNC>
-
-		% ============================steps table
-		sz = linspace(tr.maxSize, tr.minSize, 5);
-
-		if matches(tr.task, 'Simple') % simple task
-			if tr.phase > 9; tr.phase = 9; end
-			pn = 1; p = [];
-			%size
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% position
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 11;
-		else
-			pn = 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% 6
-			p(pn).size = sz(end); p(pn).hold = 0.1;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.2;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.4;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.8;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 1;     p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% 12
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 2; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.75; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.5; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.25; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = [0 0]; pn = pn + 1;
-			% 17
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 11;
-		end
-
+		
 		% ============================setup
 		sv = open(s);
+		if ~isempty(sbg); setup(sbg, s); draw(sbg); end
 		drawTextNow(s,'Initialising...');
-		aspect = sv.width / sv.height;
-		setup(rtarget, s);
-		setup(target, s);
-		if ~isempty(sbg); setup(sbg, s); end
+		setup(set, s);
+		setup(rtarget, s); rRect = rtarget.mvRect;
 		setup(t, s);
 		createQueue(t);
 		start(t);
@@ -142,7 +104,7 @@ function startTouchTraining(tr)
 		% ==============================save file name
 		svn = initialiseSaveFile(s);
 		mkdir([s.paths.savedData filesep tr.name]);
-		saveName = [ s.paths.savedData filesep tr.name filesep 'TouchT-' tr.name '-' svn '.mat'];
+		saveName = [ s.paths.savedData filesep tr.name filesep 'MTS-' tr.name '-' svn '.mat'];
 		dt = touchData;
 		dt.name = saveName;
 		dt.subject = tr.name;
@@ -158,51 +120,55 @@ function startTouchTraining(tr)
 		if ~tr.debug && ~tr.dummy; Priority(1); HideCursor; end
 		keepRunning = true;
 		trialN = 0;
-		phaseN = 0;
-		phase = tr.phase;
-		stimulus = 1;
+		phaseN = 1;
 		randomRewardTimer = GetSecs;
-		rRect = rtarget.mvRect;
-
-
 
 		while keepRunning
-			if phase > length(p); phase = length(p); end
-			if length(p(phase).pos) == 2
-				x = p(phase).pos(1);
-				y = p(phase).pos(2);
-			else
-				x = randi(p(phase).pos(1));
-				if rand > 0.5; x = -x; end
-				y = randi(p(phase).pos(1));
-				y = y / aspect;
-				if rand > 0.5; y = -y; end
+
+			set.fixationChoice = 3;
+			[~,idx] = Shuffle([1 2 3 4 5]);
+			xy = [-9 -4.5 0 4.5 9; 6 5 6 5 6];
+			xy = xy(:,idx);
+			set{1}.xPositionOut = 0;
+			set{1}.yPositionOut = sv.topInDegrees + 5/3;
+			set{2}.xPositionOut = 0;
+			set{2}.yPositionOut = sv.topInDegrees + 5/3;
+			set{3}.xPositionOut = xy(1,1);
+			set{3}.yPositionOut = xy(2,1);
+			set{4}.xPositionOut = xy(1,2);
+			set{4}.yPositionOut = xy(2,2);
+			set{5}.xPositionOut = xy(1,3);
+			set{5}.yPositionOut = xy(2,3);
+			set{6}.xPositionOut = xy(1,4);
+			set{6}.yPositionOut = xy(2,4);
+			set{7}.xPositionOut = xy(1,5);
+			set{7}.yPositionOut = xy(2,5);
+			hide(set);
+			show(set,[1 2 3 4 5 6 7]);
+			update(set);
+
+			N = target1.nImages;
+			r = randi(N); stimulus = r;
+			target1.selectionOut = r;
+			target2.selectionOut = r;
+			rr = [r];
+			for jj = 4:7
+				r = randi(N);
+				while any(r == rr)
+					r = randi(N);
+				end
+				set{jj}.selectionOut = r;
+				rr = [rr r];
 			end
-			if length(p(phase).hold) == 2
-				t.window.hold = randi(p(phase).hold .* 1e3) / 1e3;
-			else
-				t.window.hold = p(phase).hold(1);
-			end
-			if isa(target,'imageStimulus') && target.circularMask == false
-				t.window.radius = [p(phase).size/2 p(phase).size/2];
-			else
-				t.window.radius = p(phase).size / 2;
-			end
+
+			[x,y] = set.getFixationPositions;
+			t.window.radius = target2.size/2;
 			t.window.init = tr.trialTime;
-			t.window.release = p(phase).rel;
+			t.window.release = 1;
 			t.window.X = x;
 			t.window.Y = y;
 
-			target.xPositionOut = x;
-			target.yPositionOut = y;
-			target.sizeOut = p(phase).size;
-			if isa(target,'imageStimulus')
-				target.selectionOut = randi(target.nImages);
-				stimulus = target.selectionOut;
-			end
-			update(target);
-
-			res = 0;
+			res = 0; phase = 1;
 			keepRunning = true;
 			touchResponse = '';
 			anyTouch = false;
@@ -210,7 +176,7 @@ function startTouchTraining(tr)
 			trialN = trialN + 1;
 			hldtime = false;
 			
-			fprintf('\n===> START TRIAL: %i - PHASE %i STIM %i\n', trialN, phase, stimulus);
+			fprintf('\n===> START TRIAL: %i \n', trialN);
 			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', t.window.radius,t.window.init,t.window.hold,t.window.release);
 
 			if trialN == 1; dt.data.startTime = GetSecs; end
@@ -223,7 +189,7 @@ function startTouchTraining(tr)
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchResponse) && vbl < vblInit + tr.trialTime
 				if ~isempty(sbg); draw(sbg); end
-				if ~hldtime; draw(target); end
+				if ~hldtime; draw(set); end
 				if tr.debug && ~isempty(t.x) && ~isempty(t.y)
 					drawText(s, txt);
 					[xy] = s.toPixels([t.x t.y]);
@@ -270,7 +236,7 @@ function startTouchTraining(tr)
 					randomRewardTimer = GetSecs;
 				else
 					fprintf('===> TIMEOUT :-)\n');
-					if ~isempty(sbg); draw(sbg); end
+					if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
 					drawText(s,'TIMEOUT!');
 					flip(s);
 					WaitSecs(0.75+rand);
@@ -279,7 +245,7 @@ function startTouchTraining(tr)
 				giveReward(rM);
 				dt.data.rewards = dt.data.rewards + 1;
 				fprintf('===> CORRECT :-)\n');
-				beep(a,2000,0.1,0.1);
+				beep(a,tr.correctBeep,0.1,tr.audioVolume);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
 				phaseN = phaseN + 1;
 				if ~isempty(sbg); draw(sbg); end
@@ -294,8 +260,8 @@ function startTouchTraining(tr)
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
 				flip(s);
-				beep(a,250,0.3,0.8);
-				WaitSecs('YieldSecs',tr.timeOut);
+				beep(a,tr.incorrectBeep,0.5,tr.audioVolume);
+				WaitSecs(tr.timeOut);
 				randomRewardTimer = GetSecs;
 			else
 				fprintf('===> UNKNOWN :-|\n');
@@ -334,7 +300,7 @@ function startTouchTraining(tr)
 		flip(s);
 
 		try ListenChar(0); Priority(0); ShowCursor; end
-		try reset(target); end
+		try reset(set); end
 		try reset(rtarget); end
 		try close(s); end
 		try close(t); end
@@ -369,13 +335,14 @@ function startTouchTraining(tr)
 
 	catch ME
 		getReport(ME)
-		try reset(target); end
+		try reset(set); end
 		try close(s); end
 		try close(t); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end
 		try ListenChar(0); end
+		try ShowCursor; end
 		sca;
 	end
 

@@ -53,3 +53,5 @@ pixi.lock
 # Environment variables #
 #########################
 .env
+
+*.asv

@@ -8,7 +8,7 @@ function startTouchTraining(tr)
 		tr.bg = [0.5 0.5 0.5];
 		tr.maxSize = 30;
 		tr.minSize = 1;
-		tr.folder = [pth filesep 'images'];
+		tr.folder = [pth filesep 'resources'];
 		tr.fg = [1 1 0.75];
 		tr.debug = true;
 		tr.dummy = true;
@@ -42,12 +42,12 @@ function startTouchTraining(tr)
 	try
 		% ============================screen
 		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',pixelsPerCm, 'distance', distance,...
-		'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
+		'backgroundColour', tr.bg,'windowed', windowed,'specialFlags', sf);
 
 		% s============================stimuli
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
 		if matches(tr.stimulus, 'Picture')
-			target = imageStimulus('size', tr.maxSize, 'filePath', [tr.folder filesep 'objects'], 'crop', 'square','circularMask',true);
+			target = imageStimulus('size', tr.maxSize, 'filePath', [tr.folder filesep 'fractals' filesep 'A'], 'crop', 'square', 'circularMask', true);
 		else
 			target = discStimulus('size', tr.maxSize, 'colour', tr.fg);
 		end
@@ -65,7 +65,7 @@ function startTouchTraining(tr)
 		setup(a);
 		beep(a,tr.correctBeep,0.1,tr.audioVolume);
 		WaitSecs(0.1);
-		beep(a,tr.incorrectBeep,0.5,tr.audioVolume);
+		beep(a,tr.incorrectBeep,0.2,tr.audioVolume);
 
 		% ============================touch
 		t = touchManager('isDummy',tr.dummy);
@@ -219,7 +219,7 @@ function startTouchTraining(tr)
 			reset(t);
 			flush(t);
 			
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); end
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchResponse) && vbl < vblInit + tr.trialTime
 				if ~isempty(sbg); draw(sbg); end
@@ -326,6 +326,7 @@ function startTouchTraining(tr)
 			end
 
 			if keepRunning == false; break; end
+			drawBackground(s,tr.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
 		end % while keepRunning

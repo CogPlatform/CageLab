@@ -1,3 +1,54 @@
+"""
+fractals.py
+
+A command-line tool for generating and saving images of recursively deflected fractal polygons
+with customizable parameters. Each image can contain multiple overlays (fractal units), each with
+randomized or fixed number of edges, scale, rotation, color, and transparency. Inspired by 
+Miyashita, Y., Higuchi, S.-I., Sakai, K., & Masui, N. (1991). Generation of fractal patterns 
+for probing the visual memory. Neuroscience Research, 12(1), 307–311. 
+https://doi.org/10.1016/0168-0102(91)90121-e
+
+Features:
+- Generates images of fractal polygons with recursive edge deflection.
+- Supports both fixed and random number of edges, edge size, depth, GA, alpha, and rotation per overlay.
+- Customizable color (HLS), transparency, and scale for overlays.
+- Optionally sets random seeds for reproducibility.
+- Saves each pattern as a PNG with a transparent background.
+
+Usage Examples:
+    # Generate 9 patterns with default settings
+    python fractals.py
+
+    # Generate 5 patterns, each with 3 overlays, random edge count between 3 and 8
+    python fractals.py --num_patterns 5 --num_overlays 3 --num_edges 3 8
+
+    # Use fixed seeds for reproducibility
+    python fractals.py --shape_seed 42 --hue_seed 123 --rotation_seed 7
+
+    # Specify ranges for edge size, depth, GA, alpha, and rotation
+    python fractals.py --edge_size 0.5 1.0 --depth 2 5 --GA 0.1 0.3 --alpha 0.3 0.7 --rotation_angle 0 360
+
+Arguments:
+    --output_dir       Output directory for saved patterns (default: fractal_patterns)
+    --num_patterns     Number of fractal patterns to generate (default: 9)
+    --num_overlays     Number of fractal overlays per pattern (default: 3)
+    --shape_seed       Fixed seed for shape randomization (optional)
+    --hue_seed         Fixed seed for hue randomization (optional)
+    --rotation_seed    Fixed seed for rotation randomization (optional)
+    --num_edges        Fixed number of edges or range (e.g., 3 8) (default: 2 6)
+    --edge_size        Fixed edge size or range (e.g., 0.5 1.0) (default: 0.5 1.0)
+    --depth            Fixed depth or range (e.g., 2 5) (default: 2 5)
+    --GA               Fixed GA value or range (e.g., 0.1 0.3) (default: 0.1 0.3)
+    --alpha            Fixed alpha or range (e.g., 0.3 0.7) (default: 0.3 0.7)
+    --rotation_angle   Fixed rotation angle or range (e.g., 0 360) (default: None for equidistant)
+    --scale            Scale factor for successive overlays (default: 0.2)
+
+Dependencies:
+    pip install numpy matplotlib
+
+Author: CageLab
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -6,6 +57,18 @@ import argparse
 import os
 
 def deflect_midpoint(fract_x, fract_y, GA):
+    """
+    Deflects the midpoint of each edge of a polygon by a fixed amount GA,
+    creating a more complex, fractal-like shape.
+
+    Args:
+        fract_x (np.ndarray): x-coordinates of the polygon vertices.
+        fract_y (np.ndarray): y-coordinates of the polygon vertices.
+        GA (float): Deflection amplitude.
+
+    Returns:
+        tuple: (new_fract_x, new_fract_y) with doubled number of points.
+    """
     n = len(fract_x)
     new_fract_x = np.zeros(2 * n)
     new_fract_y = np.zeros(2 * n)
@@ -26,6 +89,18 @@ def deflect_midpoint(fract_x, fract_y, GA):
     return new_fract_x, new_fract_y
 
 def generate_fractal(num_edges, edge_size, depth, GA):
+    """
+    Generates a fractal polygon by recursively deflecting the midpoints of its edges.
+
+    Args:
+        num_edges (int): Number of edges for the base polygon.
+        edge_size (float): Radius of the base polygon.
+        depth (int): Number of recursive deflection steps.
+        GA (float): Deflection amplitude.
+
+    Returns:
+        tuple: (fract_x, fract_y) coordinates of the fractal polygon.
+    """
     angles = np.linspace(0, 2 * np.pi, num_edges + 1)
     fract_x = edge_size * np.cos(angles)[:-1]
     fract_y = edge_size * np.sin(angles)[:-1]
@@ -36,6 +111,17 @@ def generate_fractal(num_edges, edge_size, depth, GA):
     return fract_x, fract_y
 
 def rotate_fractal(fract_x, fract_y, angle):
+    """
+    Rotates the fractal polygon by a given angle.
+
+    Args:
+        fract_x (np.ndarray): x-coordinates of the polygon.
+        fract_y (np.ndarray): y-coordinates of the polygon.
+        angle (float): Rotation angle in degrees.
+
+    Returns:
+        tuple: (rotated_x, rotated_y) coordinates after rotation.
+    """
     theta = np.radians(angle)
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
@@ -46,10 +132,29 @@ def rotate_fractal(fract_x, fract_y, angle):
     return rotated_x, rotated_y
 
 def scale_fractal(fract_x, fract_y, scale_factor):
+    """
+    Scales the fractal polygon by a given factor.
+
+    Args:
+        fract_x (np.ndarray): x-coordinates of the polygon.
+        fract_y (np.ndarray): y-coordinates of the polygon.
+        scale_factor (float): Scaling factor.
+
+    Returns:
+        tuple: (scaled_x, scaled_y) coordinates after scaling.
+    """
     return fract_x * scale_factor, fract_y * scale_factor
 
 def plot_fractal(fract_x, fract_y, hue, alpha):
-    # Convert HSL to RGB
+    """
+    Plots a single fractal polygon with the specified color and transparency.
+
+    Args:
+        fract_x (np.ndarray): x-coordinates of the polygon.
+        fract_y (np.ndarray): y-coordinates of the polygon.
+        hue (float): Hue value for color (0-1).
+        alpha (float): Transparency (0-1).
+    """
     saturation = 0.8  # Fixed saturation
     lightness = 0.5   # Fixed lightness
     rgb = colorsys.hls_to_rgb(hue, lightness, saturation)
@@ -58,6 +163,15 @@ def plot_fractal(fract_x, fract_y, hue, alpha):
     plt.axis('off')
 
 def parse_range(value):
+    """
+    Helper for argparse: parse a single value or a range (tuple of two values).
+
+    Args:
+        value (list): List of one or two values from argparse.
+
+    Returns:
+        int, float, or tuple: Single value or (min, max) tuple.
+    """
     if len(value) == 1:
         return value[0]  # Single value, return as is
     elif len(value) == 2:
@@ -67,6 +181,19 @@ def parse_range(value):
 
 def generate_and_save_fractal(output_dir, num_patterns, num_overlays, shape_seed, hue_seed, rotation_seed,
                              num_edges, edge_size, depth, GA, alpha, rotation_angle, scale):
+    """
+    Generates and saves multiple fractal patterns, each with multiple overlays.
+
+    Args:
+        output_dir (str): Directory to save images.
+        num_patterns (int): Number of images to generate.
+        num_overlays (int): Number of overlays per image.
+        shape_seed (int or None): Seed for shape randomization.
+        hue_seed (int or None): Seed for hue randomization.
+        rotation_seed (int or None): Seed for rotation randomization.
+        num_edges, edge_size, depth, GA, alpha, rotation_angle: Fixed or range for each parameter.
+        scale (float): Scale factor for successive overlays.
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     for i in range(num_patterns):
@@ -88,6 +215,7 @@ def generate_and_save_fractal(output_dir, num_patterns, num_overlays, shape_seed
 
         plt.figure(figsize=(4, 4), dpi=300)
         for j in range(num_overlays):
+            # Randomize or fix parameters for each overlay
             if isinstance(num_edges, tuple):
                 num_edges_val = shape_random.randint(*num_edges)
             else:
@@ -137,6 +265,10 @@ def generate_and_save_fractal(output_dir, num_patterns, num_overlays, shape_seed
         plt.close()
 
 def main():
+    """
+    Main entry point for the CLI tool.
+    Parses arguments, generates fractal patterns, and saves images.
+    """
     parser = argparse.ArgumentParser(description="Generate and save fractal patterns.")
     parser.add_argument("--output_dir", type=str, default="fractal_patterns", help="Output directory for saved patterns.")
     parser.add_argument("--num_patterns", type=int, default=9, help="Number of fractal patterns to generate.")

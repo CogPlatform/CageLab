@@ -8,7 +8,7 @@ function startMatchToSample(tr)
 		tr.bg = [0.5 0.5 0.5];
 		tr.maxSize = 30;
 		tr.minSize = 1;
-		tr.folder = [pth filesep 'images'];
+		tr.folder = [pth filesep 'resources'];
 		tr.fg = [1 1 0.75];
 		tr.debug = true;
 		tr.dummy = true;
@@ -35,6 +35,8 @@ function startMatchToSample(tr)
 	distance = tr.distance;
 	windowed = [];
 	sf = [];
+	tr.randomReward = 0;
+	tr.volume = 250;
 
 	% =========================== debug mode?
 	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
@@ -45,18 +47,19 @@ function startMatchToSample(tr)
 		'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
+		fix = discStimulus('size', 3, 'colour', [1 1 0.5], 'alpha', 0.7);
 		pedestal = discStimulus('size', 6,'colour',[1 1 0],'alpha',0.3);
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
-		target1 = imageStimulus('size', 5, 'randomiseSelection', true, 'filePath', [tr.folder filesep 'fractals' filesep 'B']);
+		target1 = imageStimulus('size', 5, 'randomiseSelection', true, 'filePath', [tr.folder filesep tr.object filesep 'B']);
 		target2 = clone(target1);
 		distractor1 = clone(target1);
-		distractor1.filePath = [tr.folder filesep 'fractals' filesep 'C'];
+		distractor1.filePath = [tr.folder filesep tr.object filesep 'C'];
 		distractor2 = clone(target1);
-		distractor2.filePath = [tr.folder filesep 'fractals' filesep 'D'];
+		distractor2.filePath = [tr.folder filesep tr.object filesep 'D'];
 		distractor3 = clone(target1);
-		distractor3.filePath = [tr.folder filesep 'fractals' filesep 'E'];
+		distractor3.filePath = [tr.folder filesep tr.object filesep 'E'];
 		distractor4 = clone(target1);
-		distractor4.filePath = [tr.folder filesep 'fractals' filesep 'H'];
+		distractor4.filePath = [tr.folder filesep tr.object filesep 'H'];
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		
 		if tr.smartBackground
@@ -95,6 +98,7 @@ function startMatchToSample(tr)
 		sv = open(s);
 		if ~isempty(sbg); setup(sbg, s); draw(sbg); end
 		drawTextNow(s,'Initialising...');
+		setup(fix, s);
 		setup(set, s);
 		setup(rtarget, s); rRect = rtarget.mvRect;
 		setup(t, s);
@@ -161,12 +165,12 @@ function startMatchToSample(tr)
 				rr = [rr r];
 			end
 
-			[x,y] = set.getFixationPositions;
-			t.window.radius = target2.size/2;
+			t.window.radius = fix.size/2;
 			t.window.init = tr.trialTime;
-			t.window.release = 1;
-			t.window.X = x;
-			t.window.Y = y;
+			t.window.hold = 0.01;
+			t.window.release = 0.8;
+			t.window.X = 0;
+			t.window.Y = 0;
 
 			res = 0; phase = 1;
 			keepRunning = true;
@@ -189,22 +193,47 @@ function startMatchToSample(tr)
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchResponse) && vbl < vblInit + tr.trialTime
 				if ~isempty(sbg); draw(sbg); end
-				if ~hldtime; draw(set); end
+				if ~hldtime; draw(fix); end
 				if tr.debug && ~isempty(t.x) && ~isempty(t.y)
-					drawText(s, txt);
 					[xy] = s.toPixels([t.x t.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
 				vbl = flip(s);
-				[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHoldRelease(t,'yes','no');
-				if tch
-					anyTouch = true;
-				end
-				txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
-					phase,touchResponse,t.x,t.y,hld, hldtime, rel, reli, se,...
-					t.window.radius,t.window.init,t.window.hold,t.window.release);
+				[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHold(t,'yes','no');
 				[~,~,c] = KbCheck();
 				if c(quitKey); keepRunning = false; break; end
+			end
+
+			if matches(touchResponse,'yes')
+				touchResponse = '';
+				[x,y] = set.getFixationPositions;
+				t.window.radius = target2.size/2;
+				t.window.init = tr.trialTime;
+				t.window.hold = 0.05;
+				t.window.release = 1;
+				t.window.X = x;
+				t.window.Y = y;
+				reset(t);
+				flush(t);
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+				vbl = flip(s); vblInit = vbl;
+				while isempty(touchResponse) && vbl < vblInit + tr.trialTime
+					if ~isempty(sbg); draw(sbg); end
+					if ~hldtime; draw(set); end
+					if tr.debug && ~isempty(t.x) && ~isempty(t.y)
+						drawText(s, txt);
+						[xy] = s.toPixels([t.x t.y]);
+						Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
+					end
+					vbl = flip(s);
+					[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHold(t,'yes','no');
+					if tch; anyTouch = true; end
+					txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
+						phase,touchResponse,t.x,t.y,hld, hldtime, rel, reli, se,...
+						t.window.radius,t.window.init,t.window.hold,t.window.release);
+					[~,~,c] = KbCheck();
+					if c(quitKey); keepRunning = false; break; end
+				end
 			end
 
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
@@ -270,25 +299,6 @@ function startMatchToSample(tr)
 				flip(s);
 				WaitSecs(0.5+rand);
 				randomRewardTimer = GetSecs;
-			end
-
-			if trialN >= tr.nTrialsSample
-				if length(dt.data.result) > tr.nTrialsSample
-					res = sum(dt.data.result(end - (tr.nTrialsSample-1):end));
-				end
-				fprintf('===> Performance: %i Phase: %i\n',res,phase);
-				if phaseN >= tr.nTrialsSample && length(dt.data.result) > tr.nTrialsSample
-					if res >= 8
-						phase = phase + 1;
-					elseif res <= 2
-						phase = phase - 1;
-					end
-					phaseN = 0;
-					if phase < 1; phase = 1; end
-					if phase > 20; phase = 20; end
-					if matches(tr.task, 'Simple') && phase > 9; phase = 9; end
-					fprintf('===> Phase update: %i\n',phase);
-				end
 			end
 
 			if keepRunning == false; break; end

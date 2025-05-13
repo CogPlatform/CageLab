@@ -29,7 +29,8 @@ classdef theConductor < optickaCore
 		%> task object
 		runner
 		%>
-		commandList = ["exit" "quit" "exitmatlab" "rundemo" "run" "echo" "gettime" "syncbuffer" "commandlist"]
+		commandList = ["exit" "quit" "exitmatlab" "rundemo" "run"
+			"echo" "gettime" "syncbuffer" "commandlist"]
 	end
 
 	properties (Access = private)

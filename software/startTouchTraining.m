@@ -141,7 +141,7 @@ function startTouchTraining(tr)
 		start(t);
 
 		% ==============================save file name
-		[path, sessionID, dateID, name] = s.getAlf(tr.name, tr.lab, true);
+		[path, sessionID, dateID, name] = s.getALF(tr.name, tr.lab, true);
 		saveName = [ path filesep 'TouchT-' name '.mat'];
 		dt = touchData;
 		dt.name = saveName;

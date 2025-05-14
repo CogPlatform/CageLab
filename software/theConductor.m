@@ -1,6 +1,6 @@
 % ========================================================================
 %> @class theConductor
-%> @brief theConductor — ØMQ server to run behavioural tasks
+%> @brief theConductor — ØMQ REP server to run behavioural tasks
 %>
 %> This class opens a REP ØMQ
 %>
@@ -20,7 +20,7 @@ classdef theConductor < optickaCore
 	end
 
 	properties (GetAccess = public, SetAccess = protected)
-		%> ØMQ zmqConnection object
+		%> ØMQ jzmqConnection object
 		zmq
 		%> command
 		command
@@ -52,7 +52,7 @@ classdef theConductor < optickaCore
 
 			%setupPTB(me);
 			
-			me.zmq = zmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);
+			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);
 
 			if me.runNow; run(me); end
 
@@ -105,7 +105,7 @@ classdef theConductor < optickaCore
 			fprintf('\n\n=== Starting command receive loop... ===\n\n');
 			while ~stop
 				% Call receiveCommand, but tell it NOT to send the default 'ok' reply
-				if matches(me.zmq.poll, 'in')
+				if poll(me.zmq, 'in')
 					[cmd, data] = receiveCommand(me.zmq, false);
 				else
 					WaitSecs('YieldSecs',0.005);

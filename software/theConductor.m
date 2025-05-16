@@ -46,7 +46,7 @@ classdef theConductor < optickaCore
 		%> @details 
 		%> @note 
 		% ===================================================================	
-			args = optickaCore.addDefaults(varargin,struct('name','screenManager'));
+			args = optickaCore.addDefaults(varargin,struct('name','theConductor'));
 			me=me@optickaCore(args); %superclass constructor
 			me.parseArgs(args,me.allowedProperties); %check remaining properties from varargin
 

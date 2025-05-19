@@ -29,14 +29,19 @@ classdef theConductor < optickaCore
 		%> task object
 		runner
 		%>
-		commandList = ["exit" "quit" "exitmatlab" "rundemo" "run"
-			"echo" "gettime" "syncbuffer" "commandlist"]
+		commandList = ["exit" "quit" "exitmatlab" "rundemo" ...
+			"run" "echo" "gettime" "syncbuffer" "commandlist"]
 	end
 
 	properties (Access = private)
 		allowedProperties = {'runNow', 'address', 'port', 'verbose'}
 		sendState = false
 		recState = false
+	end
+
+	properties (Constant)
+		baseURI = matlab.net.URI('http://localhost:9012');
+		headers = [matlab.net.http.field.ContentTypeField("application/json")];
 	end
 
 	methods
@@ -50,12 +55,20 @@ classdef theConductor < optickaCore
 			me=me@optickaCore(args); %superclass constructor
 			me.parseArgs(args,me.allowedProperties); %check remaining properties from varargin
 
-			%setupPTB(me);
-			
+			try setupPTB(me); end
+
 			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);
 
 			if me.runNow; run(me); end
 
+		end
+
+		function delete(me)
+			close(me);
+		end
+		function close(me)
+			try closeProxy(me); end
+			try close(me.zmq); end
 		end
 
 		% ===================================================================
@@ -79,15 +92,96 @@ classdef theConductor < optickaCore
 				me.port = j.port;
 			end
 			if ~me.zmq.isOpen; open(me.zmq); end
+			createProxy(me);
+			handShake(me);
 			process(me);
 			fprintf('Run finished...\n');
 			
 		end
 
+		function createProxy(me)
+			% create the URL for the request
+			cmdProxyUrl = me.baseURI;
+			cmdProxyUrl.Path = {"cmds", "proxies"};
+			
+			msg = struct('nickname', 'matlab', 'hostname', 'localhost', "port", me.port);
+			msgBody = matlab.net.http.MessageBody(msg);
+			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, me.headers, msgBody);
+			
+			% send request
+			response = me.sendRequest(request, cmdProxyUrl);
+			me.handleResponse(response);
+		end
+
+		function closeProxy(me)
+			% create the URL for the request
+			cmdProxyUrl = me.baseURI;
+			cmdProxyUrl.Path = {"cmds", "proxies", "matlab"};
+
+			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.DELETE);
+			
+			% send request
+			response = me.sendRequest(request, cmdProxyUrl);
+			me.handleResponse(response);
+		end
+		
+		function response = sendRequest(~, request, uri)
+			try
+				response = request.send(uri);
+			catch exception
+				disp("Error: Failed to send request - " + exception.message);
+				response = [];
+			end
+		end
+		
+		function response = handleResponse(~, response)
+			% handle HTTP response based on status code
+			if isempty(response)
+				return;
+			end
+			
+			switch response.StatusCode
+				case matlab.net.http.StatusCode.Conflict
+					warning("MatmoteGo:endpointExists", "Endpoint already exists");
+				case matlab.net.http.StatusCode.BadRequest
+					warning("MatmoteGo:invalidRequest", "Message from cogmoteGO: %s", response.Body.show());
+				case matlab.net.http.StatusCode.NotFound
+					warning("MatmoteGo:invalidEndpoint", "Endpoint not found");
+			end
+		end
+
+		function handShake(me)
+			try
+				msgBytes = me.zmq.socket.recv();
+				
+				if isempty(msgBytes)
+					warning('No handshake message received');
+				end
+				
+				msgStr = native2unicode(msgBytes, 'UTF-8');
+				receivedMsg = jsondecode(msgStr);
+				try fprintf('Received: %s\n', receivedMsg.request); end
+				
+				if strcmp(receivedMsg.request, 'Hello')
+					response = struct('response', 'World');
+					responseStr = jsonencode(response);
+					responseBytes = unicode2native(responseStr, 'UTF-8');
+					me.socket.send(responseBytes);
+				else
+					warning('Invalid handshake request: %s', msgStr);
+				end
+
+			catch exception
+				warning(exception.identifier, 'Handshake failed: %s', exception.message);
+				rethrow(exception);
+			end
+		end
+		
+
 	end
 
 	methods (Access = protected)
-		
+
 		% ===================================================================
 		function process(me)
 		%> @brief Enters a loop to continuously receive and process commands.
@@ -240,6 +334,7 @@ classdef theConductor < optickaCore
 			end
 			fprintf('Command receive loop finished.\n');
 			me.zmq.close;
+			closeProxy(me);
 			if stopMATLAB
 				me.zmq = [];
 				WaitSecs(0.01);
@@ -256,6 +351,7 @@ classdef theConductor < optickaCore
 			if IsLinux
 				!powerprofilesctl set performance
 			end
+			PsychDefaultSetup(2);
 		end
 
 	end

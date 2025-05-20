@@ -63,14 +63,6 @@ classdef theConductor < optickaCore
 
 		end
 
-		function delete(me)
-			close(me);
-		end
-		function close(me)
-			try closeProxy(me); end
-			try close(me.zmq); end
-		end
-
 		% ===================================================================
 		function run(me)
 		%> @brief Enters a loop to continuously receive and process commands.
@@ -141,6 +133,10 @@ classdef theConductor < optickaCore
 			end
 			
 			switch response.StatusCode
+				case matlab.net.http.StatusCode.OK
+					disp('===> theConductor: OK')
+				case matlab.net.http.StatusCode.Created
+					disp('===> theConductor: Command Proxy Created')
 				case matlab.net.http.StatusCode.Conflict
 					warning("MatmoteGo:endpointExists", "Endpoint already exists");
 				case matlab.net.http.StatusCode.BadRequest
@@ -152,7 +148,7 @@ classdef theConductor < optickaCore
 
 		function handShake(me)
 			try
-				msgBytes = me.zmq.socket.recv();
+				msgBytes = me.zmq.receive();
 				
 				if isempty(msgBytes)
 					warning('No handshake message received');
@@ -160,21 +156,29 @@ classdef theConductor < optickaCore
 				
 				msgStr = native2unicode(msgBytes, 'UTF-8');
 				receivedMsg = jsondecode(msgStr);
-				try fprintf('Received: %s\n', receivedMsg.request); end
+				try fprintf('Received: %s\n', receivedMsg.request); end %#ok<*TRYNC>
 				
 				if strcmp(receivedMsg.request, 'Hello')
 					response = struct('response', 'World');
 					responseStr = jsonencode(response);
 					responseBytes = unicode2native(responseStr, 'UTF-8');
-					me.socket.send(responseBytes);
+					me.zmq.send(responseBytes);
 				else
 					warning('Invalid handshake request: %s', msgStr);
 				end
 
 			catch exception
 				warning(exception.identifier, 'Handshake failed: %s', exception.message);
-				rethrow(exception);
+				rethrow(exception)
 			end
+		end
+
+		function close(me)
+			try closeProxy(me); end
+			try close(me.zmq); end
+		end
+		function delete(me)
+			close(me);
 		end
 		
 

@@ -19,7 +19,6 @@ function startTouchTraining(tr)
 		tr.name = 'simulcra';
 		tr.lab = 'cogp';
 		tr.rewardmode = 1;
-		tr.volume = 250;
 		tr.random = 1;
 		tr.screen = 0;
 		tr.smartBackground = true;
@@ -36,7 +35,7 @@ function startTouchTraining(tr)
 	distance = tr.distance;
 	windowed = [];
 	sf = [];
-
+	
 	% =========================== debug mode?
 	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
 	
@@ -131,6 +130,9 @@ function startTouchTraining(tr)
 
 		% ============================setup
 		sv = open(s);
+		if tr.smartBackground
+			sbg.size = sv.widthInDegrees;
+		end
 		drawTextNow(s,'Initialising...');
 		aspect = sv.width / sv.height;
 		setup(rtarget, s);
@@ -346,8 +348,8 @@ function startTouchTraining(tr)
 		disp('=========================================');
 		fprintf('===> Data for %s\n',saveName)
 		disp('=========================================');
-		tVol = (9.38e-4 * tr.volume) * dt.data.rewards;
-		fVol = (9.38e-4 * tr.volume) * dt.data.random;
+		tVol = (9.38e-4 * tr.rewardTime) * dt.data.rewards;
+		fVol = (9.38e-4 * tr.rewardTime) * dt.data.random;
 		cor = sum(dt.data.result==true);
 		incor = sum(dt.data.result==false);
 		fprintf('  Total Trials: %i\n',trialN);

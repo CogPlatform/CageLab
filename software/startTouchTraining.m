@@ -166,8 +166,6 @@ function startTouchTraining(tr)
 		randomRewardTimer = GetSecs;
 		rRect = rtarget.mvRect;
 
-
-
 		while keepRunning
 			if phase > length(p); phase = length(p); end
 			if length(p(phase).pos) == 2

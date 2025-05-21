@@ -15,6 +15,8 @@ classdef theConductor < optickaCore
 		address = '0.0.0.0'
 		%> port to bind to
 		port = 6666
+		%> time in seconds to wait before polling for new messages?
+		loopTime = 0.002
 		%>
 		verbose = true
 	end
@@ -77,7 +79,7 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			cd(me.paths.parent);
-			fprintf('=== The Conductor is Running... ===\n');
+			fprintf('\n\n===> The Conductor is Initiating... ===\n');
 			if exist('conductorData.json','file')
 				j = readstruct('conductorData.json');
 				me.address = j.address;
@@ -87,10 +89,10 @@ classdef theConductor < optickaCore
 			createProxy(me);
 			handShake(me);
 			process(me);
-			fprintf('Run finished...\n');
-			
+			fprintf('\n\n===> theConductor: Run finished...\n');
 		end
 
+		% ===================================================================
 		function createProxy(me)
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
@@ -105,6 +107,7 @@ classdef theConductor < optickaCore
 			me.handleResponse(response);
 		end
 
+		% ===================================================================
 		function closeProxy(me)
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
@@ -117,6 +120,7 @@ classdef theConductor < optickaCore
 			me.handleResponse(response);
 		end
 		
+		% ===================================================================
 		function response = sendRequest(~, request, uri)
 			try
 				response = request.send(uri);
@@ -126,6 +130,7 @@ classdef theConductor < optickaCore
 			end
 		end
 		
+		% ===================================================================
 		function response = handleResponse(~, response)
 			% handle HTTP response based on status code
 			if isempty(response)
@@ -138,25 +143,24 @@ classdef theConductor < optickaCore
 				case matlab.net.http.StatusCode.Created
 					disp('===> theConductor: Command Proxy Created')
 				case matlab.net.http.StatusCode.Conflict
-					warning("MatmoteGo:endpointExists", "Endpoint already exists");
+					warning("theConductor:endpointExists", "Endpoint already exists");
 				case matlab.net.http.StatusCode.BadRequest
-					warning("MatmoteGo:invalidRequest", "Message from cogmoteGO: %s", response.Body.show());
+					warning("thieConductor:invalidRequest", "Message from cogmoteGO: %s", response.Body.show());
 				case matlab.net.http.StatusCode.NotFound
-					warning("MatmoteGo:invalidEndpoint", "Endpoint not found");
+					warning("theConductor:invalidEndpoint", "Endpoint not found");
 			end
 		end
 
+		% ===================================================================
 		function handShake(me)
 			try
 				msgBytes = me.zmq.receive();
-				
 				if isempty(msgBytes)
-					warning('No handshake message received');
+					warning("theConductor:noHandshake", 'No handshake message received');
 				end
-				
 				msgStr = native2unicode(msgBytes, 'UTF-8');
 				receivedMsg = jsondecode(msgStr);
-				try fprintf('Received: %s\n', receivedMsg.request); end %#ok<*TRYNC>
+				try fprintf('===> theConductor Received:\n%s\n', receivedMsg.request); end %#ok<*TRYNC>
 				
 				if strcmp(receivedMsg.request, 'Hello')
 					response = struct('response', 'World');
@@ -164,19 +168,21 @@ classdef theConductor < optickaCore
 					responseBytes = unicode2native(responseStr, 'UTF-8');
 					me.zmq.send(responseBytes);
 				else
-					warning('Invalid handshake request: %s', msgStr);
+					warning("theConductor:invalidHandshake",'Invalid handshake request: %s', msgStr);
 				end
-
 			catch exception
 				warning(exception.identifier, 'Handshake failed: %s', exception.message);
 				rethrow(exception)
 			end
 		end
 
+		% ===================================================================
 		function close(me)
 			try closeProxy(me); end
 			try close(me.zmq); end
 		end
+		
+		% ===================================================================
 		function delete(me)
 			close(me);
 		end
@@ -200,13 +206,14 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			stop = false; stopMATLAB = false;
-			fprintf('\n\n=== Starting command receive loop... ===\n\n');
+			fprintf('\n\n===> theConductor: Starting command receive loop... ===\n\n');
 			while ~stop
 				% Call receiveCommand, but tell it NOT to send the default 'ok' reply
 				if poll(me.zmq, 'in')
 					[cmd, data] = receiveCommand(me.zmq, false);
 				else
-					WaitSecs('YieldSecs',0.005);
+					WaitSecs('YieldSecs',me.loopTime);
+					KbCheck;
 					continue
 				end
 
@@ -217,7 +224,7 @@ classdef theConductor < optickaCore
 					me.recState = true; me.sendState = false;
 				else
 					me.recState = false;
-					WaitSecs('YieldSecs', 0.005); % Short pause before trying again
+					WaitSecs('YieldSecs', me.loopTime); % Short pause before trying again
 					continue;
 				end
 
@@ -226,13 +233,13 @@ classdef theConductor < optickaCore
 				replyCommand = ''; replyData = []; runCommand = false;
 				switch lower(cmd)
 					case {'exit', 'quit'}
-						fprintf('Received exit command. Shutting down loop.\n');
+						fprintf('\n===> theConductor:Received exit command. Shutting down loop.\n');
 						replyCommand = 'bye';
 						replyData = {'Shutting down'};
 						stop = true;
 
 					case 'exitmatlab'
-						fprintf('Received exit MATLAB command. Shutting down loop.\n');
+						fprintf('\n===> theConductor: Received exit MATLAB command. Shutting down loop.\n');
 						replyCommand = 'bye';
 						replyData = {'Shutting down MATLAB'};
 						stop = true;
@@ -240,7 +247,7 @@ classdef theConductor < optickaCore
 
 					case 'rundemo'
 						if me.verbose > 0; fprintf('Run PTB demo...\n'); end
-						setupPTB();
+						me.setupPTB();
 						data = struct('command','VBLSyncTest','args','none');
 						replyCommand = 'demo_run';
 						replyData = "Running VBLSyncTest"; % Send back the data we received
@@ -257,7 +264,7 @@ classdef theConductor < optickaCore
 						end
 
 					case 'echo'
-						if me.verbose > 0; fprintf('Echoing received data.\n'); end
+						if me.verbose > 0; fprintf('\n===> theConductor: Echoing received data.\n'); end
 						replyCommand = 'echo_reply';
 						replyData = data; % Send back the data we received
 
@@ -276,12 +283,12 @@ classdef theConductor < optickaCore
 							replyData.clientGetSecs = NaN;
 						end
 						replyData.GetSecsDiff = replyData.GetSecs - replyData.clientGetSecs;
-						if me.verbose > 0; fprintf('Replying with current time: %s\n', replyData.currentTime); end
+						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.currentTime); end
 						replyCommand = 'time_reply';
 
 					case 'syncbuffer'
 						% Placeholder for syncBuffer logic
-						if me.verbose > 0; fprintf('Processing syncBuffer command.\n'); end
+						if me.verbose > 0; fprintf('===> theConductorProcessing syncBuffer command.\n'); end
 						% me.flush(); % Example: maybe flush the input buffer?
 						if isfield(data,'frameSize')
 							me.zmq.frameSize = data.frameSize;
@@ -293,55 +300,52 @@ classdef theConductor < optickaCore
 
 					case 'commandlist'
 						% Placeholder for syncBuffer logic
-						if me.verbose > 0; fprintf('Processing syncBuffer command (placeholder).\n'); end
+						if me.verbose > 0; fprintf('===> theConductorProcessing syncBuffer command (placeholder).\n'); end
 						% me.flush(); % Example: maybe flush the input buffer?
 						replyCommand = 'list of accepted commands';
 						replyData = me.commandList;
 
 					otherwise
-						t = sprintf('Received unknown command: «%s»', cmd);
+						t = sprintf('===> theConductor: Received unknown command: «%s»', cmd);
 						disp(t);
 						replyCommand = 'unknown-command';
 						replyData = {t};
 				end
 
-				if matches(me.zmq.poll,'out')
+				if poll(me.zmq, 'out')
 					status = sendCommand(me.zmq, replyCommand, replyData, false);
 					if status ~= 0
-						warning('Reply failed for command "%s"', cmd);
+						warning('\n===> theConductor: Reply failed for command "%s"', cmd);
 						me.sendState = false; % Update state on send failure
 					else
-						me.sendState = true; me.recState = false; % Update state on send success
+						%me.sendState = true; me.recState = false; % Update state on send success
 					end
 				end
 
-				if runCommand
-					if isstruct(data) && isfield(data,'command')
-						data.zmq = me.zmq;
-						command = data.command;
-						try
-							if isfield(data,'args') && matches(data.args,'none')
-								eval(command);
-							else
-								eval([command '(data)']);
-							end
-						catch ME
-							warning('run command failed');
+				if runCommand && isstruct(data) && isfield(data,'command')
+					data.zmq = me.zmq;
+					command = data.command;
+					try
+						if isfield(data,'args') && matches(data.args,'none')
+							fprintf('\n===> theConductor run: %s\n', command);
+							eval(command);
+						else
+							fprintf('\n===> theConductor run: %s\n', [command '(data)']);
+							eval([command '(data)']);
 						end
+						fprintf('\n===> theConductor run finished: %s\n', command);
+						drawnow;
+					catch ME
+						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
 					end
-				end
-
-				% Small pause to prevent busy-waiting if no commands arrive quickly
-				if ~stop
-					WaitSecs('YieldSecs', 0.005);
 				end
 			end
-			fprintf('Command receive loop finished.\n');
-			me.zmq.close;
-			closeProxy(me);
+			fprintf('\n===> theConductor: Command receive loop finished.\n');
+			close(me);
 			if stopMATLAB
+				fprintf('\n===> theConductor: MATLAB shutdown requested...\n');
 				me.zmq = [];
-				WaitSecs(0.01);
+				WaitSecs(0.1);
 				quit(0,"force");
 			end
 		end

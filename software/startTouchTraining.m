@@ -35,6 +35,9 @@ function startTouchTraining(tr)
 	distance = tr.distance;
 	windowed = [];
 	sf = [];
+
+	broadcast = matmoteGO.broadcast();
+	
 	
 	% =========================== debug mode?
 	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
@@ -305,6 +308,8 @@ function startTouchTraining(tr)
 				WaitSecs(0.5+rand);
 				randomRewardTimer = GetSecs;
 			end
+
+			broadcast.send(struct('name',tr.name,'trial',trialN','result',dt.data.result));
 
 			if trialN >= tr.nTrialsSample
 				if length(dt.data.result) > tr.nTrialsSample

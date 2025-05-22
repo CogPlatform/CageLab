@@ -122,8 +122,12 @@ classdef theConductor < optickaCore
 		
 		% ===================================================================
 		function response = sendRequest(~, request, uri)
+			opts = matlab.net.http.HTTPOptions;
+			opts.ConnectTimeout = 5;
+			opts.ResponseTimeout = 10;
+			opts.UseProxy = false;
 			try
-				response = request.send(uri);
+				response = request.send(uri, opts);
 			catch exception
 				disp("Error: Failed to send request - " + exception.message);
 				response = [];
@@ -256,7 +260,7 @@ classdef theConductor < optickaCore
 					case 'run'
 						if isfield(data,'command')
 							replyCommand = 'running';
-							replyData = {''}; % Send back the data we received
+							replyData = {'Running task...'}; % Send back the data we received
 							runCommand = true;
 						else
 							replyCommand = 'cannot run';
@@ -266,6 +270,11 @@ classdef theConductor < optickaCore
 					case 'echo'
 						if me.verbose > 0; fprintf('\n===> theConductor: Echoing received data.\n'); end
 						replyCommand = 'echo_reply';
+						if isempty(data)
+							replyData = {'no data received'};
+						else
+							replyData = data; % Send back the data we received
+						end
 						replyData = data; % Send back the data we received
 
 					case 'gettime'
@@ -284,6 +293,7 @@ classdef theConductor < optickaCore
 						end
 						replyData.GetSecsDiff = replyData.GetSecs - replyData.clientGetSecs;
 						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.currentTime); end
+						disp(replyData);
 						replyCommand = 'time_reply';
 
 					case 'syncbuffer'
@@ -323,7 +333,7 @@ classdef theConductor < optickaCore
 				end
 
 				if runCommand && isstruct(data) && isfield(data,'command')
-					data.zmq = me.zmq;
+					data.zmq = []; % TODO there is a pointer bug if we pass it?
 					command = data.command;
 					try
 						if isfield(data,'args') && matches(data.args,'none')

@@ -30,22 +30,27 @@ function startTouchTraining(tr)
 		tr.randomReward = 30;
 		tr.randomProbability = 0.25;
 		tr.nTrialsSample = 10;
+		tr.negationBuffer = 2;
+		tr.exclusionZone = [];
+		tr.drainEvents = true;
+		tr.strictMode = true;
+		tr.negateTouch = true;
+		tr.touchDevice = 1;
+		tr.touchDeviceName = 'ILITEK-TP';
 	end
-	pixelsPerCm = tr.density;
-	distance = tr.distance;
 	windowed = [];
 	sf = [];
 
 	broadcast = matmoteGO.broadcast();
-	
 	
 	% =========================== debug mode?
 	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1600 800]; end
 	
 	try
 		% ============================screen
-		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',pixelsPerCm, 'distance', distance,...
-		'backgroundColour', tr.bg,'windowed', windowed,'specialFlags', sf);
+		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',...
+			tr.density, 'distance', tr.distance,...
+			'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
@@ -71,21 +76,15 @@ function startTouchTraining(tr)
 		beep(a,tr.incorrectBeep,0.2,tr.audioVolume);
 
 		% ============================touch
-		t = touchManager('isDummy',tr.dummy);
-		t.window.doNegation = true;
-		t.window.negationBuffer = 1.5;
-		t.drainEvents = true;
+		t = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
+			'deviceName',tr.touchDeviceName,'exclusionZone',tr.exclusionZone,...
+			'drainEvents',tr.drainEvents);
+		t.window.doNegation = tr.doNegation;
+		t.window.negationBuffer = tr.negationBuffer;
 		if tr.debug; t.verbose = true; end
 
 		% ============================reward
-		rM = arduinoManager;
-		rM.port = tr.rewardPort;
-		rM.silentMode = true;
-		rM.reward.type = 'TTL';
-		rM.reward.pin = 2;
-		rM.reward.time = tr.rewardTime; % 250ms
-		if tr.debug; rM.verbose = true; end
-		try open(rM); end %#ok<*TRYNC>
+		rM = PTBSimia.pumpManager();
 
 		% ============================steps table
 		sz = linspace(tr.maxSize, tr.minSize, 5);
@@ -264,7 +263,7 @@ function startTouchTraining(tr)
 						rtarget.mvRect = CenterRect(rtarget.mvRect,s.screenVals.winRect);
 					end
 					flip(s);
-					giveReward(rM);
+					giveReward(rM, tr.rewardTime);
 					dt.data.rewards = dt.data.rewards + 1;
 					dt.data.random = dt.data.random + 1;
 					fprintf('===> RANDOM REWARD :-)\n');

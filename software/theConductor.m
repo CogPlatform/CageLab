@@ -111,7 +111,7 @@ classdef theConductor < optickaCore
 		function closeProxy(me)
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
-			cmdProxyUrl.Path = {"cmds", "proxies", "matlab"};
+			cmdProxyUrl.Path = ["cmds", "proxies", "matlab"];
 
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.DELETE);
 			

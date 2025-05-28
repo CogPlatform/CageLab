@@ -1,134 +1,133 @@
-function startMatchToSample(tr)
+function startMatchToSample(in)
 	pth = fileparts(which(mfilename));
-	if ~exist('tr','var')
-		tr.phase = 1;
-		tr.density = 70;
-		tr.distance = 30;
-		tr.timeOut = 4;
-		tr.bg = [0.5 0.5 0.5];
-		tr.maxSize = 30;
-		tr.minSize = 1;
-		tr.folder = [pth filesep 'resources'];
-		tr.fg = [1 1 0.75];
-		tr.debug = true;
-		tr.dummy = true;
-		tr.audio = true;
-		tr.audioVolume = 0.2;
-		tr.stimulus = 'Picture';
-		tr.task = 'Normal';
-		tr.name = 'simulcra';
-		tr.rewardmode = 1;
-		tr.volume = 250;
-		tr.random = 1;
-		tr.screen = 0;
-		tr.smartBackground = true;
-		tr.correctBeep = 3000;
-		tr.incorrectBeep = 400;
-		tr.rewardPort = '/dev/ttyACM0';
-		tr.rewardTime = 200;
-		tr.trialTime = 5;
-		tr.randomReward = 30;
-		tr.randomProbability = 0.25;
-		tr.randomReward = 0;
-		tr.volume = 250;
-		tr.nTrialsSample = 10;
-		tr.negationBuffer = 2;
-		tr.exclusionZone = [];
-		tr.drainEvents = true;
-		tr.strictMode = true;
-		tr.negateTouch = true;
-		tr.touchDevice = 1;
-		tr.touchDeviceName = 'ILITEK-TP';
+	if ~exist('in','var')
+		in.phase = 1;
+		in.density = 70;
+		in.distance = 30;
+		in.timeOut = 4;
+		in.bg = [0.5 0.5 0.5];
+		in.maxSize = 30;
+		in.minSize = 1;
+		in.folder = [pth filesep 'resources'];
+		in.fg = [1 1 0.75];
+		in.debug = true;
+		in.dummy = true;
+		in.audio = true;
+		in.audioVolume = 0.2;
+		in.stimulus = 'Picture';
+		in.task = 'Normal';
+		in.name = 'simulcra';
+		in.rewardmode = 1;
+		in.volume = 250;
+		in.random = 1;
+		in.screen = 0;
+		in.smartBackground = true;
+		in.correctBeep = 3000;
+		in.incorrectBeep = 400;
+		in.rewardPort = '/dev/ttyACM0';
+		in.rewardTime = 200;
+		in.trialTime = 5;
+		in.randomReward = 30;
+		in.randomProbability = 0.25;
+		in.randomReward = 0;
+		in.volume = 250;
+		in.nTrialsSample = 10;
+		in.negationBuffer = 2;
+		in.exclusionZone = [];
+		in.drainEvents = true;
+		in.strictMode = true;
+		in.negateTouch = true;
+		in.touchDevice = 1;
+		in.touchDeviceName = 'ILITEK-TP';
 	end
-	tr.initSize = 5;
-	tr.initPosition = [0 0];
+	in.initSize = 5;
+	in.initPosition = [0 0];
 	windowed = [];
 	sf = [];
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
-	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
+	if max(Screen('Screens'))==0 && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
 	
 	try
 		% ============================screen
-		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',...
-			tr.density, 'distance', tr.distance,...
-			'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
+		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
+			in.density, 'distance', in.distance,...
+			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
-		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
-		fix = discStimulus('size', tr.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
-			'xPosition', tr.initPosition(1),'yPosition', tr.initPosition(2));
-		pedestal = discStimulus('size', tr.objectSize + 1,'colour',[1 1 0],'alpha',0.3);
-		target1 = imageStimulus('size', tr.objectSize, 'randomiseSelection', false, 'filePath', [tr.folder filesep tr.object filesep 'B']);
+		fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
+			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
+		pedestal = discStimulus('size', in.objectSize + 1,'colour',[1 1 0],'alpha',0.3);
+		target1 = imageStimulus('size', in.objectSize, 'randomiseSelection', false, 'filePath', [in.folder filesep in.object filesep 'B']);
 		target2 = clone(target1);
 		distractor1 = clone(target1);
-		distractor1.filePath = [tr.folder filesep tr.object filesep 'C'];
+		distractor1.filePath = [in.folder filesep in.object filesep 'C'];
 		distractor2 = clone(target1);
-		distractor2.filePath = [tr.folder filesep tr.object filesep 'D'];
+		distractor2.filePath = [in.folder filesep in.object filesep 'D'];
 		distractor3 = clone(target1);
-		distractor3.filePath = [tr.folder filesep tr.object filesep 'E'];
+		distractor3.filePath = [in.folder filesep in.object filesep 'E'];
 		distractor4 = clone(target1);
-		distractor4.filePath = [tr.folder filesep tr.object filesep 'H'];
+		distractor4.filePath = [in.folder filesep in.object filesep 'H'];
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
-		if tr.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [tr.folder filesep 'background' filesep 'abstract3.jpg']);
+		if in.smartBackground
+			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract3.jpg']);
 		else 
 			sbg = [];
 		end
 
 		% ============================audio
 		a = audioManager;
-		if tr.debug; a.verbose = true; end
-		if tr.audioVolume == 0 || tr.audio == false; a.silentMode = true; end
+		if in.debug; a.verbose = true; end
+		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
 		setup(a);
-		beep(a,tr.correctBeep,0.1,tr.audioVolume);
+		beep(a,in.correctBeep,0.1,in.audioVolume);
 		WaitSecs(0.1);
-		beep(a,tr.incorrectBeep,0.5,tr.audioVolume);
+		beep(a,in.incorrectBeep,0.5,in.audioVolume);
 
 		% ============================touch
-		tM = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
-			'deviceName',tr.touchDeviceName,'exclusionZone',tr.exclusionZone,...
-			'drainEvents',tr.drainEvents);
-		tM.window.doNegation = tr.doNegation;
-		tM.window.negationBuffer = tr.negationBuffer;
-		if tr.debug; tM.verbose = true; end
+		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
+			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
+			'drainEvents',in.drainEvents);
+		tM.window.doNegation = in.doNegation;
+		tM.window.negationBuffer = in.negationBuffer;
+		if in.debug; tM.verbose = true; end
 
 		% ============================reward
-		rM = PTBSimia.pumpManager();
+		if in.reward; rM = PTBSimia.pumpManager(); end
 		
 		% ============================setup
 		sv = open(s);
-		if tr.smartBackground
+		if in.smartBackground
 			sbg.size = sv.widthInDegrees;
 		end
 		drawTextNow(s,'Initialising...');
 		aspect = sv.width / sv.height;
-		setup(rtarget, s);
-		setup(target, s);
+		setup(fix, s);
+		setup(set, s);
 		if ~isempty(sbg); setup(sbg, s); end
 		setup(tM, s);
 		createQueue(tM);
 		start(tM);
 
 		% ==============================save file name
-		[path, sessionID, dateID, name] = s.getALF(tr.name, tr.lab, true);
+		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
 		saveName = [ path filesep 'MTS-' name '.mat'];
 		dt = touchData;
 		dt.name = saveName;
-		dt.subject = tr.name;
+		dt.subject = in.name;
 		dt.data.random = 0;
 		dt.data.rewards = 0;
-		dt.data.tr = tr;
+		dt.data.in = in;
 
 		% ============================settings
 		quitKey = KbName('escape');
 		RestrictKeysForKbCheck([quitKey]);
 		Screen('Preference','Verbosity',4);
 		
-		if ~tr.debug && ~tr.dummy; Priority(1); HideCursor; end
+		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
 		keepRunning = true;
 		trialN = 0;
 		phaseN = 1;phase = 1;
@@ -140,7 +139,7 @@ function startMatchToSample(tr)
 			pedestal.yPositionOut = sv.topInDegrees + 5/2;
 			target1.xPositionOut = 0;
 			target1.yPositionOut = sv.topInDegrees + 5/2;
-			switch tr.distractorN
+			switch in.distractorN
 				case 1
 					[~,idx] = Shuffle([1 2]);
 					xy = [-4.5 4.5; 5 5];
@@ -177,7 +176,7 @@ function startMatchToSample(tr)
 					show(set,[1 2 3 4 5 6]);
 				otherwise
 					[~,idx] = Shuffle([1 2 3 4 5]);
-					x = (0:tr.objectSep:tr.objectSep*4) - (tr.objectSep*4/2);
+					x = (0:in.objectSep:in.objectSep*4) - (in.objectSep*4/2);
 					xy = [x; 6 5 6 5 6];
 					xy = xy(:,idx);
 					target2.xPositionOut = xy(1,1);
@@ -233,12 +232,12 @@ function startMatchToSample(tr)
 			WaitSecs(0.01);
 			flush(tM);
 			
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchInit) && vbl < vblInit + 5
 				if ~isempty(sbg); draw(sbg); end
 				if ~hldtime; draw(fix); end
-				if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
+				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
@@ -249,7 +248,7 @@ function startMatchToSample(tr)
 				if c(quitKey); keepRunning = false; break; end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			flip(s); 
 			flush(tM);
 
@@ -257,21 +256,21 @@ function startMatchToSample(tr)
 				touchResponse = '';
 				[x,y] = set.getFixationPositions;
 				tM.window.radius = target2.size/2;
-				tM.window.init = tr.trialTime;
+				tM.window.init = in.trialTime;
 				tM.window.hold = 0.05;
 				tM.window.release = 1;
 				tM.window.X = x;
 				tM.window.Y = y;
 				while isTouch(tM)
-					if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+					if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 					vbl = flip(s);
 				end
 				flush(tM);
 				vblInit = vbl;
-				while isempty(touchResponse) && vbl < (vblInit + tr.trialTime)
+				while isempty(touchResponse) && vbl < (vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
-					if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
+					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 						drawText(s, txt);
 						[xy] = s.toPixels([tM.x tM.y]);
 						Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
@@ -287,7 +286,7 @@ function startMatchToSample(tr)
 				end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			vblEnd = flip(s);
 			WaitSecs(0.05);
 
@@ -295,10 +294,10 @@ function startMatchToSample(tr)
 			if anyTouch == false
 				
 			elseif strcmp(touchResponse,'yes')
-				giveReward(rM, tr.rewardTime);
+				if in.reward; giveReward(rM, in.rewardTime); end
 				dt.data.rewards = dt.data.rewards + 1;
 				fprintf('===> CORRECT :-)\n');
-				beep(a,tr.correctBeep,0.1,tr.audioVolume);
+				beep(a,in.correctBeep,0.1,in.audioVolume);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
 				phaseN = phaseN + 1;
 				if ~isempty(sbg); draw(sbg); end
@@ -312,8 +311,8 @@ function startMatchToSample(tr)
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
 				flip(s);
-				beep(a,tr.incorrectBeep,0.5,tr.audioVolume);
-				WaitSecs(tr.timeOut);
+				beep(a,in.incorrectBeep,0.5,in.audioVolume);
+				WaitSecs(in.timeOut);
 			else
 				fprintf('===> UNKNOWN :-|\n');
 				drawText(s,'UNKNOWN!');
@@ -342,8 +341,8 @@ function startMatchToSample(tr)
 		disp('=========================================');
 		fprintf('===> Data for %s\n',saveName)
 		disp('=========================================');
-		tVol = (9.38e-4 * tr.rewardTime) * dt.data.rewards;
-		fVol = (9.38e-4 * tr.rewardTime) * dt.data.random;
+		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
+		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
 		cor = sum(dt.data.result==true);
 		incor = sum(dt.data.result==false);
 		fprintf('  Total Trials: %i\n',trialN);

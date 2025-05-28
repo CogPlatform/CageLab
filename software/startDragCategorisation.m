@@ -1,103 +1,103 @@
-function startDragCategorisation(tr)
+function startDragCategorisation(in)
 	pth = fileparts(which(mfilename));
-	if ~exist('tr','var')
-		tr.phase = 1;
-		tr.density = 70;
-		tr.distance = 30;
-		tr.timeOut = 4;
-		tr.bg = [0.5 0.5 0.5];
-		tr.maxSize = 30;
-		tr.minSize = 1;
-		tr.folder = [pth filesep 'resources'];
-		tr.fg = [1 1 0.75];
-		tr.debug = true;
-		tr.dummy = true;
-		tr.audio = true;
-		tr.audioVolume = 0.2;
-		tr.stimulus = 'Picture';
-		tr.task = 'Normal';
-		tr.name = 'simulcra';
-		tr.rewardmode = 1;
-		tr.volume = 250;
-		tr.random = 1;
-		tr.screen = 0;
-		tr.smartBackground = true;
-		tr.correctBeep = 3000;
-		tr.incorrectBeep = 400;
-		tr.rewardPort = '/dev/ttyACM0';
-		tr.rewardTime = 200;
-		tr.trialTime = 5;
-		tr.randomReward = 30;
-		tr.randomProbability = 0.25;
-		tr.randomReward = 0;
-		tr.volume = 250;
-		tr.nTrialsSample = 10;
-		tr.negationBuffer = 2;
-		tr.exclusionZone = [];
-		tr.drainEvents = true;
-		tr.strictMode = true;
-		tr.negateTouch = true;
-		tr.touchDevice = 1;
-		tr.touchDeviceName = 'ILITEK-TP';
-		tr.initPosition = [0 3];
-		tr.target1Pos = [-5 -5];
-		tr.target2Pos = [5 -5];
-		tr.initSize = 4;
-		tr.targetSize = 10;
+	if ~exist('in','var')
+		in.phase = 1;
+		in.density = 70;
+		in.distance = 30;
+		in.timeOut = 4;
+		in.bg = [0.5 0.5 0.5];
+		in.maxSize = 30;
+		in.minSize = 1;
+		in.folder = [pth filesep 'resources'];
+		in.fg = [1 1 0.75];
+		in.debug = true;
+		in.dummy = true;
+		in.audio = true;
+		in.audioVolume = 0.2;
+		in.stimulus = 'Picture';
+		in.task = 'Normal';
+		in.name = 'simulcra';
+		in.rewardmode = 1;
+		in.volume = 250;
+		in.random = 1;
+		in.screen = 0;
+		in.smartBackground = true;
+		in.correctBeep = 3000;
+		in.incorrectBeep = 400;
+		in.rewardPort = '/dev/ttyACM0';
+		in.rewardTime = 200;
+		in.trialTime = 5;
+		in.randomReward = 30;
+		in.randomProbability = 0.25;
+		in.randomReward = 0;
+		in.volume = 250;
+		in.nTrialsSample = 10;
+		in.negationBuffer = 2;
+		in.exclusionZone = [];
+		in.drainEvents = true;
+		in.strictMode = true;
+		in.negateTouch = true;
+		in.touchDevice = 1;
+		in.touchDeviceName = 'ILITEK-TP';
+		in.initPosition = [0 3];
+		in.target1Pos = [-5 -5];
+		in.target2Pos = [5 -5];
+		in.initSize = 4;
+		in.targetSize = 10;
 	end
 	windowed = [];
 	sf = [];
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
-	if (tr.screen == 0 || max(Screen('Screens'))==0) && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
+	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
 		
 	try
 		% ============================screen
-		s = screenManager('screen',tr.screen,'blend',true,'pixelsPerCm',...
-			tr.density, 'distance', tr.distance,...
-			'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
+		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
+			in.density, 'distance', in.distance,...
+			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
 		
-		fix = discStimulus('size', tr.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
-			'xPosition', tr.initPosition(1),'yPosition', tr.initPosition(2));
-		object = imageStimulus('name','object', 'size', tr.targetSize, 'filePath', ...
-			[tr.folder filesep 'flowers'],'crop', 'square', 'circularMask', false,...
-			'xPosition',tr.initPosition(1),'yPosition',tr.initPosition(2));
+		fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
+			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
+		object = imageStimulus('name','object', 'size', in.targetSize, 'filePath', ...
+			[in.folder filesep 'flowers'],'crop', 'square', 'circularMask', false,...
+			'xPosition',in.initPosition(1),'yPosition',in.initPosition(2));
 		target1 = clone(object);
 		target1.name = 'target1';
-		target1.xPosition = tr.target1Pos(1);
-		target1.yPosition = tr.target1Pos(2);
+		target1.xPosition = in.target1Pos(1);
+		target1.yPosition = in.target1Pos(2);
 		target2 = clone(object);
 		target2.name = 'target2';
-		target2.xPosition = tr.target2Pos(1);
-		target2.yPosition = tr.target2Pos(2);
-		set = metaStimulus('stimuli',{fix, object, target1, target2});
+		target2.xPosition = in.target2Pos(1);
+		target2.yPosition = in.target2Pos(2);
+		set = metaStimulus('stimuli',{target1, target2, object, fix});
 		
-		if tr.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [tr.folder filesep 'background' filesep 'abstract1.jpg']);
+		if in.smartBackground
+			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract1.jpg']);
 		else 
 			sbg = [];
 		end
 
 		% ============================audio
 		a = audioManager;
-		if tr.debug; a.verbose = true; end
-		if tr.audioVolume == 0 || tr.audio == false; a.silentMode = true; end
+		if in.debug; a.verbose = true; end
+		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
 		setup(a);
-		beep(a,tr.correctBeep,0.1,tr.audioVolume);
+		beep(a,in.correctBeep,0.1,in.audioVolume);
 		WaitSecs(0.1);
-		beep(a,tr.incorrectBeep,0.2,tr.audioVolume);
+		beep(a,in.incorrectBeep,0.2,in.audioVolume);
 
 		% ============================touch
-		tM = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
-			'deviceName',tr.touchDeviceName,'exclusionZone',tr.exclusionZone,...
-			'drainEvents',tr.drainEvents);
-		tM.window.doNegation = tr.doNegation;
-		tM.window.negationBuffer = tr.negationBuffer;
-		if tr.debug; tM.verbose = true; end
+		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
+			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
+			'drainEvents',in.drainEvents);
+		tM.window.doNegation = in.doNegation;
+		tM.window.negationBuffer = in.negationBuffer;
+		if in.debug; tM.verbose = true; end
 
 		% ============================reward
 		rM = PTBSimia.pumpManager();
@@ -114,21 +114,21 @@ function startDragCategorisation(tr)
 		start(tM);
 
 		% ==============================save file name
-		[path, sessionID, dateID, name] = s.getALF(tr.name, tr.lab, true);
+		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
 		saveName = [ path filesep 'DCAT-' name '.mat'];
 		dt = touchData;
 		dt.name = saveName;
-		dt.subject = tr.name;
+		dt.subject = in.name;
 		dt.data.random = 0;
 		dt.data.rewards = 0;
-		dt.data.tr = tr;
+		dt.data.in = in;
 
 		% ============================settings
 		quitKey = KbName('escape');
 		RestrictKeysForKbCheck([quitKey]);
 		Screen('Preference','Verbosity',4);
 		
-		if ~tr.debug && ~tr.dummy; Priority(1); HideCursor; end
+		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
 		keepRunning = true;
 		trialN = 0;
 		phaseN = 0;
@@ -140,7 +140,7 @@ function startDragCategorisation(tr)
 		while keepRunning
 			
 			[~,idx] = Shuffle([1 2]);
-			xy = [tr.target1Pos; tr.target2Pos];
+			xy = [in.target1Pos; in.target2Pos];
 			
 			object.updateXY(0,0,true);
 			target1.updateXY(xy(idx(1),1),xy(idx(1),2), true);
@@ -150,7 +150,7 @@ function startDragCategorisation(tr)
 			object.selectionOut = r;
 			target1.selectionOut = r;
 			rr = r;
-			for jj = 4
+			for jj = 2
 				r = randi(set{jj}.nImages);
 				while any(r == rr)
 					r = randi(set{jj}.nImages);
@@ -160,7 +160,7 @@ function startDragCategorisation(tr)
 			end
 
 			hide(set);
-			show(set,1);
+			show(set,4);
 
 			update(set);
 			
@@ -169,14 +169,18 @@ function startDragCategorisation(tr)
 			tM.window.init = 5;
 			tM.window.hold = 0.05;
 			tM.window.release = 1.0;
-			tM.window.X = tr.initPosition(1);
-			tM.window.Y = tr.initPosition(2);
+			tM.window.X = in.initPosition(1);
+			tM.window.Y = in.initPosition(2);
+			tM.window.doNegation = true;
+			tM.verbose = false;
+			tM.exclusionZone = [];
+
 
 			res = 0; phase = 1;
 			keepRunning = true;
 			touchInit = '';
-			touchResponse = '';
-			anyTouch = false;
+			reachTarget = false;
+			anyTouch = false; 
 			txt = '';
 			trialN = trialN + 1;
 			hldtime = false;
@@ -188,52 +192,59 @@ function startDragCategorisation(tr)
 			if trialN == 1; dt.data.startTime = GetSecs; end
 			
 			WaitSecs(0.01);
-			reset(tM);
 			flush(tM);
+
 			
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchInit) && vbl < vblInit + 5
 				if ~isempty(sbg); draw(sbg); end
 				if ~hldtime; draw(fix); end
-				if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
+				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
 				vbl = flip(s);
-				[touchInit, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
-				if tch; anyTouch = true; end
+				[touchInit, ~, hldtime, ~, ~, ~, ~, tch] = testHold(tM,'yes','no');
+				if tch; anyTouchInint = true; end
 				[~,~,c] = KbCheck();
 				if c(quitKey); keepRunning = false; break; end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			flip(s); 
+
 			while isTouch(tM)
-				if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 				vbl = flip(s);
 			end
 
 			if matches(touchInit,'yes')
-
-				tM.verbose = true;
-				tM.window.radius = [tr.targetSize/2 tr.targetSize/2];
-				tM.window.init = tr.trialTime;
-				tM.window.hold = tr.trialTime;
+				tM.verbose = in.debug;
+				tM.window.radius = [in.targetSize/2 in.targetSize/2];
+				tM.window.init = in.trialTime;
+				tM.window.hold = in.trialTime;
 				tM.window.release = 1.0;
-				tM.window.X = object.xFinalD;
-				tM.window.Y = object.yFinalD;
-				hide(set,1);
-				show(set,[2 3 4]);
-				nowX = []; nowY = []; inTouch = false; reachTarget = false;
+				tM.window.X = target1.xFinalD;
+				tM.window.Y = target1.yFinalD;
+				tM.window.doNegation = false;
+				rect = CenterRectOnPointd([0 0 200 200],target2.xFinal,target2.yFinal);
+				tM.exclusionZone = rect;
+				hide(set,4);
+				show(set,[1 2 3]);
+				tx = [];
+				ty = [];
+				nowX = []; nowY = []; 
+				inTouch = false; anyTouch = false; 
+				reachTarget = false; exclusion = false;
 				flush(tM);
-				if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 				vbl = flip(s); vblInit = vbl;
-				while ~reachTarget && vbl < vblInit + tr.trialTime+1
+				while ~reachTarget && ~exclusion && vbl < vblInit + in.trialTime+1
 					if ~isempty(sbg); draw(sbg); end
 					draw(set)
-					if tr.debug
+					if in.debug
 						drawText(s, txt);
 						if ~isempty(tM.x) && ~isempty(tM.y)
 							[xy] = s.toPixels([tM.x tM.y]);
@@ -241,42 +252,41 @@ function startDragCategorisation(tr)
 						end
 					end
 					vbl = flip(s);
-					processTouch();
-					if tM.eventPressed
-						anyTouch = true;
-					end
+					success = processTouch();
+					if tM.eventPressed; anyTouch = true; end
+					if success==true; reachTarget = true; end
+					if success == -100; exclusion = true; reachTarget = false; end
 					txt = sprintf('Response=%i x=%.2f y=%.2f',...
-						touchResponse,tM.x,tM.y);
+						reachTarget,tM.x,tM.y);
 					[~,~,c] = KbCheck();
 					if c(quitKey); keepRunning = false; break; end
 				end
 
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			vblEnd = flip(s);
 			WaitSecs(0.01);
 
-			if strcmp(touchResponse,'yes')
-				giveReward(rM, tr.rewardTime);
+			if reachTarget == true
+				if in.reward; giveReward(rM, in.rewardTime); end
 				dt.data.rewards = dt.data.rewards + 1;
 				fprintf('===> CORRECT :-)\n');
 				beep(a,2000,0.1,0.1);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
-				phaseN = phaseN + 1;
+				
 				if ~isempty(sbg); draw(sbg); end
 				drawText(s,['CORRECT! phase: ' num2str(phase)]);
 				flip(s);
 				WaitSecs(0.5+rand);
-			elseif strcmp(touchResponse,'no')
+			elseif reachTarget == false && anyTouch == true
 				update(dt, false, phase, trialN, vblEnd-vblInit, stimulus);
-				phaseN = phaseN + 1;
 				fprintf('===> FAIL :-(\n');
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
 				flip(s);
 				beep(a,250,0.3,0.8);
-				WaitSecs('YieldSecs',tr.timeOut);
+				WaitSecs('YieldSecs',in.timeOut);
 			else
 				fprintf('===> UNKNOWN :-|\n');
 				drawText(s,'UNKNOWN!');
@@ -287,7 +297,7 @@ function startDragCategorisation(tr)
 
 
 			if keepRunning == false; break; end
-			drawBackground(s,tr.bg)
+			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
 		end % while keepRunning
@@ -307,8 +317,8 @@ function startDragCategorisation(tr)
 		disp('=========================================');
 		fprintf('===> Data for %s\n',saveName)
 		disp('=========================================');
-		tVol = (9.38e-4 * tr.rewardTime) * dt.data.rewards;
-		fVol = (9.38e-4 * tr.rewardTime) * dt.data.random;
+		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
+		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
 		cor = sum(dt.data.result==true);
 		incor = sum(dt.data.result==false);
 		fprintf('  Total Trials: %i\n',trialN);
@@ -341,31 +351,43 @@ function startDragCategorisation(tr)
 		sca;
 	end
 
-	function processTouch()
+	function success = processTouch()
+		success = false;
 		if tM.eventAvail % check we have touch event[s]
-			if inTouch
-				tM.window.X = target1.xFinalD;
-				tM.window.Y = target1.yFinalD;
-				evt = getEvent(tM);
-			else
+			if ~inTouch
 				tM.window.X = object.xFinalD;
 				tM.window.Y = object.yFinalD;
-				result = checkTouchWindows(tM,[],false); % check we are touching
+				result = checkTouchWindows(tM, [], true); % check we are touching
 				evt = tM.event;
-				if result; inTouch = true; end
+				if result 
+					inTouch = true; 
+					firstRun = true;
+				end
+			else
+				tM.window.X = target1.xFinalD;
+				tM.window.Y = target1.yFinalD;
+				tM.window.radius = 3;
+				evt = getEvent(tM);
+				firstRun = false;
 			end
 			if isempty(evt); return; end
-			nowX = tM.x; nowY = tM.y;
-			if inTouch && tM.eventRelease && evt.Type == 4 % this is a RELEASE event
-				if tr.debug; fprintf('≣≣≣≣⊱ processTouch@%s:RELEASE X: %.1f Y: %.1f \n',tM.name, tM.x,tM.y); end
-				xy = []; tx = []; ty = []; inTouch = false;
-			elseif inTouch && tM.eventPressed
-				tx = [tx nowX];
-				ty = [ty nowY];
-				object.updateXY(nowX, nowY, true);
-				object.alphaOut = 0.75;
-				if tr.debug; fprintf('≣≣≣≣⊱ processTouch@%s:TOUCH X: %.1f Y: %.1f \n',...
-						tM.name, nowX, nowY); 
+			if inTouch
+				nowX = tM.x; nowY = tM.y;
+				if tM.eventRelease && evt.Type == 4 % this is a RELEASE event
+					if in.debug; fprintf('≣≣≣≣⊱ processTouch@%s%i:RELEASE X: %.1f Y: %.1f \n',tM.name, tM.x,tM.y); end
+					xy = []; tx = []; ty = []; inTouch = false;
+				elseif tM.eventPressed
+					tx = [tx nowX];
+					ty = [ty nowY];
+					object.updateXY(nowX, nowY, true);
+					object.alphaOut = 0.9;
+					if in.debug; fprintf('≣≣≣≣⊱ processTouch@%s:TOUCH X: %.1f Y: %.1f \n',...
+							tM.name, nowX, nowY); 
+					end
+				end
+				if ~firstRun
+					success = checkTouchWindows(tM,[],false);
+					if success == true; fprintf('\nYAAAAAY %i\n',success); end
 				end
 			end
 		end

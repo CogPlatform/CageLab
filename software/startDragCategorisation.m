@@ -47,6 +47,7 @@ function startDragCategorisation(in)
 	end
 	windowed = [];
 	sf = [];
+	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
@@ -212,13 +213,12 @@ function startDragCategorisation(in)
 				if c(quitKey); keepRunning = false; break; end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			flip(s); 
-
+			%%% Wait for release
 			while isTouch(tM)
 				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 				vbl = flip(s);
 			end
+			flush(tM);
 
 			if matches(touchInit,'yes')
 				tM.verbose = in.debug;
@@ -295,10 +295,21 @@ function startDragCategorisation(in)
 				WaitSecs(0.5+rand);
 			end
 
+			broadcast.send(struct('name',in.name,'trial',trialN,'result',dt.data.result));
+
+
 			if keepRunning == false; break; end
 			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
+			if zmq.poll('in')
+				[cmd, ~] = zmq.receiveCommand();
+				if ~isempty(cmd) && isstruct(cmd)
+					if isfield(msg,'command') && matches(msg.command,'exittask')
+						break;
+					end
+				end
+			end
 		end % while keepRunning
 
 		drawText(s, 'FINISHED!');

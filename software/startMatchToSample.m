@@ -40,10 +40,9 @@ function startMatchToSample(in)
 		in.touchDevice = 1;
 		in.touchDeviceName = 'ILITEK-TP';
 	end
-	in.initSize = 5;
-	in.initPosition = [0 0];
 	windowed = [];
 	sf = [];
+	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
@@ -248,8 +247,11 @@ function startMatchToSample(in)
 				if c(quitKey); keepRunning = false; break; end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			flip(s); 
+			%%% Wait for release
+			while isTouch(tM)
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
+				vbl = flip(s);
+			end
 			flush(tM);
 
 			if matches(touchInit,'yes')
@@ -261,11 +263,6 @@ function startMatchToSample(in)
 				tM.window.release = 1;
 				tM.window.X = x;
 				tM.window.Y = y;
-				while isTouch(tM)
-					if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-					vbl = flip(s);
-				end
-				flush(tM);
 				vblInit = vbl;
 				while isempty(touchResponse) && vbl < (vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
@@ -321,9 +318,19 @@ function startMatchToSample(in)
 				WaitSecs(0.5+rand);
 			end
 
+			broadcast.send(struct('name',in.name,'trial',trialN,'result',dt.data.result));
+
 			if keepRunning == false; break; end
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
+			if zmq.poll('in')
+				[cmd, ~] = zmq.receiveCommand();
+				if ~isempty(cmd) && isstruct(cmd)
+					if isfield(msg,'command') && matches(msg.command,'exittask')
+						break;
+					end
+				end
+			end
 		end % while keepRunning
 
 		drawText(s, 'FINISHED!');

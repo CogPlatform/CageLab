@@ -41,7 +41,6 @@ function startTouchTraining(in)
 	windowed = [];
 	sf = [];
 	zmq = in.zmq;
-
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
@@ -309,7 +308,7 @@ function startTouchTraining(in)
 				randomRewardTimer = GetSecs;
 			end
 
-			broadcast.send(struct('name',in.name,'trial',trialN','result',dt.data.result));
+			broadcast.send(struct('name',in.name,'trial',trialN,'result',dt.data.result));
 
 			if trialN >= in.nTrialsSample
 				if length(dt.data.result) > in.nTrialsSample
@@ -335,10 +334,10 @@ function startTouchTraining(in)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
 			if zmq.poll('in')
-				[cmd, d] = zmq.receiveCommand();
+				[cmd, ~] = zmq.receiveCommand();
 				if ~isempty(cmd) && isstruct(cmd)
 					if isfield(msg,'command') && matches(msg.command,'exittask')
-						keepRunning = false; break;
+						break;
 					end
 				end
 			end

@@ -40,6 +40,7 @@ function startTouchTraining(in)
 	end
 	windowed = [];
 	sf = [];
+	zmq = in.zmq;
 
 	broadcast = matmoteGO.broadcast();
 	
@@ -333,6 +334,14 @@ function startTouchTraining(in)
 			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
+			if zmq.poll('in')
+				[cmd, d] = zmq.receiveCommand();
+				if ~isempty(cmd) && isstruct(cmd)
+					if isfield(msg,'command') && matches(msg.command,'exittask')
+						keepRunning = false; break;
+					end
+				end
+			end
 		end % while keepRunning
 
 		drawText(s, 'FINISHED!');
@@ -370,7 +379,6 @@ function startTouchTraining(in)
 		disp('Done!!!');
 		disp('');disp('');disp('');
 		WaitSecs(0.5);
-		sca;
 
 	catch ME
 		getReport(ME)

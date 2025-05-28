@@ -295,7 +295,6 @@ function startDragCategorisation(in)
 				WaitSecs(0.5+rand);
 			end
 
-
 			if keepRunning == false; break; end
 			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end

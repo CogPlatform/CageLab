@@ -28,8 +28,8 @@ classdef theConductor < optickaCore
 		command
 		%> data
 		data
-		%> task object
-		runner
+		%> is running
+		isRunning
 		%>
 		commandList = ["exit" "quit" "exitmatlab" "rundemo" ...
 			"run" "echo" "gettime" "syncbuffer" "commandlist"]
@@ -85,6 +85,7 @@ classdef theConductor < optickaCore
 				me.address = j.address;
 				me.port = j.port;
 			end
+			if me.isRunning; close(me); end
 			if ~me.zmq.isOpen; open(me.zmq); end
 			createProxy(me);
 			handShake(me);
@@ -333,13 +334,13 @@ classdef theConductor < optickaCore
 				end
 
 				if runCommand && isstruct(data) && isfield(data,'command')
-					data.zmq = []; % TODO there is a pointer bug if we pass it?
 					command = data.command;
 					try
 						if isfield(data,'args') && matches(data.args,'none')
 							fprintf('\n===> theConductor run: %s\n', command);
 							eval(command);
 						else
+							data.zmq = me.zmq;
 							fprintf('\n===> theConductor run: %s\n', [command '(data)']);
 							eval([command '(data)']);
 						end

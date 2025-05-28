@@ -40,13 +40,12 @@ function startMatchToSample(tr)
 		tr.touchDevice = 1;
 		tr.touchDeviceName = 'ILITEK-TP';
 	end
+	tr.initSize = 5;
+	tr.initPosition = [0 0];
 	windowed = [];
 	sf = [];
-	
-
 	broadcast = matmoteGO.broadcast();
 	
-
 	% =========================== debug mode?
 	if max(Screen('Screens'))==0 && tr.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
 	
@@ -57,8 +56,9 @@ function startMatchToSample(tr)
 			'backgroundColour',tr.bg,'windowed',windowed,'specialFlags',sf);
 
 		% s============================stimuli
-		fix = discStimulus('size', 5, 'colour', [1 1 0.5], 'alpha', 0.8);
 		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
+		fix = discStimulus('size', tr.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
+			'xPosition', tr.initPosition(1),'yPosition', tr.initPosition(2));
 		pedestal = discStimulus('size', tr.objectSize + 1,'colour',[1 1 0],'alpha',0.3);
 		target1 = imageStimulus('size', tr.objectSize, 'randomiseSelection', false, 'filePath', [tr.folder filesep tr.object filesep 'B']);
 		target2 = clone(target1);
@@ -89,31 +89,33 @@ function startMatchToSample(tr)
 		beep(a,tr.incorrectBeep,0.5,tr.audioVolume);
 
 		% ============================touch
-		t = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
+		tM = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
 			'deviceName',tr.touchDeviceName,'exclusionZone',tr.exclusionZone,...
 			'drainEvents',tr.drainEvents);
-		t.window.doNegation = tr.doNegation;
-		t.window.negationBuffer = tr.negationBuffer;
-		if tr.debug; t.verbose = true; end
+		tM.window.doNegation = tr.doNegation;
+		tM.window.negationBuffer = tr.negationBuffer;
+		if tr.debug; tM.verbose = true; end
 
 		% ============================reward
 		rM = PTBSimia.pumpManager();
 		
 		% ============================setup
 		sv = open(s);
-		if ~isempty(sbg); setup(sbg, s); draw(sbg); end
+		if tr.smartBackground
+			sbg.size = sv.widthInDegrees;
+		end
 		drawTextNow(s,'Initialising...');
-		setup(fix, s);
-		setup(set, s);
-		setup(rtarget, s); rRect = rtarget.mvRect;
-		setup(t, s);
-		createQueue(t);
-		start(t);
+		aspect = sv.width / sv.height;
+		setup(rtarget, s);
+		setup(target, s);
+		if ~isempty(sbg); setup(sbg, s); end
+		setup(tM, s);
+		createQueue(tM);
+		start(tM);
 
 		% ==============================save file name
-		svn = initialiseSaveFile(s);
-		mkdir([s.paths.savedData filesep tr.name]);
-		saveName = [ s.paths.savedData filesep tr.name filesep 'MTS-' tr.name '-' svn '.mat'];
+		[path, sessionID, dateID, name] = s.getALF(tr.name, tr.lab, true);
+		saveName = [ path filesep 'MTS-' name '.mat'];
 		dt = touchData;
 		dt.name = saveName;
 		dt.subject = tr.name;
@@ -129,7 +131,7 @@ function startMatchToSample(tr)
 		if ~tr.debug && ~tr.dummy; Priority(1); HideCursor; end
 		keepRunning = true;
 		trialN = 0;
-		phaseN = 1;
+		phaseN = 1;phase = 1;
 
 		while keepRunning
 
@@ -207,12 +209,12 @@ function startMatchToSample(tr)
 
 			update(set);
 
-			t.window.radius = fix.size/2;
-			t.window.init = 5;
-			t.window.hold = 0.01;
-			t.window.release = 1.0;
-			t.window.X = 0;
-			t.window.Y = 0;
+			tM.window.radius = fix.size/2;
+			tM.window.init = 5;
+			tM.window.hold = 0.01;
+			tM.window.release = 1.0;
+			tM.window.X = 0;
+			tM.window.Y = 0;
 
 			res = 0; phase = 1;
 			keepRunning = true;
@@ -224,25 +226,24 @@ function startMatchToSample(tr)
 			hldtime = false;
 			
 			fprintf('\n===> START TRIAL: %i \n', trialN);
-			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', t.window.radius,t.window.init,t.window.hold,t.window.release);
+			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
 
 			if trialN == 1; dt.data.startTime = GetSecs; end
 			
 			WaitSecs(0.01);
-			reset(t);
-			flush(t);
+			flush(tM);
 			
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchInit) && vbl < vblInit + 5
 				if ~isempty(sbg); draw(sbg); end
 				if ~hldtime; draw(fix); end
-				if tr.debug && ~isempty(t.x) && ~isempty(t.y)
-					[xy] = s.toPixels([t.x t.y]);
+				if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
+					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
 				vbl = flip(s);
-				[touchInit, hld, hldtime, rel, reli, se, fail, tch] = testHold(t,'yes','no');
+				[touchInit, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 				if tch; anyTouch = true; end
 				[~,~,c] = KbCheck();
 				if c(quitKey); keepRunning = false; break; end
@@ -250,39 +251,37 @@ function startMatchToSample(tr)
 
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
 			flip(s); 
-			reset(t);
-			flush(t);
+			flush(tM);
 
 			if matches(touchInit,'yes')
 				touchResponse = '';
 				[x,y] = set.getFixationPositions;
-				t.window.radius = target2.size/2;
-				t.window.init = tr.trialTime;
-				t.window.hold = 0.05;
-				t.window.release = 1;
-				t.window.X = x;
-				t.window.Y = y;
-				while isTouch(t)
+				tM.window.radius = target2.size/2;
+				tM.window.init = tr.trialTime;
+				tM.window.hold = 0.05;
+				tM.window.release = 1;
+				tM.window.X = x;
+				tM.window.Y = y;
+				while isTouch(tM)
 					if ~isempty(sbg); draw(sbg); else; drawBackground(s,tr.bg); end
 					vbl = flip(s);
 				end
-				reset(t);
-				flush(t);
+				flush(tM);
 				vblInit = vbl;
 				while isempty(touchResponse) && vbl < (vblInit + tr.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
-					if tr.debug && ~isempty(t.x) && ~isempty(t.y)
+					if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
 						drawText(s, txt);
-						[xy] = s.toPixels([t.x t.y]);
+						[xy] = s.toPixels([tM.x tM.y]);
 						Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 					end
 					vbl = flip(s);
-					[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHold(t,'yes','no');
+					[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 					if tch; anyTouch = true; end
 					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
-						touchResponse, t.x, t.y, hld, hldtime, rel, reli, se, tch, ...
-						t.window.radius,t.window.init,t.window.hold,t.window.release,t.window.X,t.window.Y);
+						touchResponse, tM.x, tM.y, hld, hldtime, rel, reli, se, tch, ...
+						tM.window.radius,tM.window.init,tM.window.hold,tM.window.release,tM.window.X,tM.window.Y);
 					[~,~,c] = KbCheck();
 					if c(quitKey); keepRunning = false; break; end
 				end
@@ -335,7 +334,7 @@ function startMatchToSample(tr)
 		try reset(set); end
 		try reset(rtarget); end
 		try close(s); end
-		try close(t); end
+		try close(tM); end
 		try close(rM); end
 
 		% save trial data
@@ -369,7 +368,7 @@ function startMatchToSample(tr)
 		getReport(ME)
 		try reset(set); end
 		try close(s); end
-		try close(t); end
+		try close(tM); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end

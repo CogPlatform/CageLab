@@ -76,12 +76,12 @@ function startTouchTraining(tr)
 		beep(a,tr.incorrectBeep,0.2,tr.audioVolume);
 
 		% ============================touch
-		t = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
+		tM = touchManager('isDummy',tr.dummy,'device',tr.touchDevice,...
 			'deviceName',tr.touchDeviceName,'exclusionZone',tr.exclusionZone,...
 			'drainEvents',tr.drainEvents);
-		t.window.doNegation = tr.doNegation;
-		t.window.negationBuffer = tr.negationBuffer;
-		if tr.debug; t.verbose = true; end
+		tM.window.doNegation = tr.doNegation;
+		tM.window.negationBuffer = tr.negationBuffer;
+		if tr.debug; tM.verbose = true; end
 
 		% ============================reward
 		rM = PTBSimia.pumpManager();
@@ -140,9 +140,9 @@ function startTouchTraining(tr)
 		setup(rtarget, s);
 		setup(target, s);
 		if ~isempty(sbg); setup(sbg, s); end
-		setup(t, s);
-		createQueue(t);
-		start(t);
+		setup(tM, s);
+		createQueue(tM);
+		start(tM);
 
 		% ==============================save file name
 		[path, sessionID, dateID, name] = s.getALF(tr.name, tr.lab, true);
@@ -181,19 +181,19 @@ function startTouchTraining(tr)
 				if rand > 0.5; y = -y; end
 			end
 			if length(p(phase).hold) == 2
-				t.window.hold = randi(p(phase).hold .* 1e3) / 1e3;
+				tM.window.hold = randi(p(phase).hold .* 1e3) / 1e3;
 			else
-				t.window.hold = p(phase).hold(1);
+				tM.window.hold = p(phase).hold(1);
 			end
 			if isa(target,'imageStimulus') && target.circularMask == false
-				t.window.radius = [p(phase).size/2 p(phase).size/2];
+				tM.window.radius = [p(phase).size/2 p(phase).size/2];
 			else
-				t.window.radius = p(phase).size / 2;
+				tM.window.radius = p(phase).size / 2;
 			end
-			t.window.init = tr.trialTime;
-			t.window.release = p(phase).rel;
-			t.window.X = x;
-			t.window.Y = y;
+			tM.window.init = tr.trialTime;
+			tM.window.release = p(phase).rel;
+			tM.window.X = x;
+			tM.window.Y = y;
 
 			target.xPositionOut = x;
 			target.yPositionOut = y;
@@ -213,32 +213,32 @@ function startTouchTraining(tr)
 			hldtime = false;
 			
 			fprintf('\n===> START TRIAL: %i - PHASE %i STIM %i\n', trialN, phase, stimulus);
-			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', t.window.radius,t.window.init,t.window.hold,t.window.release);
+			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
 
 			if trialN == 1; dt.data.startTime = GetSecs; end
 			
 			WaitSecs(0.01);
-			reset(t);
-			flush(t);
+			reset(tM);
+			flush(tM);
 			
 			if ~isempty(sbg); draw(sbg); end
 			vbl = flip(s); vblInit = vbl;
 			while isempty(touchResponse) && vbl < vblInit + tr.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~hldtime; draw(target); end
-				if tr.debug && ~isempty(t.x) && ~isempty(t.y)
+				if tr.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(s, txt);
-					[xy] = s.toPixels([t.x t.y]);
+					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
 				vbl = flip(s);
-				[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHoldRelease(t,'yes','no');
+				[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
 				if tch
 					anyTouch = true;
 				end
 				txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
-					phase,touchResponse,t.x,t.y,hld, hldtime, rel, reli, se,...
-					t.window.radius,t.window.init,t.window.hold,t.window.release);
+					phase,touchResponse,tM.x,tM.y,hld, hldtime, rel, reli, se,...
+					tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
 				[~,~,c] = KbCheck();
 				if c(quitKey); keepRunning = false; break; end
 			end
@@ -342,7 +342,7 @@ function startTouchTraining(tr)
 		try reset(target); end
 		try reset(rtarget); end
 		try close(s); end
-		try close(t); end
+		try close(tM); end
 		try close(rM); end
 
 		% save trial data
@@ -376,7 +376,7 @@ function startTouchTraining(tr)
 		getReport(ME)
 		try reset(target); end
 		try close(s); end
-		try close(t); end
+		try close(tM); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end

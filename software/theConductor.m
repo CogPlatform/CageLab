@@ -32,7 +32,7 @@ classdef theConductor < optickaCore
 		isRunning = false
 		%>
 		commandList = ["exit" "quit" "exitmatlab" "rundemo" ...
-			"run" "echo" "gettime" "syncbuffer" "commandlist"]
+			"run" "echo" "gettime" "syncbuffer" "commandlist" "getlastrun" "status"]
 	end
 
 	properties (Access = private)
@@ -256,15 +256,21 @@ classdef theConductor < optickaCore
 						stopMATLAB = true;
 
 					case 'rundemo'
-						if me.verbose > 0; fprintf('Run PTB demo...\n'); end
+						fprintf('\n===> theConductor: Run PTB demo...\n');
 						me.setupPTB();
 						data = struct('command','VBLSyncTest','args','none');
 						replyCommand = 'demo_run';
 						replyData = "Running VBLSyncTest"; % Send back the data we received
 						runCommand = true;
 
+					case 'status'
+						fprintf('\n===> theConductor: Received status command.\n');
+						replyCommand = 'Processing';
+						replyData = {'theConductor is waiting for commands...'};
+
 					case 'run'
 						if isfield(data,'command')
+							fprintf('\n===> theConductor: Received run command: %s.\n', data.command);
 							replyCommand = 'running';
 							replyData = {'Running task...'}; % Send back the data we received
 							runCommand = true;
@@ -273,8 +279,28 @@ classdef theConductor < optickaCore
 							replyData = "You must pass a struct with a command field";
 						end
 
+					case 'getlastrun'
+						if exist("~/lastTaskRun.mat","file")
+							try
+								tmp = load("~/lastTaskRun.mat");
+								if isfield(tmp,'dt')
+									tmp = tmp.dt;
+								end
+								fprintf('\n===> theConductor: Received getlatrun command: ok\n');
+								replyCommand = 'taskdata';
+								replyData = tmp;
+							catch ME
+								fprintf('\n===> theConductor: Received getlatrun command: no data\n');
+								replyCommand = 'notaskdata';
+								replyData = struct('Comment','Problem loading lastTaskRun.mat');
+							end
+						else
+							replyCommand = 'notaskdata';
+							replyData = struct('Comment','No file: lastTaskRun.mat');
+						end
+
 					case 'echo'
-						if me.verbose > 0; fprintf('\n===> theConductor: Echoing received data.\n'); end
+						fprintf('\n===> theConductor: Echoing received data.\n');
 						replyCommand = 'echo_reply';
 						if isempty(data)
 							replyData = {'no data received'};
@@ -300,12 +326,10 @@ classdef theConductor < optickaCore
 						replyData.GetSecsDiff = replyData.GetSecs - replyData.clientGetSecs;
 						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.currentTime); end
 						disp(replyData);
-						replyCommand = 'time_reply';
+						replyCommand = 'timesync_reply';
 
 					case 'syncbuffer'
-						% Placeholder for syncBuffer logic
-						if me.verbose > 0; fprintf('===> theConductorProcessing syncBuffer command.\n'); end
-						% me.flush(); % Example: maybe flush the input buffer?
+						fprintf('\n===> theConductor: Processing syncBuffer command.\n');
 						if isfield(data,'frameSize')
 							me.zmq.frameSize = data.frameSize;
 							replyData = {'buffer synced'};
@@ -316,9 +340,9 @@ classdef theConductor < optickaCore
 
 					case 'commandlist'
 						% Placeholder for syncBuffer logic
-						if me.verbose > 0; fprintf('===> theConductorProcessing syncBuffer command (placeholder).\n'); end
+						fprintf('===> theConductor: Processing commandlist command.\n');
 						% me.flush(); % Example: maybe flush the input buffer?
-						replyCommand = 'list of accepted commands';
+						replyCommand = 'ist of accepted commands';
 						replyData = me.commandList;
 
 					otherwise
@@ -367,7 +391,7 @@ classdef theConductor < optickaCore
 		end
 
 		% ===================================================================
-		function setupPTB(me)
+		function setupPTB(~)
 			Screen('Preference', 'VisualDebugLevel', 3);
 			if ismac || IsWin
 				Screen('Preference', 'SkipSyncTests', 2);

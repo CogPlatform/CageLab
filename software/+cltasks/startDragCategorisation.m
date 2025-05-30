@@ -1,6 +1,6 @@
 function startDragCategorisation(in)
 	pth = fileparts(which(mfilename));
-	checkInput();
+	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
 	windowed = [];
 	sf = [];
 	zmq = in.zmq;
@@ -44,8 +44,7 @@ function startDragCategorisation(in)
 		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
 		setup(a);
 		beep(a,in.correctBeep,0.1,in.audioVolume);
-		WaitSecs(0.1);
-		beep(a,in.incorrectBeep,0.2,in.audioVolume);
+		beep(a,in.incorrectBeep,0.1,in.audioVolume);
 
 		%% ============================touch
 		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
@@ -56,7 +55,7 @@ function startDragCategorisation(in)
 		if in.debug; tM.verbose = true; end
 
 		%% ============================reward
-		if in.reward; rM = PTBSimia.pumpManager(); end
+		if in.reward; rM = PTBSimia.pumpManager(); else; rM = []; end
 		
 		%% ============================setup
 		sv = open(s);
@@ -134,7 +133,6 @@ function startDragCategorisation(in)
 			tM.window.X = in.initPosition(1);
 			tM.window.Y = in.initPosition(2);
 			tM.window.doNegation = true;
-			tM.verbose = false;
 			tM.exclusionZone = [];
 
 			res = 0; phase = 1;
@@ -145,13 +143,13 @@ function startDragCategorisation(in)
 			txt = '';
 			trialN = trialN + 1;
 			hldtime = false;
+			vblInit = NaN;
 			
 			%% Initiate a trial with a touch target
-			startTouchTrial();
+			[touchInit, hldtime, anyTouch, keepRunning, dt, vblInit] = clutil.startTouchTrial(trialN, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
 
 			%% Success at initiation
-			if matches(touchInit,'yes')
-				tM.verbose = in.debug;
+			if matches(string(touchInit),"yes")
 				tM.window.radius = [in.targetSize/2 in.targetSize/2];
 				tM.window.init = in.trialTime;
 				tM.window.hold = in.trialTime;
@@ -182,7 +180,7 @@ function startDragCategorisation(in)
 						end
 					end
 					vbl = flip(s);
-					success = processTouch();
+					[success, inTouch, nowX, nowY, tx, ty, object] = clutil.processTouch(tM, in, object, target1, fix, s, inTouch, nowX, nowY, tx, ty);
 					if tM.eventPressed; anyTouch = true; end
 					if success==true; reachTarget = true; end
 					if success == -100; exclusion = true; reachTarget = false; end
@@ -196,14 +194,14 @@ function startDragCategorisation(in)
 
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			vblEnd = flip(s);
-			WaitSecs(0.01);
+			WaitSecs(0.05);
 
 			%% Get trial result
 			if reachTarget == true
 				if in.reward; giveReward(rM, in.rewardTime); end
 				dt.data.rewards = dt.data.rewards + 1;
 				fprintf('===> CORRECT :-)\n');
-				beep(a,2000,0.1,0.1);
+				beep(a,in.correctBeep,0.1,in.audioVolume);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
 				if ~isempty(sbg); draw(sbg); end
 				drawText(s,['CORRECT! phase: ' num2str(phase)]);
@@ -216,7 +214,7 @@ function startDragCategorisation(in)
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
 				flip(s);
-				beep(a,250,0.3,0.8);
+				beep(a,in.incorrectBeep,0.5,in.audioVolume);
 				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
 				WaitSecs('YieldSecs',in.timeOut);
 			else
@@ -233,7 +231,7 @@ function startDragCategorisation(in)
 			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
-			if zmq.poll('in')
+			if ~isempty(zmq) && zmq.poll('in')
 				[cmd, ~] = zmq.receiveCommand();
 				if ~isempty(cmd) && isstruct(cmd)
 					if isfield(msg,'command') && matches(msg.command,'exittask')
@@ -243,187 +241,17 @@ function startDragCategorisation(in)
 			end
 		end % while keepRunning
 
-		shutDownTask()
+		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);
 
 	catch ME
 		getReport(ME)
-		try reset(target); end
+		try reset(set); end
 		try close(s); end
 		try close(tM); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end
 		try ListenChar(0); end
+		try ShowCursor; end
 		sca;
 	end
-
-	function startTouchTrial()
-		% v1.01
-		fprintf('\n===> START TRIAL: %i of task %s: \n', trialN, upper(in.task));
-		fprintf('===> Touch params Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
-			tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
-
-		if trialN == 1; dt.data.startTime = GetSecs; end
-
-		touchInit = '';
-		flush(tM);
-
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-		vbl = flip(s); vblInit = vbl;
-		while isempty(touchInit) && vbl < vblInit + 5
-			if ~isempty(sbg); draw(sbg); end
-			if ~hldtime; draw(fix); end
-			if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
-				[xy] = s.toPixels([tM.x tM.y]);
-				Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
-			end
-			vbl = flip(s);
-			[touchInit, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
-			if tch; anyTouch = true; end
-			[~,~,c] = KbCheck();
-			if c(quitKey); keepRunning = false; break; end
-		end
-
-		fprintf('touchInit <%s>\n',touchInit);
-
-		%%% Wait for release
-		while isTouch(tM)
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			vbl = flip(s);
-		end
-		flush(tM);
-	end
-
-	function success = processTouch()
-		% V1.02
-		success = false;
-		if tM.eventAvail % check we have touch event[s]
-			if ~inTouch
-				tM.window.X = object.xFinalD;
-				tM.window.Y = object.yFinalD;
-				result = checkTouchWindows(tM, [], true); % check we are touching
-				evt = tM.event;
-				if result 
-					inTouch = true; 
-					firstRun = true;
-				end
-			else
-				tM.window.X = target1.xFinalD;
-				tM.window.Y = target1.yFinalD;
-				tM.window.radius = 3;
-				evt = getEvent(tM);
-				firstRun = false;
-			end
-			if isempty(evt); return; end
-			if inTouch
-				nowX = tM.x; nowY = tM.y;
-				if tM.eventRelease && evt.Type == 4 % this is a RELEASE event
-					if in.debug; fprintf('≣≣≣≣⊱ processTouch@%s%i:RELEASE X: %.1f Y: %.1f \n',tM.name, tM.x,tM.y); end
-					xy = []; tx = []; ty = []; inTouch = false;
-				elseif tM.eventPressed
-					tx = [tx nowX];
-					ty = [ty nowY];
-					object.updateXY(nowX, nowY, true);
-					object.alphaOut = 0.9;
-					if in.debug; fprintf('≣≣≣≣⊱ processTouch@%s:TOUCH X: %.1f Y: %.1f \n',tM.name, nowX, nowY); end
-				end
-				if ~firstRun
-					success = checkTouchWindows(tM,[],false);
-					if success == true; fprintf('\nYAAAAAY %i\n',success); end
-				end
-			end
-		end
-	end
-
-	function shutDownTask()
-		%V1.04
-		drawText(s, 'FINISHED!');
-		flip(s);
-		try ListenChar(0); Priority(0); ShowCursor; end
-		if exist('sbg','var') && ~isempty(sbg); try reset(sbg); end;end %#ok<*TRYNC>
-		if exist('fix','var'); try reset(fix); end; end
-		if exist('set','var'); try reset(set); end; end
-		if exist('target','var'); try reset(target); end; end
-		if exist('rtarget','var'); try reset(rtarget); end; end
-		if exist('set','var'); try reset(set); end; end
-		try close(s); end
-		try close(tM); end
-		try close(rM); end
-		try touchManager.xinput(tM.deviceName, false); end
-		% save trial data
-		disp('');
-		disp('=========================================');
-		fprintf('===> Data for %s\n',saveName)
-		disp('=========================================');
-		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
-		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
-		cor = sum(dt.data.result==true);
-		incor = sum(dt.data.result==false);
-		fprintf('  Total Trials: %i\n',trialN);
-		fprintf('  Correct Trials: %i\n',cor);
-		fprintf('  Incorrect Trials: %i\n',incor);
-		fprintf('  Free Rewards: %i\n',dt.data.random);
-		fprintf('  Correct Volume: %.2f ml\n',tVol);
-		fprintf('  Free Volume: %i ml\n\n\n',fVol);
-		% save trial data
-		disp('=========================================');
-		fprintf('===> Saving data to %s\n',saveName)
-		disp('=========================================');
-		save('-v7', saveName, 'dt');
-		save('-v7', "~/lastTaskRun.mat", 'dt');
-		disp('Done!!!');
-		disp('');disp('');disp('');
-		WaitSecs(0.5);
-	end
-
-
-	function checkInput()
-		%V1.0
-		if ~exist('in','var')
-			in.phase = 1;
-			in.density = 70;
-			in.distance = 30;
-			in.timeOut = 4;
-			in.bg = [0.5 0.5 0.5];
-			in.maxSize = 30;
-			in.minSize = 1;
-			in.folder = [pth filesep 'resources'];
-			in.fg = [1 1 0.75];
-			in.debug = true;
-			in.dummy = true;
-			in.audio = true;
-			in.audioVolume = 0.2;
-			in.stimulus = 'Picture';
-			in.task = 'generic';
-			in.name = 'simulcra';
-			in.rewardmode = 1;
-			in.volume = 250;
-			in.random = 1;
-			in.screen = 0;
-			in.smartBackground = true;
-			in.correctBeep = 3000;
-			in.incorrectBeep = 400;
-			in.rewardPort = '/dev/ttyACM0';
-			in.rewardTime = 200;
-			in.trialTime = 5;
-			in.randomReward = 30;
-			in.randomProbability = 0.25;
-			in.randomReward = 0;
-			in.volume = 250;
-			in.nTrialsSample = 10;
-			in.negationBuffer = 2;
-			in.exclusionZone = [];
-			in.drainEvents = true;
-			in.strictMode = true;
-			in.negateTouch = true;
-			in.touchDevice = 1;
-			in.touchDeviceName = 'ILITEK-TP';
-			in.initPosition = [0 4];
-			in.initSize = 4;
-			in.target1Pos = [-5 -5];
-			in.target2Pos = [5 -5];
-			in.targetSize = 10;
-		end
-	end
-
-end

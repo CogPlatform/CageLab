@@ -1,20 +1,24 @@
 function startMatchToSample(in)
 	pth = fileparts(which(mfilename));
-	checkInput();
+	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
 	windowed = [];
 	sf = [];
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 	
 	% =========================== debug mode?
-	if max(Screen('Screens'))==0 && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
-	
+	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
+		
 	try
-		% ============================screen
+		%% ============================screen & background
 		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
 			in.density, 'distance', in.distance,...
 			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
-
+		if in.smartBackground
+			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract1.jpg']);
+		else 
+			sbg = [];
+		end
 		% s============================stimuli
 		fix = discStimulus('size', in.initSize, 'colour', in.fg, 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
@@ -33,22 +37,17 @@ function startMatchToSample(in)
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
-		if in.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract3.jpg']);
-		else 
-			sbg = [];
-		end
+	
 
-		% ============================audio
+		%% ============================audio
 		a = audioManager;
 		if in.debug; a.verbose = true; end
 		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
 		setup(a);
 		beep(a,in.correctBeep,0.1,in.audioVolume);
-		WaitSecs(0.1);
-		beep(a,in.incorrectBeep,0.5,in.audioVolume);
+		beep(a,in.incorrectBeep,0.1,in.audioVolume);
 
-		% ============================touch
+		%% ============================touch
 		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
 			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
 			'drainEvents',in.drainEvents);
@@ -56,10 +55,10 @@ function startMatchToSample(in)
 		tM.window.negationBuffer = in.negationBuffer;
 		if in.debug; tM.verbose = true; end
 
-		% ============================reward
-		if in.reward; rM = PTBSimia.pumpManager(); end
+		%% ============================reward
+		if in.reward; rM = PTBSimia.pumpManager(); else; rM = []; end
 		
-		% ============================setup
+		%% ============================setup
 		sv = open(s);
 		drawTextNow(s,'Initialising...');
 		if in.smartBackground
@@ -69,12 +68,11 @@ function startMatchToSample(in)
 		aspect = sv.width / sv.height;
 		setup(fix, s);
 		setup(set, s);
-		if ~isempty(sbg); setup(sbg, s); end
 		setup(tM, s);
 		createQueue(tM);
 		start(tM);
 
-		% ==============================save file name
+		%% ==============================save file name
 		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
 		saveName = [ path filesep 'MTS-' name '.mat'];
 		dt = touchData;
@@ -84,9 +82,9 @@ function startMatchToSample(in)
 		dt.data.rewards = 0;
 		dt.data.in = in;
 
-		% ============================settings
+		%% ============================settings
 		quitKey = KbName('escape');
-		RestrictKeysForKbCheck([quitKey]);
+		RestrictKeysForKbCheck(quitKey);
 		Screen('Preference','Verbosity',4);
 		
 		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
@@ -94,6 +92,8 @@ function startMatchToSample(in)
 		trialN = 0;
 		phaseN = 1;phase = 1;
 
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while keepRunning
 
 			set.fixationChoice = 3;
@@ -175,7 +175,8 @@ function startMatchToSample(in)
 			end
 
 			update(set);
-
+			
+			% reset touch window for initial touch
 			tM.window.radius = fix.size/2;
 			tM.window.init = 5;
 			tM.window.hold = 0.05;
@@ -193,8 +194,8 @@ function startMatchToSample(in)
 			trialN = trialN + 1;
 			hldtime = false;
 			
-			touchInit = '';
-			startTouchTrial();
+			%% Initiate a trial with a touch target
+			[touchInit, hldtime, anyTouch, keepRunning, dt] = clutil.startTouchTrial(trialN, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
 
 			if matches(string(touchInit),"yes")
 				touchResponse = '';
@@ -238,34 +239,35 @@ function startMatchToSample(in)
 				fprintf('===> CORRECT :-)\n');
 				beep(a,in.correctBeep,0.1,in.audioVolume);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
-				phaseN = phaseN + 1;
 				if ~isempty(sbg); draw(sbg); end
 				drawText(s,['CORRECT! phase: ' num2str(phase)]);
 				flip(s);
+				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
 				WaitSecs(0.5+rand);
 			elseif strcmp(touchResponse,'no')
 				update(dt, false, phase, trialN, vblEnd-vblInit, stimulus);
-				phaseN = phaseN + 1;
 				fprintf('===> FAIL :-(\n');
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
 				flip(s);
 				beep(a,in.incorrectBeep,0.5,in.audioVolume);
-				WaitSecs(in.timeOut);
+				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
+				WaitSecs('YieldSecs',in.timeOut);
 			else
 				fprintf('===> UNKNOWN :-|\n');
 				drawText(s,'UNKNOWN!');
 				if ~isempty(sbg); draw(sbg); end
 				flip(s);
+				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
 				WaitSecs(0.5+rand);
 			end
 
-			broadcast.send(struct('name',in.name,'trial',trialN,'result',dt.data.result));
-
+			%% finalise this trial
 			if keepRunning == false; break; end
+			drawBackground(s,in.bg)
 			if ~isempty(sbg); draw(sbg); end
 			flip(s);
-			if zmq.poll('in')
+			if ~isempty(zmq) && zmq.poll('in')
 				[cmd, ~] = zmq.receiveCommand();
 				if ~isempty(cmd) && isstruct(cmd)
 					if isfield(msg,'command') && matches(msg.command,'exittask')
@@ -275,7 +277,7 @@ function startMatchToSample(in)
 			end
 		end % while keepRunning
 
-		shutDownTask();
+		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);
 
 	catch ME
 		getReport(ME)
@@ -289,135 +291,4 @@ function startMatchToSample(in)
 		try ShowCursor; end
 		sca;
 	end
-
-	function startTouchTrial()
-		% v1.02
-		fprintf('\n===> START TRIAL: %i of task: \n', trialN, upper(in.task));
-		fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
-			tM.window.X, tM.window.Y, tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
-
-		if trialN == 1; dt.data.startTime = GetSecs; end
-
-		touchInit = '';
-		flush(tM);
-
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-		vbl = flip(s); vblInit = vbl;
-		while isempty(touchInit) && vbl < vblInit + 5
-			if ~isempty(sbg); draw(sbg); end
-			if ~hldtime; draw(fix); end
-			if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
-				[xy] = s.toPixels([tM.x tM.y]);
-				Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
-			end
-			vbl = flip(s);
-			[touchInit, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
-			if tch; anyTouch = true; end
-			[~,~,c] = KbCheck();
-			if c(quitKey); keepRunning = false; break; end
-		end
-
-		fprintf('touchInit <%s>\n',touchInit);
-
-		%%% Wait for release
-		while isTouch(tM)
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			vbl = flip(s);
-		end
-		flush(tM);
-	end
-
-	function shutDownTask()
-		%V1.04
-		drawText(s, 'FINISHED!');
-		flip(s);
-		try ListenChar(0); Priority(0); ShowCursor; end
-		if exist('sbg','var') && ~isempty(sbg); try reset(sbg); end;end %#ok<*TRYNC>
-		if exist('fix','var'); try reset(fix); end; end
-		if exist('set','var'); try reset(set); end; end
-		if exist('target','var'); try reset(target); end; end
-		if exist('rtarget','var'); try reset(rtarget); end; end
-		if exist('set','var'); try reset(set); end; end
-		try close(s); end
-		try close(tM); end
-		try close(rM); end
-		try touchManager.xinput(tM.deviceName, false); end
-		% save trial data
-		disp('');
-		disp('=========================================');
-		fprintf('===> Data for %s\n',saveName)
-		disp('=========================================');
-		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
-		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
-		cor = sum(dt.data.result==true);
-		incor = sum(dt.data.result==false);
-		fprintf('  Total Trials: %i\n',trialN);
-		fprintf('  Correct Trials: %i\n',cor);
-		fprintf('  Incorrect Trials: %i\n',incor);
-		fprintf('  Free Rewards: %i\n',dt.data.random);
-		fprintf('  Correct Volume: %.2f ml\n',tVol);
-		fprintf('  Free Volume: %i ml\n\n\n',fVol);
-		% save trial data
-		disp('=========================================');
-		fprintf('===> Saving data to %s\n',saveName)
-		disp('=========================================');
-		save('-v7', saveName, 'dt');
-		save('-v7', "~/lastTaskRun.mat", 'dt');
-		disp('Done!!!');
-		disp('');disp('');disp('');
-		WaitSecs(0.5);
-	end
-
-	function checkInput()
-		%V1.01
-		if ~exist('in','var')
-			in.phase = 1;
-			in.density = 70;
-			in.distance = 30;
-			in.timeOut = 4;
-			in.bg = [0.5 0.5 0.5];
-			in.maxSize = 30;
-			in.minSize = 1;
-			in.folder = [pth filesep 'resources'];
-			in.fg = [1 1 0.75];
-			in.debug = true;
-			in.dummy = true;
-			in.audio = true;
-			in.audioVolume = 0.2;
-			in.stimulus = 'Picture';
-			in.task = 'generic';
-			in.name = 'simulcra';
-			in.rewardmode = 1;
-			in.volume = 250;
-			in.random = 1;
-			in.screen = 0;
-			in.smartBackground = true;
-			in.correctBeep = 3000;
-			in.incorrectBeep = 400;
-			in.rewardPort = '/dev/ttyACM0';
-			in.rewardTime = 200;
-			in.trialTime = 5;
-			in.randomReward = 30;
-			in.randomProbability = 0.25;
-			in.randomReward = 0;
-			in.volume = 250;
-			in.nTrialsSample = 10;
-			in.negationBuffer = 2;
-			in.exclusionZone = [];
-			in.drainEvents = true;
-			in.strictMode = true;
-			in.negateTouch = true;
-			in.touchDevice = 1;
-			in.touchDeviceName = 'ILITEK-TP';
-			in.initPosition = [0 4];
-			in.initSize = 4;
-			in.target1Pos = [-5 -5];
-			in.target2Pos = [5 -5];
-			in.targetSize = 10;
-			in.startY = -10;
-			in.distractorY = -1;
-		end
-	end
-
-
 end

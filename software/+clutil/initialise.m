@@ -1,0 +1,75 @@
+function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = initialise(in, bgName, prefix, windowed, sf)
+	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
+	pth = fileparts(which(mfilename('fullpath')));
+	windowed = [];
+	sf = [];
+
+	% =========================== debug mode?
+	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
+		sf = kPsychGUIWindow; windowed = [0 0 1300 800]; 
+	end
+	
+	%% ============================screen & background
+	s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
+		in.density, 'distance', in.distance,...
+		'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
+	if in.smartBackground
+		sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
+	else 
+		sbg = [];
+	end
+
+	%% s============================stimuli
+	rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
+	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
+			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
+	%% ============================audio
+	a = audioManager;
+	if in.debug; a.verbose = true; end
+	if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
+	setup(a);
+	beep(a,in.correctBeep,0.1,in.audioVolume);
+	beep(a,in.incorrectBeep,0.1,in.audioVolume);
+
+	%% ============================touch
+	tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
+		'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
+		'drainEvents',in.drainEvents);
+	tM.window.doNegation = in.doNegation;
+	tM.window.negationBuffer = in.negationBuffer;
+	if in.debug; tM.verbose = true; end
+
+	%% ============================reward
+	if in.reward; rM = PTBSimia.pumpManager(); else; rM = PTBSimia.pumpManager(true); end
+	
+	%% ============================setup
+	sv = open(s);
+	if in.smartBackground
+		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
+		setup(sbg, s);
+	end
+	drawTextNow(s,'Initialising...');
+	setup(rtarget, s);
+	setup(fix, s);
+	setup(tM, s);
+	createQueue(tM);
+	start(tM);
+
+	%% ==============================save file name
+	[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
+	saveName = [ path filesep prefix '-' name '.mat'];
+	dt = touchData;
+	dt.name = saveName;
+	dt.subject = in.name;
+	dt.data.random = 0;
+	dt.data.rewards = 0;
+	dt.data.in = in;
+
+	%% ============================settings
+	quitKey = KbName('escape');
+	RestrictKeysForKbCheck(quitKey);
+	Screen('Preference','Verbosity',4);
+		
+	if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
+	
+end

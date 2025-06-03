@@ -1,26 +1,16 @@
 function startMatchToSample(in)
-	pth = fileparts(which(mfilename));
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
-	windowed = [];
-	sf = [];
+	bgName = 'abstract2.png';
+	prefix = 'MTS';
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
-	
-	% =========================== debug mode?
-	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
-		
+
 	try
-		%% ============================screen & background
-		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
-			in.density, 'distance', in.distance,...
-			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
-		if in.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract1.jpg']);
-		else 
-			sbg = [];
-		end
-		% s============================stimuli
-		fix = discStimulus('size', in.initSize, 'colour', in.fg, 'alpha', 0.8,...
+		%% ============================subfunction for shared initialisation
+		[s, sv, sbg, rtarget, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
+
+		%% ============================task specific figures
+		fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.startY);
 		target1 = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
@@ -37,57 +27,15 @@ function startMatchToSample(in)
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
-	
-
-		%% ============================audio
-		a = audioManager;
-		if in.debug; a.verbose = true; end
-		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
-		setup(a);
-		beep(a,in.correctBeep,0.1,in.audioVolume);
-		beep(a,in.incorrectBeep,0.1,in.audioVolume);
-
-		%% ============================touch
-		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
-			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
-			'drainEvents',in.drainEvents);
-		tM.window.doNegation = in.doNegation;
-		tM.window.negationBuffer = in.negationBuffer;
-		if in.debug; tM.verbose = true; end
-
-		%% ============================reward
-		if in.reward; rM = PTBSimia.pumpManager(); else; rM = []; end
 		
-		%% ============================setup
-		sv = open(s);
-		drawTextNow(s,'Initialising...');
-		if in.smartBackground
-			sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
-			setup(sbg, s);
-		end
-		aspect = sv.width / sv.height;
+		%% ============================ custom stimuli setup
 		setup(fix, s);
 		setup(set, s);
-		setup(tM, s);
-		createQueue(tM);
-		start(tM);
 
-		%% ==============================save file name
-		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
-		saveName = [ path filesep 'MTS-' name '.mat'];
-		dt = touchData;
-		dt.name = saveName;
-		dt.subject = in.name;
-		dt.data.random = 0;
-		dt.data.rewards = 0;
-		dt.data.in = in;
 
-		%% ============================settings
-		quitKey = KbName('escape');
-		RestrictKeysForKbCheck(quitKey);
-		Screen('Preference','Verbosity',4);
 		
-		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
+
+		%% ============================ run variables
 		keepRunning = true;
 		trialN = 0;
 		phaseN = 1;phase = 1;
@@ -281,6 +229,8 @@ function startMatchToSample(in)
 
 	catch ME
 		getReport(ME)
+		try reset(rtarget); end
+		try reset(fix); end
 		try reset(set); end
 		try close(s); end
 		try close(tM); end

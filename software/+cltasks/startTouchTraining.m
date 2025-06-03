@@ -1,59 +1,36 @@
 function startTouchTraining(in)
-	pth = fileparts(which(mfilename));
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
-	windowed = [];
-	sf = [];
+	bgName = 'abstract1.jpg';
+	prefix = 'TT';
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 	
-	% =========================== debug mode?
-	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
-		
 	try
-		%% ============================screen & background
-		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
-			in.density, 'distance', in.distance,...
-			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
-		if in.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract1.jpg']);
-		else 
-			sbg = [];
-		end
+		%% ============================subfunction for shared initialisation
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
 
-		%% s============================stimuli
-		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
+		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
 			target = imageStimulus('size', in.maxSize, 'filePath', [in.folder filesep 'flowers'], 'crop', 'square', 'circularMask', true);
 		else
 			target = discStimulus('size', in.maxSize, 'colour', in.fg);
 		end
 		if in.debug; target.verbose = true; end
-		
 
-		%% ============================audio
-		a = audioManager;
-		if in.debug; a.verbose = true; end
-		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
-		setup(a);
-		beep(a,in.correctBeep,0.1,in.audioVolume);
-		beep(a,in.incorrectBeep,0.1,in.audioVolume);
+		%% ============================ custom stimuli setup
+		setup(target, s);
 
-		%% ============================touch
-		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
-			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
-			'drainEvents',in.drainEvents);
-		tM.window.doNegation = in.doNegation;
-		tM.window.negationBuffer = in.negationBuffer;
-		if in.debug; tM.verbose = true; end
+		%% ============================ run variables
+		keepRunning = true;
+		trialN = 0;
+		phaseN = 0;
+		phase = in.phase;
+		stimulus = 1;
+		randomRewardTimer = GetSecs;
+		rRect = rtarget.mvRect;
 
-		%% ============================reward
-		if in.reward; rM = PTBSimia.pumpManager(); else; rM = []; end
-		
-		%% ============================setup
-
-		% ============================steps table
+		%% ============================steps table
 		sz = linspace(in.maxSize, in.minSize, 5);
-
 		if matches(in.task, 'Simple') % simple task
 			if in.phase > 9; in.phase = 9; end
 			pn = 1; p = [];
@@ -94,44 +71,6 @@ function startTouchTraining(in)
 			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
 			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 11;
 		end
-
-		% ============================setup
-		sv = open(s);
-		drawTextNow(s,'Initialising...');
-		if in.smartBackground
-			sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
-			setup(sbg, s);
-		end
-		aspect = sv.width / sv.height;
-		setup(rtarget, s);
-		setup(target, s);
-		setup(tM, s);
-		createQueue(tM);
-		start(tM);
-
-		%% ==============================save file name
-		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
-		saveName = [ path filesep 'TouchT-' name '.mat'];
-		dt = touchData;
-		dt.name = saveName;
-		dt.subject = in.name;
-		dt.data.random = 0;
-		dt.data.rewards = 0;
-		dt.data.in = in;
-
-		%% ============================settings
-		quitKey = KbName('escape');
-		RestrictKeysForKbCheck(quitKey);
-		Screen('Preference','Verbosity',4);
-		
-		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
-		keepRunning = true;
-		trialN = 0;
-		phaseN = 0;
-		phase = in.phase;
-		stimulus = 1;
-		randomRewardTimer = GetSecs;
-		rRect = rtarget.mvRect;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

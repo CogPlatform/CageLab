@@ -2,7 +2,8 @@
 %> @class theConductor
 %> @brief theConductor — ØMQ REP server to run behavioural tasks
 %>
-%> This class opens a REP ØMQ
+%> This class opens a REP ØMQ and uses a HTTP API to open a REC ØMQ with cogmoteGO
+%> It can run PTB or other tasks, designed to provide a local server for CageLab.
 %>
 %> Copyright ©2014-2025 Ian Max Andolina — released: LGPL3, see LICENCE.md
 % ========================================================================
@@ -16,7 +17,7 @@ classdef theConductor < optickaCore
 		%> port to bind to
 		port = 6666
 		%> time in seconds to wait before polling for new messages?
-		loopTime = 0.002
+		loopTime = 0.005
 		%>
 		verbose = true
 	end

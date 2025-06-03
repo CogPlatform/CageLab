@@ -1,30 +1,15 @@
 function startDragCategorisation(in)
-	pth = fileparts(which(mfilename));
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
-	windowed = [];
-	sf = [];
+	bgName = 'abstract4.jpg';
+	prefix = 'DCAT';
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 	
-	% =========================== debug mode?
-	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug; sf = kPsychGUIWindow; windowed = [0 0 1300 800]; end
-		
 	try
-		%% ============================screen & background
-		s = screenManager('screen',in.screen,'blend',true,'pixelsPerCm',...
-			in.density, 'distance', in.distance,...
-			'backgroundColour',in.bg,'windowed',windowed,'specialFlags',sf);
-		if in.smartBackground
-			sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep 'abstract1.jpg']);
-		else 
-			sbg = [];
-		end
-
-		%% s============================stimuli
-		rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
+		%% ============================subfunction for shared initialisation
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
 		
-		fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
-			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
+		%% ============================task specific figures
 		object = imageStimulus('name','object', 'size', in.targetSize, 'filePath', ...
 			[in.folder filesep 'flowers'],'crop', 'square', 'circularMask', false,...
 			'xPosition',in.initPosition(1),'yPosition',in.initPosition(2));
@@ -37,57 +22,12 @@ function startDragCategorisation(in)
 		target2.xPosition = in.target2Pos(1);
 		target2.yPosition = in.target2Pos(2);
 		set = metaStimulus('stimuli',{target1, target2, object, fix});
+		set.fixationChoice = 1;
 
-		%% ============================audio
-		a = audioManager;
-		if in.debug; a.verbose = true; end
-		if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
-		setup(a);
-		beep(a,in.correctBeep,0.1,in.audioVolume);
-		beep(a,in.incorrectBeep,0.1,in.audioVolume);
-
-		%% ============================touch
-		tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
-			'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
-			'drainEvents',in.drainEvents);
-		tM.window.doNegation = in.doNegation;
-		tM.window.negationBuffer = in.negationBuffer;
-		if in.debug; tM.verbose = true; end
-
-		%% ============================reward
-		if in.reward; rM = PTBSimia.pumpManager(); else; rM = []; end
-		
-		%% ============================setup
-		sv = open(s);
-		drawTextNow(s,'Initialising...');
-		if in.smartBackground
-			sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
-			setup(sbg, s);
-		end
-		
-		setup(fix, s);
+		%% ============================ custom stimuli setup
 		setup(set, s);
-		setup(rtarget, s); rRect = rtarget.mvRect;
-		setup(tM, s);
-		createQueue(tM);
-		start(tM);
 
-		%% ==============================save file name
-		[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
-		saveName = [ path filesep 'DCAT-' name '.mat'];
-		dt = touchData;
-		dt.name = saveName;
-		dt.subject = in.name;
-		dt.data.random = 0;
-		dt.data.rewards = 0;
-		dt.data.in = in;
-
-		%% ============================settings
-		quitKey = KbName('escape');
-		RestrictKeysForKbCheck(quitKey);
-		Screen('Preference','Verbosity',4);
-		
-		if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
+		%% ============================ run variables
 		keepRunning = true;
 		trialN = 0;
 		phaseN = 0;
@@ -157,7 +97,7 @@ function startDragCategorisation(in)
 				tM.window.X = target1.xFinalD;
 				tM.window.Y = target1.yFinalD;
 				tM.window.doNegation = false;
-				rect = CenterRectOnPointd([0 0 200 200],target2.xFinal,target2.yFinal);
+				rect = CenterRectOnPointd([0 0 5*s.ppd 5*s.ppd],target2.xFinal,target2.yFinal);
 				tM.exclusionZone = rect;
 				hide(set,4);
 				show(set,[1 2 3]);
@@ -245,6 +185,8 @@ function startDragCategorisation(in)
 
 	catch ME
 		getReport(ME)
+		try reset(rtarget); end
+		try reset(fix); end
 		try reset(set); end
 		try close(s); end
 		try close(tM); end
@@ -255,3 +197,5 @@ function startDragCategorisation(in)
 		try ShowCursor; end
 		sca;
 	end
+
+		

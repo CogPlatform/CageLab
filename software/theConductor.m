@@ -163,27 +163,33 @@ classdef theConductor < optickaCore
 		end
 
 		% ===================================================================
-		function handShake(me)
-			try
-				msgBytes = me.zmq.receive();
-				if isempty(msgBytes)
-					warning("theConductor:noHandshake", 'No handshake message received');
+		function success = handShake(me)
+			success = false;
+			while ~success
+				try
+					msgBytes = me.zmq.receive();
+					if isempty(msgBytes)
+						warning("theConductor:noHandshake", 'No handshake message received');
+					end
+					msgStr = native2unicode(msgBytes, 'UTF-8');
+					try 
+						receivedMsg = jsondecode(msgStr);
+						fprintf('===> theConductor Received:\n%s\n', receivedMsg.request); 
+					end %#ok<*TRYNC>
+					if isstruct(receivedMsg) && strcmpi(receivedMsg.request, 'Hello')
+						response = struct('response', 'World');
+						responseStr = jsonencode(response);
+						responseBytes = unicode2native(responseStr, 'UTF-8');
+						fprintf('===> theConductor Replying:\n%s\n', 'World'); 
+						me.zmq.send(responseBytes);
+						success = true;
+					else
+						error("theConductor:invalidHandshake",'Invalid handshake request: %s', msgStr);
+					end
+				catch exception
+					warning(exception.identifier, 'Handshake failed: %s', exception.message);
+					rethrow(exception);
 				end
-				msgStr = native2unicode(msgBytes, 'UTF-8');
-				receivedMsg = jsondecode(msgStr);
-				try fprintf('===> theConductor Received:\n%s\n', receivedMsg.request); end %#ok<*TRYNC>
-				
-				if strcmp(receivedMsg.request, 'Hello')
-					response = struct('response', 'World');
-					responseStr = jsonencode(response);
-					responseBytes = unicode2native(responseStr, 'UTF-8');
-					me.zmq.send(responseBytes);
-				else
-					warning("theConductor:invalidHandshake",'Invalid handshake request: %s', msgStr);
-				end
-			catch exception
-				warning(exception.identifier, 'Handshake failed: %s', exception.message);
-				rethrow(exception)
 			end
 		end
 

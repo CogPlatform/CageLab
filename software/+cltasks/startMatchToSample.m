@@ -2,8 +2,8 @@ function startMatchToSample(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
 	bgName = 'abstract2.jpg';
 	prefix = 'MTS';
-	zmq = in.zmq;
-	broadcast = matmoteGO.broadcast();
+	r.zmq = in.zmq;
+	r.broadcast = matmoteGO.broadcast();
 
 	try
 		%% ============================subfunction for shared initialisation
@@ -34,7 +34,7 @@ function startMatchToSample(in)
 				pfix = setxor(pfix3,pfix4);
 				pfix5 = pfix(randi(length(pfix)));
 			case 'flowers'
-				[pfix1 pfix2 pfix3 pfix4 pfix5] = deal("");
+				[pfix1, pfix2, pfix3, pfix4, pfix5] = deal("");
 		end
 		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
 		target1 = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
@@ -51,20 +51,25 @@ function startMatchToSample(in)
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
-		
 		%% ============================ custom stimuli setup
 		setup(fix, s);
 		setup(set, s);
 
 		%% ============================ run variables
-		keepRunning = true;
-		trialN = 0;
-		phaseN = 1;phase = 1;
+		r.keepRunning = true;
+		r.phase = in.phase;
+		r.trialN = 0;
+		r.trialW = 0;
+		r.phaseN = 0;
+		r.stimulus = 1;
+		r.randomRewardTimer = GetSecs;
+		r.rRect = rtarget.mvRect;
+		r.result = -1;
+		r.vblInit = NaN;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		while keepRunning
-
+		while r.keepRunning
 			set.fixationChoice = 3;
 			pedestal.xPositionOut = 0;
 			pedestal.yPositionOut = in.sampleY;
@@ -130,17 +135,17 @@ function startMatchToSample(in)
 					show(set,[1 2 3 4 5 6 7]);
 			end
 			
-			r = randi(target1.nImages); stimulus = r;
-			target1.selectionOut = r;
-			target2.selectionOut = r;
-			rr = r;
+			rr = randi(target1.nImages); r.stimulus = rr;
+			target1.selectionOut = rr;
+			target2.selectionOut = rr;
+			rrn = rr;
 			for jj = 4:7
-				r = randi(set{jj}.nImages);
-				while any(r == rr)
-					r = randi(set{jj}.nImages);
+				rr = randi(set{jj}.nImages);
+				while any(rr == rrn)
+					rr = randi(set{jj}.nImages);
 				end
-				set{jj}.selectionOut = r;
-				rr = [rr r];
+				set{jj}.selectionOut = rr;
+				rrn = [rrn r];
 			end
 
 			update(set);
@@ -155,19 +160,19 @@ function startMatchToSample(in)
 			tM.window.doNegation = true;
 			tM.exclusionZone = [];
 
-			res = 0; phase = 1;
-			keepRunning = true;
-			touchResponse = '';
-			anyTouch = false;
+			r.keepRunning = true;
+			r.touchResponse = '';
+			r.touchInit = '';
+			r.anyTouch = false;
 			txt = '';
-			trialN = trialN + 1;
-			hldtime = false;
+			r.trialN = r.trialN + 1;
+			r.hldtime = false;
 			
 			%% Initiate a trial with a touch target
-			[touchInit, hldtime, anyTouch, keepRunning, dt] = clutil.startTouchTrial(trialN, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
+			[r, dt, vblInit] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
 
-			if matches(string(touchInit),"yes")
-				touchResponse = '';
+			if matches(string(r.touchInit),"yes")
+				r.touchResponse = '';
 				[x,y] = set.getFixationPositions;
 				tM.window.radius = target2.size/2;
 				tM.window.init = in.trialTime;
@@ -176,7 +181,7 @@ function startMatchToSample(in)
 				tM.window.X = x;
 				tM.window.Y = y;
 				vblInit = GetSecs; vbl = vblInit;
-				while isempty(touchResponse) && vbl < (vblInit + in.trialTime)
+				while isempty(r.touchResponse) && vbl < (vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
@@ -185,65 +190,27 @@ function startMatchToSample(in)
 						Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 					end
 					vbl = flip(s);
-					[touchResponse, hld, hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
-					if tch; anyTouch = true; end
-					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
-						touchResponse, tM.x, tM.y, hld, hldtime, rel, reli, se, tch, ...
+					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
+					if tch; r.anyTouch = true; end
+					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
+						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, se, fail, tch, ...
 						tM.window.radius,tM.window.init,tM.window.hold,tM.window.release,tM.window.X,tM.window.Y);
 					[~,~,c] = KbCheck();
-					if c(quitKey); keepRunning = false; break; end
+					if c(quitKey); r.keepRunning = false; break; end
 				end
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			vblEnd = flip(s);
-			WaitSecs(0.05);
-
-			% lets check the result:
-			if anyTouch == false
-				
-			elseif strcmp(touchResponse,'yes')
-				if in.reward; giveReward(rM, in.rewardTime); end
-				dt.data.rewards = dt.data.rewards + 1;
-				fprintf('===> CORRECT :-)\n');
-				beep(a,in.correctBeep,0.1,in.audioVolume);
-				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
-				if ~isempty(sbg); draw(sbg); end
-				drawText(s,['CORRECT! phase: ' num2str(phase)]);
-				flip(s);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs(0.5+rand);
-			elseif strcmp(touchResponse,'no')
-				update(dt, false, phase, trialN, vblEnd-vblInit, stimulus);
-				fprintf('===> FAIL :-(\n');
-				drawBackground(s,[1 0 0]);
-				drawText(s,['FAIL! phase: ' num2str(phase)]);
-				flip(s);
-				beep(a,in.incorrectBeep,0.5,in.audioVolume);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs('YieldSecs',in.timeOut);
+			if matches(r.touchResponse,'yes')
+				r.result = 1;
+			elseif matches(r.touchResponse,'no')
+				r.result = 1;
 			else
-				fprintf('===> UNKNOWN :-|\n');
-				drawText(s,'UNKNOWN!');
-				if ~isempty(sbg); draw(sbg); end
-				flip(s);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs(0.5+rand);
+				r.result = -1;
 			end
 
-			%% finalise this trial
-			if keepRunning == false; break; end
-			drawBackground(s,in.bg)
-			if ~isempty(sbg); draw(sbg); end
-			flip(s);
-			if ~isempty(zmq) && zmq.poll('in')
-				[cmd, ~] = zmq.receiveCommand();
-				if ~isempty(cmd) && isstruct(cmd)
-					if isfield(msg,'command') && matches(msg.command,'exittask')
-						break;
-					end
-				end
-			end
+			%% update this trials reults
+			[dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
+			
 		end % while keepRunning
 
 		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);

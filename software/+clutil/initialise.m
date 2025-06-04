@@ -47,6 +47,7 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	if in.smartBackground
 		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
 		setup(sbg, s);
+		draw(sbg);
 	end
 	drawTextNow(s,'Initialising...');
 	setup(rtarget, s);

@@ -1,4 +1,4 @@
-function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = initialise(in, bgName, prefix, windowed, sf)
+function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initialise(in, bgName, prefix, windowed, sf)
 	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
 	pth = fileparts(which(mfilename('fullpath')));
 	windowed = [];

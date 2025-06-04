@@ -7,7 +7,7 @@ function startDragCategorisation(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 		
 		%% ============================task specific figures
 		object = imageStimulus('name','object', 'size', in.targetSize, 'filePath', ...

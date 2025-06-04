@@ -4,10 +4,12 @@ function startTouchTraining(in)
 	prefix = 'TT';
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
+	in.initSize = 5;
+	in.initPosition = [0 0];
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
@@ -190,6 +192,7 @@ function startTouchTraining(in)
 				beep(a,in.correctBeep,0.1,in.audioVolume);
 				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
 				phaseN = phaseN + 1;
+				trialW = 0;
 				if ~isempty(sbg); draw(sbg); end
 				drawText(s,['CORRECT! phase: ' num2str(phase)]);
 				flip(s);
@@ -199,6 +202,7 @@ function startTouchTraining(in)
 			elseif strcmp(touchResponse,'no')
 				update(dt, false, phase, trialN, vblEnd-vblInit, stimulus);
 				phaseN = phaseN + 1;
+				trialW = trialW + 1;
 				fprintf('===> FAIL :-(\n');
 				drawBackground(s,[1 0 0]);
 				drawText(s,['FAIL! phase: ' num2str(phase)]);
@@ -219,7 +223,9 @@ function startTouchTraining(in)
 
 			broadcast.send(struct('name',in.name,'trial',trialN,'result',dt.data.result));
 
-			if trialN >= in.nTrialsSample
+			if trialW > 4
+
+			elseif trialN >= in.stepForward
 				if length(dt.data.result) > in.nTrialsSample
 					res = sum(dt.data.result(end - (in.nTrialsSample-1):end));
 				end

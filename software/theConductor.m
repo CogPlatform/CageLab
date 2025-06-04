@@ -33,7 +33,8 @@ classdef theConductor < optickaCore
 		isRunning = false
 		%>
 		commandList = ["exit" "quit" "exitmatlab" "rundemo" ...
-			"run" "echo" "gettime" "syncbuffer" "commandlist" "getlastrun" "status"]
+			"run" "echo" "gettime" "syncbuffer" "commandlist" ...
+			"getlastrun" "exittask" "status"]
 	end
 
 	properties (Access = private)
@@ -300,6 +301,11 @@ classdef theConductor < optickaCore
 							replyData = struct('Comment','No file: lastTaskRun.mat');
 						end
 
+					case 'exittask'
+						fprintf('\n===> theConductor: no task is running, cannot exit task loop.\n');
+						replyCommand = 'invalid';
+						replyData = {''};
+
 					case 'echo'
 						fprintf('\n===> theConductor: Echoing received data.\n');
 						replyCommand = 'echo_reply';
@@ -353,7 +359,7 @@ classdef theConductor < optickaCore
 						replyData = {t};
 				end
 
-				if poll(me.zmq, 'out')
+				if poll(me.zmq, 'out', 0.1)
 					status = sendCommand(me.zmq, replyCommand, replyData, false);
 					if status ~= 0
 						warning('\n===> theConductor: Reply failed for command "%s"', cmd);
@@ -380,7 +386,9 @@ classdef theConductor < optickaCore
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
 					end
 				end
+				
 			end
+
 			fprintf('\n===> theConductor: Command receive loop finished.\n');
 			close(me);
 			if stopMATLAB

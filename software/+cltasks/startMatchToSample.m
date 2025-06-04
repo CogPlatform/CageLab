@@ -1,29 +1,53 @@
 function startMatchToSample(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
-	bgName = 'abstract2.png';
+	bgName = 'abstract2.jpg';
 	prefix = 'MTS';
 	zmq = in.zmq;
 	broadcast = matmoteGO.broadcast();
 
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, a, rM, tM, dt, quitKey] = clutil.initialise(in, bgName, prefix);
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
-		fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
-			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
-		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.startY);
+		switch lower(in.object)
+			case 'fractals'
+				pfix = ["A" "B" "C" "D" "E" "F" "G" "H" "I"];
+				pfix1 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix1);
+				pfix2 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix2);
+				pfix3 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix3);
+				pfix4 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix3,pfix4);
+				pfix5 = pfix(randi(length(pfix)));
+			case 'quaddles'
+				pfix = ["A" "B" "C" "D" "E" "F" "G" "H"];
+				pfix1 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix1);
+				pfix2 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix2);
+				pfix3 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix,pfix3);
+				pfix4 = pfix(randi(length(pfix)));
+				pfix = setxor(pfix3,pfix4);
+				pfix5 = pfix(randi(length(pfix)));
+			case 'flowers'
+				[pfix1 pfix2 pfix3 pfix4 pfix5] = deal("");
+		end
+		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
 		target1 = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
-			'filePath', [in.folder filesep in.object filesep 'B'],'yPosition',in.startY);
+			'filePath', [string(in.folder) + filesep + in.object + filesep + pfix1],'yPosition',in.sampleY);
 		target2 = clone(target1);
 		distractor1 = clone(target1);
-		distractor1.filePath = [in.folder filesep in.object filesep 'C'];
+		distractor1.filePath = [string(in.folder) + filesep + in.object + filesep + pfix2];
 		distractor2 = clone(target1);
-		distractor2.filePath = [in.folder filesep in.object filesep 'D'];
+		distractor2.filePath = [string(in.folder) + filesep + in.object + filesep + pfix3];
 		distractor3 = clone(target1);
-		distractor3.filePath = [in.folder filesep in.object filesep 'E'];
+		distractor3.filePath = [string(in.folder) + filesep + in.object + filesep + pfix4];
 		distractor4 = clone(target1);
-		distractor4.filePath = [in.folder filesep in.object filesep 'H'];
+		distractor4.filePath = [string(in.folder) + filesep + in.object + filesep + pfix5];
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
@@ -31,9 +55,6 @@ function startMatchToSample(in)
 		%% ============================ custom stimuli setup
 		setup(fix, s);
 		setup(set, s);
-
-
-		
 
 		%% ============================ run variables
 		keepRunning = true;
@@ -46,9 +67,9 @@ function startMatchToSample(in)
 
 			set.fixationChoice = 3;
 			pedestal.xPositionOut = 0;
-			pedestal.yPositionOut = in.startY;
+			pedestal.yPositionOut = in.sampleY;
 			target1.xPositionOut = 0;
-			target1.yPositionOut = in.startY;
+			target1.yPositionOut = in.sampleY;
 			sep = in.objectSep;
 			N = in.distractorN;
 			Y = in.distractorY;
@@ -154,7 +175,7 @@ function startMatchToSample(in)
 				tM.window.release = 1;
 				tM.window.X = x;
 				tM.window.Y = y;
-				vblInit = vbl;
+				vblInit = GetSecs; vbl = vblInit;
 				while isempty(touchResponse) && vbl < (vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
@@ -229,7 +250,7 @@ function startMatchToSample(in)
 
 	catch ME
 		getReport(ME)
-		try reset(rtarget); end
+		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(set); end
 		try close(s); end

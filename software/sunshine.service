@@ -1,0 +1,19 @@
+[Unit]
+Description=Sunshine is a self-hosted game stream host for Moonlight.
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+# delay initialization to after graphical-session.target has been started
+After=graphical-session.target
+
+[Service]
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/sunshine
+# uncomment the line below if your system is reporting session initialization prematurely
+# ExecStartPre=/usr/bin/sleep 30 # wait  30s before starting sunshine
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+# activate this unit alongside graphical-session.target
+WantedBy=graphical-session.target

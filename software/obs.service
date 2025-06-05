@@ -1,18 +1,22 @@
 # User service file for flatpak OBS Studio
-# Place this file in /etc/systemd/user/obs.service
+# Place this file in ~/.config/systemd/user/
 # systemctl --user daemon-reload
 # systemctl --user enable obs.service
 # systemctl --user start obs.service
 
 [Unit]
 Description=OBS Studio Service
+After=mediamtx.service
+Requires=mediamtx.service
 StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming--disable-shutdown-check
+ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming --disable-shutdown-check
 Restart=always
-RestartSec=30
+RestartSec=5
+StartLimitInterval=100
+StartLimitBurst=5
 
 [Install]
 WantedBy=default.target

@@ -2,8 +2,8 @@ function startDragCategorisation(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
 	bgName = 'abstract4.jpg';
 	prefix = 'DCAT';
-	zmq = in.zmq;
-	broadcast = matmoteGO.broadcast();
+	r.zmq = in.zmq;
+	r.broadcast = matmoteGO.broadcast();
 	
 	try
 		%% ============================subfunction for shared initialisation
@@ -28,17 +28,20 @@ function startDragCategorisation(in)
 		setup(set, s);
 
 		%% ============================ run variables
-		keepRunning = true;
-		trialN = 0;
-		phaseN = 0;
-		phase = 1;
-		stimulus = 1;
-		randomRewardTimer = GetSecs;
-		rRect = rtarget.mvRect;
+		r.keepRunning = true;
+		r.phase = in.phase;
+		r.trialN = 0;
+		r.trialW = 0;
+		r.phaseN = 0;
+		r.stimulus = 1;
+		r.randomRewardTimer = GetSecs;
+		r.rRect = rtarget.mvRect;
+		r.result = -1;
+		r.vblInit = NaN;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		while keepRunning
+		while r.keepRunning
 			
 			[~,idx] = Shuffle([1 2]);
 			xy = [in.target1Pos; in.target2Pos];
@@ -47,17 +50,17 @@ function startDragCategorisation(in)
 			target1.updateXY(xy(idx(1),1),xy(idx(1),2), true);
 			target2.updateXY(xy(idx(2),1),xy(idx(2),2), true);
 
-			r = randi(object.nImages); stimulus = r;
-			object.selectionOut = r;
-			target1.selectionOut = r;
-			rr = r;
+			rs = randi(object.nImages); r.stimulus = rs;
+			object.selectionOut = rs;
+			target1.selectionOut = rs;
+			rr = rs;
 			for jj = 2
-				r = randi(set{jj}.nImages);
-				while any(r == rr)
-					r = randi(set{jj}.nImages);
+				rs = randi(set{jj}.nImages);
+				while any(rs == rr)
+					rs = randi(set{jj}.nImages);
 				end
-				set{jj}.selectionOut = r;
-				rr = [rr r];
+				set{jj}.selectionOut = rs;
+				rr = [rr rs];
 			end
 
 			hide(set);
@@ -75,21 +78,22 @@ function startDragCategorisation(in)
 			tM.window.doNegation = true;
 			tM.exclusionZone = [];
 
-			res = 0; phase = 1;
-			keepRunning = true;
-			touchInit = '';
-			reachTarget = false;
-			anyTouch = false; 
+			r.keepRunning = true;
+			r.touchResponse = '';
+			r.touchInit = '';
+			r.anyTouch = false;
+			r.hldtime = false;
 			txt = '';
-			trialN = trialN + 1;
-			hldtime = false;
-			vblInit = NaN;
+			fail = false; hld = false;
 			
 			%% Initiate a trial with a touch target
-			[touchInit, hldtime, anyTouch, keepRunning, dt, vblInit] = clutil.startTouchTrial(trialN, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
+			[r, dt, vblInit] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
 			%% Success at initiation
-			if matches(string(touchInit),"yes")
+			if matches(string(r.touchInit),"yes")
+				% update trial number as we enter actal trial
+				r.trialN = r.trialN + 1;
+
 				tM.window.radius = [in.targetSize/2 in.targetSize/2];
 				tM.window.init = in.trialTime;
 				tM.window.hold = in.trialTime;
@@ -97,19 +101,23 @@ function startDragCategorisation(in)
 				tM.window.X = target1.xFinalD;
 				tM.window.Y = target1.yFinalD;
 				tM.window.doNegation = false;
+
 				rect = CenterRectOnPointd([0 0 5*s.ppd 5*s.ppd],target2.xFinal,target2.yFinal);
 				tM.exclusionZone = rect;
+
 				hide(set,4);
 				show(set,[1 2 3]);
+
 				tx = [];
 				ty = [];
 				nowX = []; nowY = []; 
-				inTouch = false; anyTouch = false; 
-				reachTarget = false; exclusion = false;
+				r.inTouch = false;
+				r.reachTarget = false; r.exclusion = false;
 				flush(tM);
+
 				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-				vbl = flip(s); vblInit = vbl;
-				while ~reachTarget && ~exclusion && vbl < vblInit + in.trialTime+1
+				vbl = flip(s); r.vblInit = vbl;
+				while ~r.reachTarget && ~r.exclusion && vbl < r.vblInit + in.trialTime+1
 					if ~isempty(sbg); draw(sbg); end
 					draw(set)
 					if in.debug
@@ -120,65 +128,29 @@ function startDragCategorisation(in)
 						end
 					end
 					vbl = flip(s);
-					[success, inTouch, nowX, nowY, tx, ty, object] = clutil.processTouch(tM, in, object, target1, fix, s, inTouch, nowX, nowY, tx, ty);
-					if tM.eventPressed; anyTouch = true; end
-					if success==true; reachTarget = true; end
-					if success == -100; exclusion = true; reachTarget = false; end
+					[success, r.inTouch, nowX, nowY, tx, ty, object] = clutil.processTouch(tM, in, object, target1, fix, s, r.inTouch, nowX, nowY, tx, ty);
+					if tM.eventPressed; r.anyTouch = true; end
+					if success==true; r.reachTarget = true; end
+					if success == -100; r.exclusion = true; r.reachTarget = false; end
 					txt = sprintf('Response=%i x=%.2f y=%.2f',...
-						reachTarget,tM.x,tM.y);
+						r.reachTarget, tM.x, tM.y);
 					[~,~,c] = KbCheck();
-					if c(quitKey); keepRunning = false; break; end
+					if c(quitKey); r.keepRunning = false; break; end
 				end
 
 			end
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			vblEnd = flip(s);
-			WaitSecs(0.05);
-
-			%% Get trial result
-			if reachTarget == true
-				if in.reward; giveReward(rM, in.rewardTime); end
-				dt.data.rewards = dt.data.rewards + 1;
-				fprintf('===> CORRECT :-)\n');
-				beep(a,in.correctBeep,0.1,in.audioVolume);
-				update(dt, true, phase, trialN, vblEnd-vblInit, stimulus);
-				if ~isempty(sbg); draw(sbg); end
-				drawText(s,['CORRECT! phase: ' num2str(phase)]);
-				flip(s);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs(0.5+rand);
-			elseif reachTarget == false && anyTouch == true
-				update(dt, false, phase, trialN, vblEnd-vblInit, stimulus);
-				fprintf('===> FAIL :-(\n');
-				drawBackground(s,[1 0 0]);
-				drawText(s,['FAIL! phase: ' num2str(phase)]);
-				flip(s);
-				beep(a,in.incorrectBeep,0.5,in.audioVolume);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs('YieldSecs',in.timeOut);
+			if fail || hld == -100 || matches(r.touchResponse,'no')
+				r.result = 0;
+			elseif matches(r.touchResponse,'yes')
+				r.result = 1;
 			else
-				fprintf('===> UNKNOWN :-|\n');
-				drawText(s,'UNKNOWN!');
-				if ~isempty(sbg); draw(sbg); end
-				flip(s);
-				broadcast.send(struct('task',in.task,'name',in.name,'trial',trialN,'result',dt.data.result));
-				WaitSecs(0.5+rand);
+				r.result = -1;
 			end
 
-			%% finalise this trial
-			if keepRunning == false; break; end
-			drawBackground(s,in.bg)
-			if ~isempty(sbg); draw(sbg); end
-			flip(s);
-			if ~isempty(zmq) && zmq.poll('in')
-				[cmd, ~] = zmq.receiveCommand();
-				if ~isempty(cmd) && isstruct(cmd)
-					if isfield(msg,'command') && matches(msg.command,'exittask')
-						break;
-					end
-				end
-			end
+			%% update this trials reults
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
+
 		end % while keepRunning
 
 		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);

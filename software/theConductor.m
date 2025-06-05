@@ -323,21 +323,22 @@ classdef theConductor < optickaCore
 						replyData = data; % Send back the data we received
 
 					case 'gettime'
-						replyData(1).GetSecs = GetSecs;
-						replyData(1).currentTime = datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss.SSS');
-						if isfield(data,'currentTime')
-							replyData.clientTime = data.currentTime;
-						else
-							replyData.clientTime = NaN;
-						end
-						replyDate.timeDiff = replyData.currentTime - replyData.clientTime;
+						replyData(1).comment = "PTB GetSecs and datetime";
+						replyData.remoteGetSecs = GetSecs;
 						if isfield(data,'GetSecs')
 							replyData.clientGetSecs = data.GetSecs;
 						else
 							replyData.clientGetSecs = NaN;
 						end
-						replyData.GetSecsDiff = replyData.GetSecs - replyData.clientGetSecs;
-						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.currentTime); end
+						replyData.GetSecsDiff = replyData.remoteGetSecs - replyData.clientGetSecs;
+						replyData.remoteTime = datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss.SSS');
+						if isfield(data,'currentTime')
+							replyData.clientTime = data.currentTime;
+						else
+							replyData.clientTime = NaN;
+						end
+						replyData.timeDiff = replyData.remoteTime - replyData.clientTime;
+						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.remoteTime); end
 						disp(replyData);
 						replyCommand = 'timesync_reply';
 

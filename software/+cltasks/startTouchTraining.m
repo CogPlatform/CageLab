@@ -4,8 +4,6 @@ function startTouchTraining(in)
 	prefix = 'TT';
 	r.zmq = in.zmq;
 	r.broadcast = matmoteGO.broadcast();
-	in.initSize = 5;
-	in.initPosition = [0 0];
 	
 	try
 		%% ============================subfunction for shared initialisation
@@ -121,10 +119,11 @@ function startTouchTraining(in)
 			r.touchInit = '';
 			r.touchResponse = '';
 			r.anyTouch = false;
-			txt = '';
 			r.trialN = r.trialN + 1;
 			r.hldtime = false;
 			r.vblInit = NaN;
+			txt = '';
+			fail = false; hld = false;
 			
 			fprintf('\n===> START TRIAL: %i - PHASE %i\n', r.trialN, r.phase, r.stimulus);
 			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
@@ -157,9 +156,10 @@ function startTouchTraining(in)
 				if c(quitKey); r.keepRunning = false; break; end
 			end
 
-			if matches(r.touchResponse,'yes')
-				r.result = 1;
-			elseif matches(r.touchResponse,'no')
+
+			if fail || hld == -100 || matches(r.touchResponse,'no')
+				r.result = 0;
+			elseif matches(r.touchResponse,'yes')
 				r.result = 1;
 			else
 				r.result = -1;
@@ -170,7 +170,7 @@ function startTouchTraining(in)
 
 		end % while keepRunning
 
-		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);
+		clutil.shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)

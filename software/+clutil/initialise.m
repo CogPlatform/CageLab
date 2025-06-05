@@ -62,9 +62,10 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	dt = touchData;
 	dt.name = saveName;
 	dt.subject = in.name;
-	dt.data.random = 0;
-	dt.data.rewards = 0;
-	dt.data.in = in;
+	dt.data(1).comment = [in.task ' ' in.command];
+	dt.data(1).random = 0;
+	dt.data(1).rewards = 0;
+	dt.data(1).in = in;
 
 	%% ============================settings
 	quitKey = KbName('escape');

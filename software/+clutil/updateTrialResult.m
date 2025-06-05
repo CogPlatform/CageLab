@@ -67,8 +67,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.randomRewardTimer = GetSecs;
 	else
 		update(dt, NaN, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus);
-		r.phaseN = phaseN + 1;
-		r.trialW = trialW + 1;
+		r.phaseN = r.phaseN + 1;
+		r.trialW = r.trialW + 1;
 		fprintf('===> UNKNOWN :-|\n');
 		drawText(s,'UNKNOWN!');
 		if ~isempty(sbg); draw(sbg); end

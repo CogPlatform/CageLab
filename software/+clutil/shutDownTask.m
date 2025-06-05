@@ -1,4 +1,4 @@
-function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, trialN)
+function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
 	%V1.04
 	drawText(s, 'FINISHED!');
 	flip(s);
@@ -20,9 +20,9 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp('=========================================');
 	tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
 	fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
-	cor = sum(dt.data.result==true);
-	incor = sum(dt.data.result==false);
-	fprintf('  Total Trials: %i\n', trialN);
+	cor = sum(dt.data.result==1);
+	incor = sum(dt.data.result~=1);
+	fprintf('  Total Trials: %i\n', r.trialN);
 	fprintf('  Correct Trials: %i\n', cor);
 	fprintf('  Incorrect Trials: %i\n', incor);
 	fprintf('  Free Rewards: %i\n', dt.data.random);
@@ -34,7 +34,8 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp('=========================================');
 	save('-v7', saveName, 'dt');
 	save('-v7', "~/lastTaskRun.mat", 'dt');
-	disp('Done!!!');
+	disp('Done (and a copy saved to ~/lastTaskRun.mat)!!!');
 	disp(''); disp(''); disp('');
+	if in.remote == false; dt.plot; end
 	WaitSecs(0.5);
 end

@@ -4,7 +4,7 @@ function startMatchToSample(in)
 	prefix = 'MTS';
 	r.zmq = in.zmq;
 	r.broadcast = matmoteGO.broadcast();
-
+	
 	try
 		%% ============================subfunction for shared initialisation
 		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
@@ -135,17 +135,17 @@ function startMatchToSample(in)
 					show(set,[1 2 3 4 5 6 7]);
 			end
 			
-			rr = randi(target1.nImages); r.stimulus = rr;
-			target1.selectionOut = rr;
-			target2.selectionOut = rr;
-			rrn = rr;
+			rs = randi(target1.nImages); r.stimulus = rs;
+			target1.selectionOut = rs;
+			target2.selectionOut = rs;
+			rr = rs;
 			for jj = 4:7
-				rr = randi(set{jj}.nImages);
-				while any(rr == rrn)
-					rr = randi(set{jj}.nImages);
+				rn = randi(set{jj}.nImages);
+				while any(rn == rr)
+					rn = randi(set{jj}.nImages);
 				end
-				set{jj}.selectionOut = rr;
-				rrn = [rrn r];
+				set{jj}.selectionOut = rn;
+				rr = [rr rn];
 			end
 
 			update(set);
@@ -164,14 +164,16 @@ function startMatchToSample(in)
 			r.touchResponse = '';
 			r.touchInit = '';
 			r.anyTouch = false;
-			txt = '';
-			r.trialN = r.trialN + 1;
 			r.hldtime = false;
+			txt = '';
+			fail = false; hld = false;
 			
 			%% Initiate a trial with a touch target
-			[r, dt, vblInit] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, hldtime, anyTouch, quitKey, keepRunning, dt);
+			[r, dt, vblInit] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
 			if matches(string(r.touchInit),"yes")
+				% update trial number as we enter actal trial
+				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
 				[x,y] = set.getFixationPositions;
 				tM.window.radius = target2.size/2;
@@ -200,20 +202,20 @@ function startMatchToSample(in)
 				end
 			end
 
-			if matches(r.touchResponse,'yes')
-				r.result = 1;
-			elseif matches(r.touchResponse,'no')
+			if fail || hld == -100 || matches(r.touchResponse,'no')
+				r.result = 0;
+			elseif matches(r.touchResponse,'yes')
 				r.result = 1;
 			else
 				r.result = -1;
 			end
 
 			%% update this trials reults
-			[dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
 			
 		end % while keepRunning
-
-		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);
+		target = [];
+		clutil.shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)

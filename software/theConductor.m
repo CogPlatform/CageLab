@@ -111,12 +111,11 @@ classdef theConductor < optickaCore
 
 			maxRetries = 5;
 			for retry = 1:maxRetries
-				try
-					% send request
-					response = me.sendRequest(request, cmdProxyUrl);
+				response = me.sendRequest(request, cmdProxyUrl);
+				if ~isempty(response)
 					me.handleResponse(response);
 					break;
-				catch
+				else
 					if retry == maxRetries
 						error('request failed, reached maximum retry count (%d times)', maxRetries);
 					else

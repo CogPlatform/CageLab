@@ -31,6 +31,7 @@ function startTouchTraining(in)
 		r.randomRewardTimer = GetSecs;
 		r.rRect = rtarget.mvRect;
 		r.result = -1;
+		r.value = NaN;
 		r.vblInit = NaN;
 
 		%% ============================steps table
@@ -115,6 +116,7 @@ function startTouchTraining(in)
 			update(target);
 
 			r.result = -1;
+			r.value = NaN;
 			r.keepRunning = true;
 			r.touchInit = '';
 			r.touchResponse = '';

@@ -65,6 +65,7 @@ function startMatchToSample(in)
 		r.randomRewardTimer = GetSecs;
 		r.rRect = rtarget.mvRect;
 		r.result = -1;
+		r.value = NaN;
 		r.vblInit = NaN;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -40,7 +40,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs(0.5+rand);
 	elseif r.result == 1
 		disp(r);
-		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus);
+		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
 		if in.reward; giveReward(rM, 500); end
 		dt.data.rewards = dt.data.rewards + 1;
 		fprintf('===> CORRECT :-)\n');
@@ -54,7 +54,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs(0.5+rand);
 		r.randomRewardTimer = GetSecs;
 	elseif r.result == 0
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus);
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
 		fprintf('===> FAIL :-(\n');
@@ -66,7 +66,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs('YieldSecs',in.timeOut);
 		r.randomRewardTimer = GetSecs;
 	else
-		update(dt, NaN, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus);
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
 		fprintf('===> UNKNOWN :-|\n');

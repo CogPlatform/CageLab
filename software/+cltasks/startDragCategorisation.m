@@ -140,6 +140,7 @@ function startDragCategorisation(in)
 
 			end
 
+			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
@@ -153,7 +154,8 @@ function startDragCategorisation(in)
 
 		end % while keepRunning
 
-		clutil.shutDownTask(s, sbg, fix, set, target1, target2, tM, rM, saveName, dt, in, trialN);
+		target = [];
+		clutil.shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)

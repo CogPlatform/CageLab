@@ -202,6 +202,7 @@ function startMatchToSample(in)
 				end
 			end
 
+			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')

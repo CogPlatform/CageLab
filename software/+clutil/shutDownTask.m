@@ -36,6 +36,6 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	save('-v7', "~/lastTaskRun.mat", 'dt');
 	disp('Done (and a copy saved to ~/lastTaskRun.mat)!!!');
 	disp(''); disp(''); disp('');
-	if in.remote == false; dt.plot; end
+	if in.remote == false; dt.plotData; end
 	WaitSecs(0.5);
 end

@@ -110,8 +110,21 @@ classdef theConductor < optickaCore
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, me.headers, msgBody);
 			
 			% send request
-			response = me.sendRequest(request, cmdProxyUrl);
-			me.handleResponse(response);
+			maxRetries = 5;
+			for retry = 1:maxRetries
+				response = me.sendRequest(request, cmdProxyUrl);
+				if ~isempty(response)
+					me.handleResponse(response);
+					break;
+				else
+					if retry == maxRetries
+						error('request failed, reached maximum retry count (%d times)', maxRetries);
+					else
+						warning('request failed, retrying (%d/%d)', retry, maxRetries);
+					end
+
+				end
+			end
 		end
 
 		% ===================================================================

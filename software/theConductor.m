@@ -8,7 +8,7 @@
 %> Copyright ©2014-2025 Ian Max Andolina — released: LGPL3, see LICENCE.md
 % ========================================================================
 classdef theConductor < optickaCore
-	
+
 	properties
 		%> run the zmq server immediately?
 		runNow = false
@@ -51,10 +51,10 @@ classdef theConductor < optickaCore
 	methods
 		% ===================================================================
 		function me = theConductor(varargin)
-		%> @brief 
-		%> @details 
-		%> @note 
-		% ===================================================================	
+			%> @brief
+			%> @details
+			%> @note
+			% ===================================================================
 			args = optickaCore.addDefaults(varargin,struct('name','theConductor'));
 			me=me@optickaCore(args); %superclass constructor
 			me.parseArgs(args,me.allowedProperties); %check remaining properties from varargin
@@ -69,17 +69,17 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function run(me)
-		%> @brief Enters a loop to continuously receive and process commands.
-		%> @details This method runs a `while` loop that repeatedly calls
-		%>   `receiveCommand(me, false)` to wait for incoming commands without
-		%>   sending an automatic 'ok'. Based on the received `command`, it
-		%>   performs specific actions (e.g., echo, gettime) and sends an
-		%>   appropriate reply using `sendObject`. The loop terminates upon
-		%>   receiving an 'exit' or 'quit' command.
-		%> @note This is typically used for server-like roles (e.g., REP sockets)
-		%>   that need to handle various client requests. Includes short pauses
-		%>   using `WaitSecs` to prevent busy-waiting.
-		% ===================================================================
+			%> @brief Enters a loop to continuously receive and process commands.
+			%> @details This method runs a `while` loop that repeatedly calls
+			%>   `receiveCommand(me, false)` to wait for incoming commands without
+			%>   sending an automatic 'ok'. Based on the received `command`, it
+			%>   performs specific actions (e.g., echo, gettime) and sends an
+			%>   appropriate reply using `sendObject`. The loop terminates upon
+			%>   receiving an 'exit' or 'quit' command.
+			%> @note This is typically used for server-like roles (e.g., REP sockets)
+			%>   that need to handle various client requests. Includes short pauses
+			%>   using `WaitSecs` to prevent busy-waiting.
+			% ===================================================================
 			cd(me.paths.parent);
 			fprintf('\n\n===> The Conductor is Initiating... ===\n');
 			if exist('conductorData.json','file')
@@ -104,14 +104,26 @@ classdef theConductor < optickaCore
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
 			cmdProxyUrl.Path = {"cmds", "proxies"};
-			
+
 			msg = struct('nickname', 'matlab', 'hostname', 'localhost', "port", me.port);
 			msgBody = matlab.net.http.MessageBody(msg);
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, me.headers, msgBody);
-			
-			% send request
-			response = me.sendRequest(request, cmdProxyUrl);
-			me.handleResponse(response);
+
+			maxRetries = 5;
+			for retry = 1:maxRetries
+				try
+					% send request
+					response = me.sendRequest(request, cmdProxyUrl);
+					me.handleResponse(response);
+					break;
+				catch
+					if retry == maxRetries
+						error('request failed, reached maximum retry count (%d times)', maxRetries);
+					else
+						warning('request failed, retrying (%d/%d)', retry, maxRetries);
+					end
+				end
+			end
 		end
 
 		% ===================================================================
@@ -121,12 +133,12 @@ classdef theConductor < optickaCore
 			cmdProxyUrl.Path = ["cmds", "proxies", "matlab"];
 
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.DELETE);
-			
+
 			% send request
 			response = me.sendRequest(request, cmdProxyUrl);
 			me.handleResponse(response);
 		end
-		
+
 		% ===================================================================
 		function response = sendRequest(~, request, uri)
 			opts = matlab.net.http.HTTPOptions;
@@ -140,14 +152,14 @@ classdef theConductor < optickaCore
 				response = [];
 			end
 		end
-		
+
 		% ===================================================================
 		function response = handleResponse(~, response)
 			% handle HTTP response based on status code
 			if isempty(response)
 				return;
 			end
-			
+
 			switch response.StatusCode
 				case matlab.net.http.StatusCode.OK
 					disp('===> theConductor: OK')
@@ -172,15 +184,15 @@ classdef theConductor < optickaCore
 						warning("theConductor:noHandshake", 'No handshake message received');
 					end
 					msgStr = native2unicode(msgBytes, 'UTF-8');
-					try 
+					try
 						receivedMsg = jsondecode(msgStr);
-						fprintf('===> theConductor Received:\n%s\n', receivedMsg.request); 
+						fprintf('===> theConductor Received:\n%s\n', receivedMsg.request);
 					end %#ok<*TRYNC>
 					if isstruct(receivedMsg) && strcmpi(receivedMsg.request, 'Hello')
 						response = struct('response', 'World');
 						responseStr = jsonencode(response);
 						responseBytes = unicode2native(responseStr, 'UTF-8');
-						fprintf('===> theConductor Replying:\n%s\n', 'World'); 
+						fprintf('===> theConductor Replying:\n%s\n', 'World');
 						me.zmq.send(responseBytes);
 						success = true;
 					else
@@ -199,12 +211,12 @@ classdef theConductor < optickaCore
 			try closeProxy(me); end
 			try close(me.zmq); end
 		end
-		
+
 		% ===================================================================
 		function delete(me)
 			close(me);
 		end
-		
+
 
 	end
 
@@ -212,17 +224,17 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function process(me)
-		%> @brief Enters a loop to continuously receive and process commands.
-		%> @details This method runs a `while` loop that repeatedly calls
-		%>   `receiveCommand(me, false)` to wait for incoming commands without
-		%>   sending an automatic 'ok'. Based on the received `command`, it
-		%>   performs specific actions (e.g., echo, gettime) and sends an
-		%>   appropriate reply using `sendObject`. The loop terminates upon
-		%>   receiving an 'exit' or 'quit' command.
-		%> @note This is typically used for server-like roles (e.g., REP sockets)
-		%>   that need to handle various client requests. Includes short pauses
-		%>   using `WaitSecs` to prevent busy-waiting.
-		% ===================================================================
+			%> @brief Enters a loop to continuously receive and process commands.
+			%> @details This method runs a `while` loop that repeatedly calls
+			%>   `receiveCommand(me, false)` to wait for incoming commands without
+			%>   sending an automatic 'ok'. Based on the received `command`, it
+			%>   performs specific actions (e.g., echo, gettime) and sends an
+			%>   appropriate reply using `sendObject`. The loop terminates upon
+			%>   receiving an 'exit' or 'quit' command.
+			%> @note This is typically used for server-like roles (e.g., REP sockets)
+			%>   that need to handle various client requests. Includes short pauses
+			%>   using `WaitSecs` to prevent busy-waiting.
+			% ===================================================================
 			stop = false; stopMATLAB = false;
 			fprintf('\n\n===> theConductor: Starting command receive loop... ===\n\n');
 			while ~stop
@@ -393,7 +405,7 @@ classdef theConductor < optickaCore
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
 					end
 				end
-				
+
 			end
 
 			fprintf('\n===> theConductor: Command receive loop finished.\n');

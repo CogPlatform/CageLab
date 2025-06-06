@@ -1,0 +1,15 @@
+[Unit]
+Description=Disable an xinput device at startup
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/toggleInput "disable" "ILITEK-TP"
+# Environment="DISPLAY=%m"
+# Or use: Environment="DISPLAY=%m" if you're not always on :0
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -115,6 +115,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	if ~isempty(r.zmq) && r.zmq.poll('in')
 		[cmd, ~] = r.zmq.receiveCommand();
 		if ~isempty(cmd) && isstruct(cmd)
+			fprintf('\n---> update trial result: received command:\n');
+			disp(cmd);
 			if isfield(msg,'command') && matches(msg.command,'exittask')
 				r.keepRunning = false; return;
 			end

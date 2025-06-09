@@ -10,6 +10,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		tt = vblEnd - r.randomRewardTimer;
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
 			WaitSecs(rand/2);
+			rtarget.mvRect = in.rRect;
 			for i = 0:round(s.screenVals.fps/3)
 				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 				draw(rtarget);
@@ -17,7 +18,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 				inc = sin(i*0.2)/2 + 1;
 				if inc <=0; inc =0.01; end
 				rtarget.angleOut = rtarget.angleOut+0.5;
-				rtarget.mvRect = ScaleRect(rRect, inc, inc);
+				rtarget.mvRect = ScaleRect(rtarget.mvRect, inc, inc);
 				rtarget.mvRect = CenterRect(rtarget.mvRect,s.screenVals.winRect);
 			end
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
@@ -113,11 +114,16 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	if ~isempty(sbg); draw(sbg); end
 	flip(s);
 	if ~isempty(r.zmq) && r.zmq.poll('in')
-		[cmd, ~] = r.zmq.receiveCommand();
-		if ~isempty(cmd) && isstruct(cmd)
-			fprintf('\n---> update trial result: received command:\n');
-			disp(cmd);
-			if isfield(msg,'command') && matches(msg.command,'exittask')
+		[cmd, dat] = r.zmq.receiveCommand();
+		if ischar(cmd); cmd = string(cmd); end
+		fprintf('\n---> Update trial result: received command:\n');
+		disp(cmd);
+		if ~isempty(dat) && isstruct(dat) && isfield(dat,'timeStamp')
+			fprintf('---> Command sent %.1f secs ago\n',GetSecs-dat.timeStamp);
+		end
+		if ~isempty(cmd) 
+			if (isstring(cmd) && matches(cmd,'exittask') || (isfield(cmd,'command') && matches(cmd.command,'exittask'))
+				fprintf('---> Exit task Triggered...\n\n');
 				r.keepRunning = false; return;
 			end
 		end

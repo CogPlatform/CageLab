@@ -1,9 +1,9 @@
 function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
 	%V1.04
-	drawText(s, 'FINISHED!');
-	flip(s);
+	if ~isempty(sbg); draw(sbg); end
+	drawTextNow(s, 'FINISHED!');
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
-	disp(set)
+	try touchManager.xinput(tM.deviceName, false); end
 	if exist('sbg','var') && ~isempty(sbg); try reset(sbg); end; end
 	if exist('fix','var'); try reset(fix); end; end
 	if exist('set','var'); try reset(set); end; end
@@ -12,7 +12,6 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	try close(s); end
 	try close(tM); end
 	try close(rM); end
-	try touchManager.xinput(tM.deviceName, false); end
 	% save trial data
 	disp('');
 	disp('=========================================');

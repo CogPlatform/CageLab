@@ -1,6 +1,5 @@
 function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initialise(in, bgName, prefix, windowed, sf)
 	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
-	pth = fileparts(which(mfilename('fullpath')));
 	windowed = [];
 	sf = [];
 
@@ -23,6 +22,7 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
 	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
+	
 	%% ============================audio
 	a = audioManager;
 	if in.debug; a.verbose = true; end
@@ -40,7 +40,11 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	if in.debug; tM.verbose = true; end
 
 	%% ============================reward
-	if in.reward; rM = PTBSimia.pumpManager(); else; rM = PTBSimia.pumpManager(true); end
+	if in.reward
+		rM = PTBSimia.pumpManager(); 
+	else %dummy mode
+		rM = PTBSimia.pumpManager(true); 
+	end
 	
 	%% ============================setup
 	sv = open(s);
@@ -51,6 +55,7 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	end
 	drawTextNow(s,'Initialising...');
 	setup(rtarget, s);
+	in.rRect = rtarget.mvRect;
 	setup(fix, s);
 	setup(tM, s);
 	createQueue(tM);
@@ -58,6 +63,8 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 
 	%% ==============================save file name
 	[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
+	in.sessionID = sessionID;
+	in.dateID = dateID;
 	saveName = [ path filesep prefix '-' name '.mat'];
 	dt = touchData;
 	dt.name = saveName;

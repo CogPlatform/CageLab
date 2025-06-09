@@ -1,5 +1,5 @@
 function startTouchTraining(in)
-	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
+	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	bgName = 'abstract1.jpg';
 	prefix = 'TT';
 	r.zmq = in.zmq;

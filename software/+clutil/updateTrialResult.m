@@ -6,21 +6,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	WaitSecs(0.05);
 
 	%% lets check the result:
-	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 5
+	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
 		tt = vblEnd - r.randomRewardTimer;
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
 			WaitSecs(rand/2);
-			rtarget.mvRect = in.rRect;
-			for i = 0:round(s.screenVals.fps/3)
-				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-				draw(rtarget);
-				flip(s);
-				inc = sin(i*0.2)/2 + 1;
-				if inc <=0; inc =0.01; end
-				rtarget.angleOut = rtarget.angleOut+0.5;
-				rtarget.mvRect = ScaleRect(rtarget.mvRect, inc, inc);
-				rtarget.mvRect = CenterRect(rtarget.mvRect,s.screenVals.winRect);
-			end
+			animateRewardTarget(0.33);
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			flip(s);
 			giveReward(rM, in.rewardTime);
@@ -40,42 +30,60 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	elseif r.anyTouch == false
 		WaitSecs(0.5+rand);
 	elseif r.result == 1
-		disp(r);
-		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
-		if in.reward; giveReward(rM, 500); end
-		dt.data.rewards = dt.data.rewards + 1;
-		fprintf('===> CORRECT :-)\n');
+
+		if in.reward; giveReward(rM, in.rewardTime); end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
+		animateRewardTarget(1);
+
+		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
+		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
+		
+		dt.data.rewards = dt.data.rewards + 1;
+		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = 0;
-		if ~isempty(sbg); draw(sbg); end
-		drawText(s,['CORRECT! phase: ' num2str(r.phase)]);
-		flip(s);
-		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
-		WaitSecs(0.5+rand);
+		
+		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
+		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
+
 	elseif r.result == 0
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
-		r.phaseN = r.phaseN + 1;
-		r.trialW = r.trialW + 1;
-		fprintf('===> FAIL :-(\n');
+
 		drawBackground(s,[1 0 0]);
-		drawText(s,['FAIL! phase: ' num2str(r.phase)]);
+		if in.debug; drawText(s,['FAIL! phase: ' num2str(r.phase)]); end
 		flip(s);
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
+
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
+		
 		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
-		WaitSecs('YieldSecs',in.timeOut);
-		r.randomRewardTimer = GetSecs;
-	else
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
+		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
-		fprintf('===> UNKNOWN :-|\n');
-		drawText(s,'UNKNOWN!');
+
+		fprintf('===> FAIL :-(\n');
+		
+		WaitSecs('YieldSecs',in.timeOut);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
+		r.randomRewardTimer = GetSecs;
+
+	else
+
+		if in.debug; drawText(s,'UNKNOWN!'); end
 		if ~isempty(sbg); draw(sbg); end
 		flip(s);
+
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
+		
+		r.phaseN = r.phaseN + 1;
+		r.trialW = r.trialW + 1;
+
+		fprintf('===> UNKNOWN :-|\n');
+		
 		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
+
 		WaitSecs('YieldSecs',in.timeOut);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
 		r.randomRewardTimer = GetSecs;
 	end
 
@@ -84,8 +92,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.trialW = 0;
 		if r.phase < 1; r.phase = 1; end
 		if r.phase > 20; r.phase = 20; end
-		if matches(in.task, 'Simple') && r.phase > 9; r.phase = 9; end
-		fprintf('===> Phase update: %i\n',r.phase);
+		if matches(in.taskType, 'Simple') && r.phase > 9; r.phase = 9; end
+		fprintf('===> Step Back Phase update: %i\n',r.phase);
 	elseif matches(in.task, 'train') && r.trialN >= in.stepForward
 		if length(dt.data.result) >= in.stepForward
 			r.res = sum(dt.data.result(end - (in.stepForward-1):end)) / in.stepForward;
@@ -104,7 +112,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			if r.phase < 1; r.phase = 1; end
 			if r.phase > 20; r.phase = 20; end
 			if matches(in.task, 'Simple') && r.phase > 9; r.phase = 9; end
-			fprintf('===> Phase update: %i\n',r.phase);
+			fprintf('===> Step Forward Phase update: %i\n',r.phase);
 		end
 	end
 
@@ -122,11 +130,32 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			fprintf('---> Command sent %.1f secs ago\n',GetSecs-dat.timeStamp);
 		end
 		if ~isempty(cmd) 
-			if (isstring(cmd) && matches(cmd,'exittask') || (isfield(cmd,'command') && matches(cmd.command,'exittask'))
+			if (isstring(cmd) && matches(cmd,'exittask')) || (isfield(cmd,'command') && matches(cmd.command,'exittask'))
 				fprintf('---> Exit task Triggered...\n\n');
 				r.keepRunning = false; return;
 			end
 		end
+	end
+
+	function animateRewardTarget(time)
+		frames = round(time * s.screenVals.fps);
+		rtarget.mvRect = r.rRect;
+		rtarget.angleOut = 0;
+		rtarget.alphaOut = 0;
+		for i = 0:frames
+			inc = sin(i*0.25)/2;
+			rtarget.angleOut = rtarget.angleOut + (inc * 5);
+			%rect = ScaleRect(rtarget.mvRect, inc, inc);
+			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
+			draw(rtarget);
+			drawText(s,[num2str(i) '  ' num2str(inc) '  ' num2str(rtarget.angleOut)]);
+			flip(s);
+			rtarget.alphaOut = rtarget.alphaOut + 0.1;
+			if rtarget.alphaOut > 1; rtarget.alphaOut = 1; end
+		end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
+		flip(s);
 	end
 
 end

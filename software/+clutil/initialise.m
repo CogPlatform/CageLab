@@ -1,4 +1,4 @@
-function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initialise(in, bgName, prefix, windowed, sf)
+function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix, windowed, sf)
 	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
 	windowed = [];
 	sf = [];
@@ -19,7 +19,7 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 	end
 
 	%% s============================stimuli
-	rtarget = imageStimulus('size', 5, 'colour', [0 1 0], 'filePath', 'star.png');
+	rtarget = imageStimulus('colour', [0 1 0], 'filePath', 'star.png');
 	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
@@ -54,8 +54,13 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = initiali
 		draw(sbg);
 	end
 	drawTextNow(s,'Initialising...');
+	
+	rtarget.size = 5;
+	rtarget.xPosition = sv.rightInDegrees - 6;
+	rtarget.yPosition = sv.topInDegrees + 6;
 	setup(rtarget, s);
 	in.rRect = rtarget.mvRect;
+
 	setup(fix, s);
 	setup(tM, s);
 	createQueue(tM);

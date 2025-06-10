@@ -7,7 +7,7 @@ function startTouchTraining(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')

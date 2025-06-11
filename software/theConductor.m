@@ -17,7 +17,7 @@ classdef theConductor < optickaCore
 		%> port to bind to
 		port = 6666
 		%> time in seconds to wait before polling for new messages?
-		loopTime = 0.005
+		loopTime = 0.01
 		%>
 		verbose = true
 	end

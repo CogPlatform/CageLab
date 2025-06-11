@@ -58,6 +58,7 @@ function startMatchToSample(in)
 		%% ============================ run variables
 		r.keepRunning = true;
 		r.phase = in.phase;
+		r.loopN = 0;
 		r.trialN = 0;
 		r.trialW = 0;
 		r.phaseN = 0;
@@ -161,6 +162,7 @@ function startMatchToSample(in)
 			tM.window.doNegation = true;
 			tM.exclusionZone = [];
 
+			r.loopN = r.loopN + 1;
 			r.keepRunning = true;
 			r.touchResponse = '';
 			r.touchInit = '';

@@ -36,7 +36,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		animateRewardTarget(1);
 
 		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
-		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
 		
 		dt.data.rewards = dt.data.rewards + 1;
 		
@@ -55,8 +54,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
 
 		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
-		
-		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
@@ -79,8 +76,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.trialW = r.trialW + 1;
 
 		fprintf('===> UNKNOWN :-|\n');
-		
-		r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'result',r.result));
 
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
@@ -137,6 +132,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
+	r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'loop',r.loopN,...
+		'rewards', dt.data.rewards, 'random',dt.data.random, 'result',r.result));
+
 	function animateRewardTarget(time)
 		frames = round(time * s.screenVals.fps);
 		rtarget.mvRect = r.rRect;
@@ -149,7 +147,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 			draw(rtarget);
-			drawText(s,[num2str(i) '  ' num2str(inc) '  ' num2str(rtarget.angleOut)]);
 			flip(s);
 			rtarget.alphaOut = rtarget.alphaOut + 0.1;
 			if rtarget.alphaOut > 1; rtarget.alphaOut = 1; end

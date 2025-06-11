@@ -1,3 +1,17 @@
+# User service for disabling an xinput device at startup
+# https://github.com/CogPlatform/Setup/blob/main/config/toggleInput
+#
+# Place this file in $HOME/.config/systemd/user/toggleInput.service
+# and the script in /usr/local/bin/toggleInput
+# Make sure to give the script executable permissions:
+# chmod +x /usr/local/bin/toggleInput
+# To enable the service, run the following commands:
+# mkdir -p $HOME/.config/systemd/user
+# cp toggleInput.service $HOME/.config/systemd/user
+# systemctl --user daemon-reload
+# systemctl --user enable toggleInput.service
+# systemctl --user start toggleInput.service
+
 [Unit]
 Description=Disable an xinput device at startup
 After=graphical-session.target
@@ -6,8 +20,7 @@ Wants=graphical-session.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/toggleInput "disable" "ILITEK-TP"
-# Environment="DISPLAY=%m"
-# Or use: Environment="DISPLAY=%m" if you're not always on :0
+# Environment="DISPLAY=%m" if you're not always on :0
 Restart=on-failure
 RestartSec=5
 

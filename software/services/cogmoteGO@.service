@@ -1,0 +1,17 @@
+# See https://github.com/Ccccraz/cogmoteGO for details
+# This file is part of cogmoteGO, a service for remote neuroexperiments.
+[Unit]
+Description="air traffic control" for remote neuroexperiments
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/cogmoteGO
+User=%i
+Restart=always
+RestartSec=10
+StartLimitInterval=50
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

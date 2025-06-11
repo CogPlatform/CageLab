@@ -33,7 +33,7 @@ if tM.eventAvail % check we have touch event[s]
 		end
 		if ~firstRun
 			success = checkTouchWindows(tM,[],false);
-			if success == true; fprintf('\nYAAAAAY %i\n',success); end
+			if in.debug && success == true; fprintf('\nYAAAAAY %i\n',success); end
 		end
 	end
 end

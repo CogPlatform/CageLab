@@ -31,34 +31,42 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs(0.5+rand);
 	elseif r.result == 1
 
-		if in.reward; giveReward(rM, in.rewardTime); end
+		if in.reward
+			giveReward(rM, in.rewardTime);
+			dt.data.rewards = dt.data.rewards + 1;
+		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
+		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
+		r.correctRate = getCorrectRate();
+		r.txt = getResultsText();
+
 		animateRewardTarget(1);
 
-		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
-		
-		dt.data.rewards = dt.data.rewards + 1;
+		fprintf('===> CORRECT :-) %s\n',r.txt);
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = 0;
 		
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
+		flip(s);
 		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
 
 	elseif r.result == 0
 
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
+		r.correctRate = getCorrectRate();
+		r.txt = getResultsText();
+
 		drawBackground(s,[1 0 0]);
-		if in.debug; drawText(s,['FAIL! phase: ' num2str(r.phase)]); end
+		if in.debug; drawText(s,r.txt); end
 		flip(s);
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
-
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
 
-		fprintf('===> FAIL :-(\n');
+		fprintf('===> FAIL :-( %s\n',r.txt);
 		
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
@@ -66,40 +74,38 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	else
 
-		if in.debug; drawText(s,'UNKNOWN!'); end
+		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
+		r.correctRate = getCorrectRate();
+		r.txt = getResultsText();
+
+		if in.debug; drawText(s,r.txt); end
 		if ~isempty(sbg); draw(sbg); end
 		flip(s);
-
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
 
-		fprintf('===> UNKNOWN :-|\n');
+		fprintf('===> UNKNOWN :-| %s\n',r.txt);
 
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
 		r.randomRewardTimer = GetSecs;
 	end
 
-	if matches(in.task, 'train') && r.trialW > 4
+	if matches(in.task, 'train') && r.trialW >= in.stepBack
 		r.phase = r.phase - 1;
 		r.trialW = 0;
+		r.phaseN = 0;
 		if r.phase < 1; r.phase = 1; end
 		if r.phase > 20; r.phase = 20; end
 		if matches(in.taskType, 'Simple') && r.phase > 9; r.phase = 9; end
 		fprintf('===> Step Back Phase update: %i\n',r.phase);
 	elseif matches(in.task, 'train') && r.trialN >= in.stepForward
-		if length(dt.data.result) >= in.stepForward
-			r.res = sum(dt.data.result(end - (in.stepForward-1):end)) / in.stepForward;
-		else 
-			r.res = [];
-		end
-		fprintf('===> Performance: %i @ Phase: %i\n', r.res, r.phase);
+		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
-			if ~isempty(r.res) && r.res >= 0.8
+			if r.correctRate >= in.stepPercent
 				r.phase = r.phase + 1;
-			elseif ~isempty(r.res) && r.res <= 0.2
+			elseif r.correctRate <= 0.2
 				r.phase = r.phase - 1;
 			end
 			r.phaseN = 0;
@@ -135,6 +141,20 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'loop',r.loopN,...
 		'rewards', dt.data.rewards, 'random',dt.data.random, 'result',r.result));
 
+
+	function txt = getResultsText()
+		txt = sprintf('Loop=%i Trial=%i CorrectRate=%.1f Rewards=%i Random=%i Result=%i',r.loopN,r.trialN,r.correctRate,dt.data.rewards,dt.data.random,r.result);
+	end
+
+	function cr = getCorrectRate()
+		if length(dt.data.result) >= in.stepForward
+			cr = dt.data.result(end - (in.stepForward-1):end);
+			cr = length(find(cr == 1)) / length(cr);
+		else 
+			cr = NaN;
+		end
+	end
+
 	function animateRewardTarget(time)
 		frames = round(time * s.screenVals.fps);
 		rtarget.mvRect = r.rRect;
@@ -146,6 +166,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			%rect = ScaleRect(rtarget.mvRect, inc, inc);
 			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
+			if in.debug; drawText(s,r.txt); end
 			draw(rtarget);
 			flip(s);
 			rtarget.alphaOut = rtarget.alphaOut + 0.1;

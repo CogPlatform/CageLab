@@ -24,6 +24,7 @@ function startTouchTraining(in)
 		%% ============================ run variables
 		r.keepRunning = true;
 		r.phase = in.phase;
+		r.correctRate = NaN;
 		r.loopN = 0;
 		r.trialN = 0;
 		r.trialW = 0;
@@ -127,10 +128,11 @@ function startTouchTraining(in)
 			r.vblInit = NaN;
 			txt = '';
 			fail = false; hld = false;
-			
-			fprintf('\n===> START Loop / Trial: %i / %i - PHASE %i\n', r.loopN, r.trialN, r.phase, r.stimulus);
-			fprintf('===> Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
 
+			fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus);
+			fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
+				tM.window.X, tM.window.Y, tM.window.radius, tM.window.init, tM.window.hold, tM.window.release);
+			
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
 			
 			WaitSecs(0.01);
@@ -150,7 +152,6 @@ function startTouchTraining(in)
 				vbl = flip(s);
 				[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
 				if tch
-					r.trialN = r.trialN + 1;
 					r.anyTouch = true;
 				end
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
@@ -162,6 +163,7 @@ function startTouchTraining(in)
 				if c(quitKey); r.keepRunning = false; break; end
 			end
 
+			if r.anyTouch; r.trialN = r.trialN + 1; end
 			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')
 				r.result = 0;

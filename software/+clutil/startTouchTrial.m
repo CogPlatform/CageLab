@@ -1,6 +1,6 @@
 function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 	% v1.02
-	fprintf('\n===> START TRIAL: %i - %i of task: %s\n', r.loopN, r.trialN, upper(in.task));
+	fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN, r.phase, r.stimulus);
 	fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
 		tM.window.X, tM.window.Y, tM.window.radius, tM.window.init, tM.window.hold, tM.window.release);
 

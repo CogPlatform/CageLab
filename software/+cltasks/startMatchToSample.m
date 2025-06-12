@@ -58,6 +58,7 @@ function startMatchToSample(in)
 		%% ============================ run variables
 		r.keepRunning = true;
 		r.phase = in.phase;
+		r.correctRate = NaN;
 		r.loopN = 0;
 		r.trialN = 0;
 		r.trialW = 0;

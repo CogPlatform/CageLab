@@ -24,13 +24,16 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = init
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
 	%% ============================audio
-	a = audioManager;
+	a = audioManager('device',in.audioDevice);
 	if in.debug; a.verbose = true; end
-	if in.audioVolume == 0 || in.audio == false; a.silentMode = true; end
-	setup(a);
-	beep(a,in.correctBeep,0.1,in.audioVolume);
-	beep(a,in.incorrectBeep,0.1,in.audioVolume);
-
+	if in.audioVolume == 0 || in.audio == false
+		a.silentMode = true; 
+	else
+		setup(a);
+		beep(a,in.correctBeep,0.1,in.audioVolume);
+		beep(a,in.incorrectBeep,0.1,in.audioVolume);
+	end
+	
 	%% ============================touch
 	tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
 		'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
@@ -77,7 +80,10 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = init
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
 	dt.data(1).random = 0;
 	dt.data(1).rewards = 0;
-	dt.data(1).in = in;
+
+	if isempty(dt.info); dt.info(1).name = dt.name; end
+	dt.info.screenVals = sv;
+	dt.info.settings = in;
 
 	%% ============================settings
 	quitKey = KbName('escape');

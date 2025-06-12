@@ -21,6 +21,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
 	cor = sum(dt.data.result==1);
 	incor = sum(dt.data.result~=1);
+	fprintf('  Total Loops: %i\n', r.loopN);
 	fprintf('  Total Trials: %i\n', r.trialN);
 	fprintf('  Correct Trials: %i\n', cor);
 	fprintf('  Incorrect Trials: %i\n', incor);
@@ -31,6 +32,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp('=========================================');
 	fprintf('===> Saving data to %s\n', saveName)
 	disp('=========================================');
+	dt.info.runInfo = r;
 	save('-v7', saveName, 'dt');
 	save('-v7', "~/lastTaskRun.mat", 'dt');
 	disp('Done (and a copy saved to ~/lastTaskRun.mat)!!!');

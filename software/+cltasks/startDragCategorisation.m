@@ -30,6 +30,7 @@ function startDragCategorisation(in)
 		%% ============================ run variables
 		r.keepRunning = true;
 		r.phase = in.phase;
+		r.correctRate = NaN;
 		r.trialN = 0;
 		r.trialW = 0;
 		r.phaseN = 0;

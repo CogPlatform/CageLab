@@ -17,7 +17,7 @@ classdef theConductor < optickaCore
 		%> port to bind to
 		port = 6666
 		%> time in seconds to wait before polling for new messages?
-		loopTime = 0.01
+		loopTime = 0.1
 		%>
 		verbose = true
 	end
@@ -32,6 +32,9 @@ classdef theConductor < optickaCore
 		%> is running
 		isRunning = false
 		%>
+		%> version
+		version
+		%> commandList
 		commandList = ["exit" "quit" "exitmatlab" "rundemo" ...
 			"run" "echo" "gettime" "syncbuffer" "commandlist" ...
 			"getlastrun" "exittask" "status"]
@@ -59,6 +62,7 @@ classdef theConductor < optickaCore
 			me=me@optickaCore(args); %superclass constructor
 			me.parseArgs(args,me.allowedProperties); %check remaining properties from varargin
 
+			me.version = cluitl.version;
 			try setupPTB(me); end
 
 			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);
@@ -81,7 +85,7 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			cd(me.paths.parent);
-			fprintf('\n\n===> The Conductor is Initiating... ===\n');
+			fprintf('\n\n===> The Conductor V%s is Initiating... ===\n', me.version);
 			if exist('conductorData.json','file')
 				j = readstruct('conductorData.json');
 				me.address = j.address;
@@ -237,7 +241,7 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			stop = false; stopMATLAB = false;
-			fprintf('\n\n===> theConductor: Starting command receive loop... ===\n\n');
+			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
 			while ~stop
 				% Call receiveCommand, but tell it NOT to send the default 'ok' reply
 				if poll(me.zmq, 'in')
@@ -287,13 +291,13 @@ classdef theConductor < optickaCore
 					case 'status'
 						fprintf('\n===> theConductor: Received status command.\n');
 						replyCommand = 'Processing';
-						replyData = {'theConductor is waiting for commands...'};
+						replyData = {sprintf('theConductor V%s is processing commands...',me.version)};
 
 					case 'run'
 						if isfield(data,'command')
 							fprintf('\n===> theConductor: Received run command: %s.\n', data.command);
 							replyCommand = 'running';
-							replyData = {'Running task...'}; % Send back the data we received
+							replyData = {'Running command...'}; % Send back the data we received
 							runCommand = true;
 						else
 							replyCommand = 'cannot run';
@@ -323,7 +327,7 @@ classdef theConductor < optickaCore
 					case 'exittask'
 						fprintf('\n===> theConductor: no task is running, cannot exit task loop.\n');
 						replyCommand = 'invalid';
-						replyData = {''};
+						replyData = {'exittask only works when running a behavioural task'};
 
 					case 'echo'
 						fprintf('\n===> theConductor: Echoing received data.\n');
@@ -369,7 +373,7 @@ classdef theConductor < optickaCore
 						% Placeholder for syncBuffer logic
 						fprintf('===> theConductor: Processing commandlist command.\n');
 						% me.flush(); % Example: maybe flush the input buffer?
-						replyCommand = 'ist of accepted commands';
+						replyCommand = sprintf('theConductor V%s: List of accepted commands',me.version);
 						replyData = me.commandList;
 
 					otherwise
@@ -392,6 +396,7 @@ classdef theConductor < optickaCore
 				if runCommand && isstruct(data) && isfield(data,'command')
 					command = data.command;
 					try
+						tt=tic;
 						if isfield(data,'args') && matches(data.args,'none')
 							fprintf('\n===> theConductor run: %s\n', command);
 							eval(command);
@@ -400,7 +405,7 @@ classdef theConductor < optickaCore
 							fprintf('\n===> theConductor run: %s\n', [command '(data)']);
 							eval([command '(data)']);
 						end
-						fprintf('\n===> theConductor run finished: %s\n', command);
+						fprintf('===> theConductor run finished in %.1f secs for: %s\n', toc(tt), command);
 						drawnow;
 					catch ME
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
@@ -425,10 +430,10 @@ classdef theConductor < optickaCore
 			if ismac || IsWin
 				Screen('Preference', 'SkipSyncTests', 2);
 			end
+			PsychDefaultSetup(2);
 			if IsLinux
 				!powerprofilesctl set performance
 			end
-			PsychDefaultSetup(2);
 		end
 
 	end

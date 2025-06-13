@@ -62,7 +62,7 @@ classdef theConductor < optickaCore
 			me=me@optickaCore(args); %superclass constructor
 			me.parseArgs(args,me.allowedProperties); %check remaining properties from varargin
 
-			me.version = cluitl.version;
+			me.version = clutil.version;
 			try setupPTB(me); end
 
 			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);

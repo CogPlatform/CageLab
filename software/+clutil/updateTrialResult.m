@@ -36,7 +36,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			dt.data.rewards = dt.data.rewards + 1;
 		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
-		update(dt, true, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'correct',[],[],r.value);
+		update(dt, true, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'correct',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -54,7 +54,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	elseif r.result == 0
 
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -74,7 +74,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	else
 
-		update(dt, false, r.phase, r.trialN, vblEnd - r.vblInit, r.stimulus,'unknown',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'unknown',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 

@@ -173,7 +173,7 @@ function startMatchToSample(in)
 			fail = false; hld = false;
 			
 			%% Initiate a trial with a touch target
-			[r, dt, vblInit] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
 			if matches(string(r.touchInit),"yes")
 				% update trial number as we enter actal trial
@@ -186,8 +186,8 @@ function startMatchToSample(in)
 				tM.window.release = 1;
 				tM.window.X = x;
 				tM.window.Y = y;
-				vblInit = GetSecs; vbl = vblInit;
-				while isempty(r.touchResponse) && vbl < (vblInit + in.trialTime)
+				r.vblInit = GetSecs; vbl = r.vblInit;
+				while isempty(r.touchResponse) && vbl < (r.vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
@@ -206,6 +206,8 @@ function startMatchToSample(in)
 				end
 			end
 
+			r.vblFinal = GetSecs;
+			if r.anyTouch; r.trialN = r.trialN + 1; end
 			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')
 				r.result = 0;

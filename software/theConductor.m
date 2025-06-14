@@ -285,7 +285,7 @@ classdef theConductor < optickaCore
 						me.setupPTB();
 						data = struct('command','VBLSyncTest','args','none');
 						replyCommand = 'demo_run';
-						replyData = "Running VBLSyncTest"; % Send back the data we received
+						replyData = {"Running VBLSyncTest"}; % Send back the data we received
 						runCommand = true;
 
 					case 'status'
@@ -296,12 +296,12 @@ classdef theConductor < optickaCore
 					case 'run'
 						if isfield(data,'command')
 							fprintf('\n===> theConductor: Received run command: %s.\n', data.command);
-							replyCommand = 'running';
-							replyData = {'Running command...'}; % Send back the data we received
+							replyCommand = 'running_command';
+							replyData = {sprintf('Running command %s',data.command)}; % Send back the data we received
 							runCommand = true;
 						else
-							replyCommand = 'cannot run';
-							replyData = "You must pass a struct with a command field";
+							replyCommand = 'cannot_run';
+							replyData = "You must send me a struct with a command field";
 						end
 
 					case 'getlastrun'
@@ -311,7 +311,7 @@ classdef theConductor < optickaCore
 								if isfield(tmp,'dt')
 									tmp = tmp.dt;
 								end
-								fprintf('\n===> theConductor: Received getlatrun command: ok\n');
+								fprintf('\n===> theConductor: Received getlastrun command: ok\n');
 								replyCommand = 'taskdata';
 								replyData = tmp;
 							catch ME
@@ -405,7 +405,7 @@ classdef theConductor < optickaCore
 							fprintf('\n===> theConductor run: %s\n', [command '(data)']);
 							eval([command '(data)']);
 						end
-						fprintf('===> theConductor run finished in %.1f secs for: %s\n', toc(tt), command);
+						fprintf('===> theConductor run finished in %.3f secs for: %s\n\n', toc(tt), command);
 						drawnow;
 					catch ME
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);

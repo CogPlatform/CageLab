@@ -152,6 +152,7 @@ function startTouchTraining(in)
 				vbl = flip(s);
 				[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
 				if tch
+					r.firstTouchTime = vbl;
 					r.anyTouch = true;
 				end
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
@@ -163,6 +164,7 @@ function startTouchTraining(in)
 				if c(quitKey); r.keepRunning = false; break; end
 			end
 
+			r.vblFinal = GetSecs;
 			if r.anyTouch; r.trialN = r.trialN + 1; end
 			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')

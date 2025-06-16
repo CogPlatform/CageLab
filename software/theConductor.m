@@ -97,7 +97,6 @@ classdef theConductor < optickaCore
 			handShake(me);
 			me.isRunning = true;
 			fprintf('\n===> theConductor: Running on %s:%d\n', me.address, me.port);
-			fprintf('===> theConductor: Waiting for commands...\n');
 			% Start the main command processing loop
 			process(me);
 			fprintf('\n\n===> theConductor: Run finished...\n');

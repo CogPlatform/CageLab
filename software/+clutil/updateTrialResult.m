@@ -5,6 +5,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	tM.flush;
 	WaitSecs(0.05);
 
+	r.reactionTime = r.vblFinal - r.vblInit;
+
 	%% lets check the result:
 	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
 		tt = vblEnd - r.randomRewardTimer;
@@ -36,7 +38,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			dt.data.rewards = dt.data.rewards + 1;
 		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
-		update(dt, true, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'correct',[],[],r.value);
+		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,'correct',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -54,7 +56,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	elseif r.result == 0
 
-		update(dt, false, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'incorrect',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'incorrect',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -74,7 +76,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	else
 
-		update(dt, false, r.phase, r.trialN, r.vblFinal - r.vblInit, r.stimulus,'unknown',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'unknown',[],[],r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -138,9 +140,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
-	r.broadcast.send(struct('task',in.task,'name',in.name,'trial',r.trialN,'loop',r.loopN,...
-		'rewards', dt.data.rewards, 'random',dt.data.random, 'result',r.result));
-
+	r.broadcast.send(struct('task',in.task,'name',in.name,'loop',r.loopN,'trial',r.trialN,...
+		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
+		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random));
 
 	function txt = getResultsText()
 		txt = sprintf('Loop=%i Trial=%i CorrectRate=%.1f Rewards=%i Random=%i Result=%i',r.loopN,r.trialN,r.correctRate,dt.data.rewards,dt.data.random,r.result);

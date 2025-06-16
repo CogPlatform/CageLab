@@ -6,7 +6,7 @@ function startTouchTraining(in)
 	try
 		%% ============================subfunction for shared initialisation
 		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = clutil.initialise(in, bgName, prefix);
-
+		
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
 			target = imageStimulus('size', in.maxSize, 'filePath', [in.folder filesep 'flowers'], 'crop', 'square', 'circularMask', true);
@@ -73,7 +73,7 @@ function startTouchTraining(in)
 				x = randi(p(r.phase).pos(1));
 				if rand > 0.5; x = -x; end
 				y = randi(p(r.phase).pos(1));
-				y = y / aspect;
+				y = y / r.aspect;
 				if rand > 0.5; y = -y; end
 			end
 			if length(p(r.phase).hold) == 2

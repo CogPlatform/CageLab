@@ -57,6 +57,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		setup(sbg, s);
 		draw(sbg);
 	end
+	aspect = sv.widthInDegrees / sv.heightInDegrees;
 	drawTextNow(s,'Initialising...');
 	
 	rtarget.size = 5;
@@ -112,4 +113,5 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.value = NaN;
 	r.vblInit = NaN;
 	r.txt = '';
+	r.aspect = aspect;
 end

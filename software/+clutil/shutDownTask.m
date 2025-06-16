@@ -3,7 +3,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	if ~isempty(sbg); draw(sbg); end
 	drawTextNow(s, 'FINISHED!');
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
-	try touchManager.xinput(tM.deviceName, false); end
+	try touchManager.enableTouchDevice(tM.deviceName, "disable"); end
 	if exist('sbg','var') && ~isempty(sbg); try reset(sbg); end; end
 	if exist('fix','var'); try reset(fix); end; end
 	if exist('set','var'); try reset(set); end; end
@@ -36,7 +36,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	save('-v7', saveName, 'dt');
 	save('-v7', "~/lastTaskRun.mat", 'dt');
 	disp('Done (and a copy saved to ~/lastTaskRun.mat)!!!');
-	disp(''); disp(''); disp('');
-	if in.remote == false; dt.plotData; end
+	if in.remote == false; try dt.plotData; end; end
+	disp(' . '); disp(' . '); disp(' . ');
 	WaitSecs(0.5);
 end

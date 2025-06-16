@@ -1,11 +1,12 @@
-function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix, windowed, sf)
+function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix, windowed, sf)
 	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
 	windowed = [];
 	sf = [];
 
 	% =========================== debug mode?
 	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
-		sf = kPsychGUIWindow; windowed = [0 0 1300 800]; 
+		%sf = kPsychGUIWindow; windowed = [0 0 1300 800]; 
+		PsychDebugWindowConfiguration
 	end
 	
 	%% ============================screen & background
@@ -90,6 +91,25 @@ function [s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = init
 	RestrictKeysForKbCheck(quitKey);
 	Screen('Preference','Verbosity',4);
 		
-	if ~in.debug && ~in.dummy; Priority(1); HideCursor; end
-	
+	if ~in.debug; Priority(1); end
+	if ~in.debug || ~in.dummy; HideCursor; end
+
+	%% ============================ run variables
+	r = [];
+	r.zmq = in.zmq;
+	r.broadcast = matmoteGO.broadcast();
+	r.keepRunning = true;
+	r.phase = in.phase;
+	r.correctRate = NaN;
+	r.loopN = 0;
+	r.trialN = 0;
+	r.trialW = 0;
+	r.phaseN = 0;
+	r.stimulus = 1;
+	r.randomRewardTimer = GetSecs;
+	r.rRect = rtarget.mvRect;
+	r.result = -1;
+	r.value = NaN;
+	r.vblInit = NaN;
+	r.txt = '';
 end

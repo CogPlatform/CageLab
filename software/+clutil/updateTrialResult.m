@@ -166,7 +166,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			%rect = ScaleRect(rtarget.mvRect, inc, inc);
 			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
 			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			if in.debug; drawText(s,r.txt); end
+			if in.debug && ~isempty(r.txt); drawText(s,r.txt); end
 			draw(rtarget);
 			flip(s);
 			rtarget.alphaOut = rtarget.alphaOut + 0.1;

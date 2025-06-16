@@ -1,13 +1,16 @@
 function startMatchToSample(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
-	bgName = 'abstract2.jpg';
-	prefix = 'MTS';
-	r.zmq = in.zmq;
-	r.broadcast = matmoteGO.broadcast();
+	if matches(in.task,'mts')
+		bgName = 'abstract2.jpg';
+		prefix = 'MTS';
+	else
+		bgName = 'abstract3.jpg';
+		prefix = 'DMTS';
+	end
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		switch lower(in.object)
@@ -51,24 +54,11 @@ function startMatchToSample(in)
 		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
 		set.fixationChoice = 3;
 
+		if matches(in.task,'dmts')
+
 		%% ============================ custom stimuli setup
 		setup(fix, s);
 		setup(set, s);
-
-		%% ============================ run variables
-		r.keepRunning = true;
-		r.phase = in.phase;
-		r.correctRate = NaN;
-		r.loopN = 0;
-		r.trialN = 0;
-		r.trialW = 0;
-		r.phaseN = 0;
-		r.stimulus = 1;
-		r.randomRewardTimer = GetSecs;
-		r.rRect = rtarget.mvRect;
-		r.result = -1;
-		r.value = NaN;
-		r.vblInit = NaN;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -2,12 +2,10 @@ function startDragCategorisation(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
 	bgName = 'abstract4.jpg';
 	prefix = 'DCAT';
-	r.zmq = in.zmq;
-	r.broadcast = matmoteGO.broadcast();
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 		
 		%% ============================task specific figures
 		object = imageStimulus('name','object', 'size', in.targetSize, 'filePath', ...
@@ -26,20 +24,6 @@ function startDragCategorisation(in)
 
 		%% ============================ custom stimuli setup
 		setup(set, s);
-
-		%% ============================ run variables
-		r.keepRunning = true;
-		r.phase = in.phase;
-		r.correctRate = NaN;
-		r.trialN = 0;
-		r.trialW = 0;
-		r.phaseN = 0;
-		r.stimulus = 1;
-		r.randomRewardTimer = GetSecs;
-		r.rRect = rtarget.mvRect;
-		r.result = -1;
-		r.value = NaN;
-		r.vblInit = NaN;
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

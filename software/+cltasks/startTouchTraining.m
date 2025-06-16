@@ -2,12 +2,10 @@ function startTouchTraining(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	bgName = 'abstract1.jpg';
 	prefix = 'TT';
-	r.zmq = in.zmq;
-	r.broadcast = matmoteGO.broadcast();
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = clutil.initialise(in, bgName, prefix);
+		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
@@ -21,62 +19,47 @@ function startTouchTraining(in)
 		%% ============================ custom stimuli setup
 		setup(target, s);
 
-		%% ============================ run variables
-		r.keepRunning = true;
-		r.phase = in.phase;
-		r.correctRate = NaN;
-		r.loopN = 0;
-		r.trialN = 0;
-		r.trialW = 0;
-		r.phaseN = 0;
-		r.stimulus = 1;
-		r.randomRewardTimer = GetSecs;
-		r.rRect = rtarget.mvRect;
-		r.result = -1;
-		r.value = NaN;
-		r.vblInit = NaN;
-
 		%% ============================steps table
 		sz = linspace(in.maxSize, in.minSize, 5);
 		if matches(in.task, 'Simple') % simple task
 			if r.phase > 9; r.phase = 9; end
 			pn = 1; p = [];
 			%size
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
 			% position
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = 11;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 11;
 		else
 			pn = 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.05; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
 			% 6
-			p(pn).size = sz(end); p(pn).hold = 0.1;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.2;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.4;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.8;   p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 1;     p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% 12
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 2; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.75; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.5; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.25; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = [0 0]; pn = pn + 1;
-			% 17
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1; p(pn).pos = 11;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 11;
+			% 10
+			p(pn).size = sz(end); p(pn).hold = 0.1;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.2;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.4;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.8;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 1;     p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			% 16
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 2;	p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.75; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.5;	p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.25; p(pn).pos = 11; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1;	p(pn).pos = 11; pn = pn + 1;
 		end
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

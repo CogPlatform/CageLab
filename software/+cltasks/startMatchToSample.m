@@ -156,13 +156,9 @@ function startMatchToSample(in)
 			update(set2);
 			
 			% reset touch window for initial touch
-			tM.window.radius = fix.size/2;
-			tM.window.init = 5;
-			tM.window.hold = 0.05;
-			tM.window.release = 1.0;
-			tM.window.X = in.initPosition(1);
-			tM.window.Y = in.initPosition(2);
-			tM.window.doNegation = true;
+			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+			tM.updateWindow(in.initPosition(1), in.initPosition(2),fix.size/2,...
+				true, [], [], 5, 0.05, 1.0);
 			tM.exclusionZone = [];
 
 			r.loopN = r.loopN + 1;
@@ -194,12 +190,9 @@ function startMatchToSample(in)
 				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
 				[x,y] = set.getFixationPositions;
-				tM.window.radius = target2.size/2;
-				tM.window.init = in.trialTime;
-				tM.window.hold = 0.05;
-				tM.window.release = 1;
-				tM.window.X = x;
-				tM.window.Y = y;
+				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+				tM.updateWindow(x, y, target2.size/2,...
+				[], [], [], in.trialTime, 0.05, 1.0);
 
 				if matches(in.task,'dmts')
 					vblInit = GetSecs; vbl = vblInit;
@@ -211,9 +204,8 @@ function startMatchToSample(in)
 						[~,~,c] = KbCheck(); if c(quitKey); r.keepRunning = false; break; end
 					end
 					if ~isempty(sbg); draw(sbg); end
-					%if in.delayDistractors; draw(set2); end
-					draw(set2);
-					vbl = flip(s);
+					if in.delayDistractors; draw(set2); end
+					flip(s);
 					WaitSecs(delayTime-sv.ifi);
 					showSet(set, 4); %just target2 and distractors
 				end

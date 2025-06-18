@@ -55,13 +55,9 @@ function startDragCategorisation(in)
 			update(set);
 			
 			% reset touch window for initial touch
-			tM.window.radius = fix.size/2;
-			tM.window.init = 5;
-			tM.window.hold = 0.05;
-			tM.window.release = 1.0;
-			tM.window.X = in.initPosition(1);
-			tM.window.Y = in.initPosition(2);
-			tM.window.doNegation = true;
+			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+			tM.updateWindow(in.initPosition(1), in.initPosition(2), fix.size/2,...
+				true, [], [], in.trialTime, 0.05, 1);
 			tM.exclusionZone = [];
 
 			r.keepRunning = true;
@@ -80,13 +76,10 @@ function startDragCategorisation(in)
 				% update trial number as we enter actal trial
 				r.trialN = r.trialN + 1;
 
-				tM.window.radius = [in.targetSize/2 in.targetSize/2];
-				tM.window.init = in.trialTime;
-				tM.window.hold = in.trialTime;
-				tM.window.release = 1.0;
-				tM.window.X = target1.xFinalD;
-				tM.window.Y = target1.yFinalD;
-				tM.window.doNegation = false;
+				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+				radius = [in.targetSize/2 in.targetSize/2];
+				tM.updateWindow(target1.xFinalD, target1.yFinalD, radius,...
+				false, [], [], in.trialTime, in.trialTime, 1.0);
 
 				rect = CenterRectOnPointd([0 0 5*s.ppd 5*s.ppd],target2.xFinal,target2.yFinal);
 				tM.exclusionZone = rect;

@@ -77,19 +77,19 @@ function startTouchTraining(in)
 				if rand > 0.5; y = -y; end
 			end
 			if length(p(r.phase).hold) == 2
-				tM.window.hold = randi(p(r.phase).hold .* 1e3) / 1e3;
+				hold = randi(p(r.phase).hold .* 1e3) / 1e3;
 			else
-				tM.window.hold = p(r.phase).hold(1);
+				hold = p(r.phase).hold(1);
 			end
 			if isa(target,'imageStimulus') && target.circularMask == false
-				tM.window.radius = [p(r.phase).size/2 p(r.phase).size/2];
+				radius = [p(r.phase).size/2 p(r.phase).size/2];
 			else
-				tM.window.radius = p(r.phase).size / 2;
+				radius = p(r.phase).size / 2;
 			end
-			tM.window.init = in.trialTime;
-			tM.window.release = p(r.phase).rel;
-			tM.window.X = x;
-			tM.window.Y = y;
+			
+			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+			tM.updateWindow(x, y, radius,...
+				[], [], [], in.trialTime, hold, p(r.phase).rel);
 
 			target.xPositionOut = x;
 			target.yPositionOut = y;

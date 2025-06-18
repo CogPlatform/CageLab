@@ -30,7 +30,11 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 	%%% Wait for release
 	while isTouch(tM)
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
-		vbl = flip(s);
+		if in.debug; drawText(s,'Please release touchscreen...'); end
+		flip(s);
 	end
+	if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+	flip(s);
+	WaitSecs('YieldSecs',0.05);
 	flush(tM);
 end

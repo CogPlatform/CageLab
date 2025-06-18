@@ -140,15 +140,20 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
+	% broadcast the data to cogmoteGO
 	r.broadcast.send(struct('task',in.task,'name',in.name,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random));
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function txt = getResultsText()
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		txt = sprintf('Loop=%i Trial=%i CorrectRate=%.1f Rewards=%i Random=%i Result=%i',r.loopN,r.trialN,r.correctRate,dt.data.rewards,dt.data.random,r.result);
 	end
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function cr = getCorrectRate()
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		if length(dt.data.result) >= in.stepForward
 			cr = dt.data.result(end - (in.stepForward-1):end);
 			cr = length(find(cr == 1)) / length(cr);
@@ -157,7 +162,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function animateRewardTarget(time)
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		frames = round(time * s.screenVals.fps);
 		rtarget.mvRect = r.rRect;
 		rtarget.angleOut = 0;

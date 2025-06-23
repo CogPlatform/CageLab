@@ -48,6 +48,7 @@ classdef theConductor < optickaCore
 
 	properties (Constant)
 		baseURI = matlab.net.URI('http://localhost:9012');
+		basePath = ["api", "cmds", "proxies"];
 		headers = [matlab.net.http.field.ContentTypeField("application/json")];
 	end
 
@@ -106,7 +107,7 @@ classdef theConductor < optickaCore
 		function createProxy(me)
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
-			cmdProxyUrl.Path = {"cmds", "proxies"};
+			cmdProxyUrl.Path = me.basePath;
 			
 			msg = struct('nickname', 'matlab', 'hostname', 'localhost', "port", me.port);
 			msgBody = matlab.net.http.MessageBody(msg);
@@ -134,7 +135,7 @@ classdef theConductor < optickaCore
 		function closeProxy(me)
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
-			cmdProxyUrl.Path = ["cmds", "proxies", "matlab"];
+			cmdProxyUrl.Path = [me.basePath, "matlab"];
 
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.DELETE);
 			

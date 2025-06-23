@@ -140,7 +140,7 @@ function startDragCategorisation(in)
 
 	catch ME
 		getReport(ME)
-		try reset(rtarget); end
+		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(set); end
 		try close(s); end

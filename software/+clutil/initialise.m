@@ -39,26 +39,26 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	%% ============================touch
 	tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
 		'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
-		'drainEvents',in.drainEvents);
+		'drainEvents',in.drainEvents,'trackID',in.trackID);
 	tM.window.doNegation = in.doNegation;
 	tM.window.negationBuffer = in.negationBuffer;
-	if in.debug; tM.verbose = true; end
+	if in.debug || in.verbose; tM.verbose = true; end
 
 	%% ============================reward
 	if in.reward
 		rM = PTBSimia.pumpManager(); 
-	else %dummy mode
+	else %dummy mode pass true to constructor
 		rM = PTBSimia.pumpManager(true); 
 	end
 	
 	%% ============================setup
-	sv = open(s);
+	sv = open(s); % open screen
 	if in.smartBackground
 		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
 		setup(sbg, s);
 		draw(sbg);
 	end
-	aspect = sv.widthInDegrees / sv.heightInDegrees;
+	
 	drawTextNow(s,'Initialising...');
 	
 	rtarget.size = 5;
@@ -83,6 +83,12 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
 	dt.data(1).random = 0;
 	dt.data(1).rewards = 0;
+	dt.data(1).times.initStart = [];
+	dt.data(1).times.initTouch = [];
+	dt.data(1).times.initRT = [];
+	dt.data(1).times.taskStart = [];
+	dt.data(1).times.taskEnd = [];
+	dt.data(1).times.taskRT = [];
 
 	if isempty(dt.info); dt.info(1).name = dt.name; end
 	dt.info.screenVals = sv;
@@ -114,5 +120,6 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.value = NaN;
 	r.vblInit = NaN;
 	r.txt = '';
-	r.aspect = aspect;
+	r.aspect = sv.widthInDegrees / sv.heightInDegrees;
+	r.quitKey = quitKey;
 end

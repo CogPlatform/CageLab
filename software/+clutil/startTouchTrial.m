@@ -11,6 +11,7 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
 	vbl = flip(s); vblInit = vbl;
+	dt.data.times.initStart(r.trialN+1) = vbl;
 	while isempty(r.touchInit) && vbl < vblInit + 5
 		if ~isempty(sbg); draw(sbg); end
 		if ~r.hldtime; draw(fix); end
@@ -20,12 +21,13 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 		end
 		vbl = flip(s);
 		[r.touchInit, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM, 'yes', 'no');
-		if tch; r.anyTouch = true; end
+		if tch; r.anyTouch = true; dt.data.times.initTouch(r.trialN+1) = vbl; end
 		[~, ~, c] = KbCheck();
 		if c(quitKey); r.keepRunning = false; break; end
 	end
 
-	fprintf('===> touchInit: <%s> hld:%i fail:%i touch:%i\n', r.touchInit, hld, fail,tch);
+	dt.data.times.initRT(r.trialN+1) = vbl - vlbInit;
+	fprintf('===> touchInit: <%s> hld:%i fail:%i touch:%i RT:%.2fs\n', r.touchInit, hld, fail,tch, vlb-vblInit);
 
 	%%% Wait for release
 	while isTouch(tM)
@@ -35,6 +37,6 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 	end
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
 	flip(s);
-	WaitSecs('YieldSecs',0.05);
 	flush(tM);
+	WaitSecs('YieldSecs',0.02);
 end

@@ -185,6 +185,7 @@ function startMatchToSample(in)
 			%% Initiate a trial with a touch target
 			[r, dt, r.vblInitT] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
+			%% start the actual task
 			if matches(string(r.touchInit),"yes")
 				% update trial number as we enter actal trial
 				r.trialN = r.trialN + 1;
@@ -221,7 +222,10 @@ function startMatchToSample(in)
 					end
 					vbl = flip(s);
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
-					if tch; r.anyTouch = true; end
+					if tch
+						r.firstTouchTime = vbl - r.vblInit;
+						r.anyTouch = true; 
+					end
 					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
 						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, se, fail, tch, ...
 						tM.window.radius,tM.window.init,tM.window.hold,tM.window.release,tM.window.X,tM.window.Y);
@@ -231,9 +235,8 @@ function startMatchToSample(in)
 			end
 
 			r.vblFinal = GetSecs;
-			if r.anyTouch; r.trialN = r.trialN + 1; end
 			r.value = hld;
-			if fail || hld == -100 || matches(r.touchResponse,'no')
+			if fail || hld == -100 || matches(r.touchResponse,'no') || matches(r.touchInit,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
 				r.result = 1;

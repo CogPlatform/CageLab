@@ -60,6 +60,7 @@ function startDragCategorisation(in)
 				true, [], [], in.trialTime, 0.05, 1);
 			tM.exclusionZone = [];
 
+			r.loopN = r.loopN + 1;
 			r.keepRunning = true;
 			r.touchResponse = '';
 			r.touchInit = '';
@@ -73,7 +74,7 @@ function startDragCategorisation(in)
 
 			%% Success at initiation
 			if matches(string(r.touchInit),"yes")
-				% update trial number as we enter actal trial
+				% update trial number as we enter actual trial
 				r.trialN = r.trialN + 1;
 
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
@@ -108,7 +109,10 @@ function startDragCategorisation(in)
 					end
 					vbl = flip(s);
 					[success, r.inTouch, nowX, nowY, tx, ty, object] = clutil.processTouch(tM, in, object, target1, fix, s, r.inTouch, nowX, nowY, tx, ty);
-					if tM.eventPressed; r.anyTouch = true; end
+					if tM.eventPressed
+						r.firstTouchTime = vbl - r.vblInit;
+						r.anyTouch = true; 
+					end
 					if success==true; r.reachTarget = true; end
 					if success == -100; r.exclusion = true; r.reachTarget = false; end
 					txt = sprintf('Response=%i x=%.2f y=%.2f',...
@@ -120,9 +124,8 @@ function startDragCategorisation(in)
 			end
 			
 			r.vblFinal = GetSecs;
-			if r.anyTouch; r.trialN = r.trialN + 1; end
 			r.value = hld;
-			if fail || hld == -100 || matches(r.touchResponse,'no')
+			if fail || hld == -100 || matches(r.touchResponse,'no') || matches(r.touchInit,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
 				r.result = 1;

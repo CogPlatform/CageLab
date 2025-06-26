@@ -1,13 +1,21 @@
 function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)		
 	
+	%% blank display
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 	vblEnd = flip(s);
-	tM.flush;
-	WaitSecs(0.05);
+	WaitSecs('YieldSecs',0.02);
 
-	r.reactionTime = r.vblFinal - r.vblInit;
+	%% register some times if subject touched
+	if r.anyTouch
+		r.reactionTime = r.vblFinal - r.vblInit;
+		dt.data.times.taskStart(r.trialN) = r.vblInit;
+		dt.data.times.taskEnd(r.trialN) = r.vblFinal;
+		dt.data.times.taskRT(r.trialN) = r.reactionTime;
+	end
 
-	%% lets check the result:
+	%% lets check the results:
+
+	%% no touch and first training phases, give some random rewards
 	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
 		tt = vblEnd - r.randomRewardTimer;
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
@@ -29,8 +37,12 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			flip(s);
 			WaitSecs(0.75+rand);
 		end
+
+	%% no touch, just wait a bit
 	elseif r.anyTouch == false
 		WaitSecs(0.5+rand);
+
+	%% correct
 	elseif r.result == 1
 
 		if in.reward
@@ -38,7 +50,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			dt.data.rewards = dt.data.rewards + 1;
 		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
-		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,'correct',[],[],r.value);
+		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,'correct',tM.xAll,tM.yAll,tM.tAll,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -54,9 +66,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
 
+	%% incorrect
 	elseif r.result == 0
 
-		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'incorrect',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'incorrect',tM.xAll,tM.yAll,tM.tAll,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -74,9 +87,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
 		r.randomRewardTimer = GetSecs;
 
+	%% otherwise
 	else
 
-		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'unknown',[],[],r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'unknown',tM.xAll,tM.yAll,tM.tAll,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -94,6 +108,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.randomRewardTimer = GetSecs;
 	end
 
+	%% logic for training starcase
 	if matches(in.task, 'train') && r.trialW >= in.stepBack
 		r.phase = r.phase - 1;
 		r.trialW = 0;
@@ -140,7 +155,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
-	% broadcast the data to cogmoteGO
+	%% broadcast the data to cogmoteGO
 	r.broadcast.send(struct('task',in.task,'name',in.name,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random));

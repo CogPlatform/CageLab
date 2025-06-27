@@ -96,7 +96,7 @@ function startDragCategorisation(in)
 				flush(tM);
 
 				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-				vbl = flip(s); r.vblInit = vbl;
+				vbl = flip(s); r.vblInit = vbl; syncTime(tM);
 				while ~r.reachTarget && ~r.exclusion && vbl < r.vblInit + in.trialTime+1
 					if ~isempty(sbg); draw(sbg); end
 					draw(set)

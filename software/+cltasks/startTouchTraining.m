@@ -123,7 +123,7 @@ function startTouchTraining(in)
 			flush(tM);
 			
 			if ~isempty(sbg); draw(sbg); end
-			vbl = flip(s); r.vblInit = vbl;
+			vbl = flip(s); r.vblInit = vbl; syncTime(tM);
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end

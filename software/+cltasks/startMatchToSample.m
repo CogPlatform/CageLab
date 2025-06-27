@@ -211,7 +211,7 @@ function startMatchToSample(in)
 					showSet(set, 4); %just target2 and distractors
 				end
 
-				r.vblInit = GetSecs; vbl = r.vblInit;
+				r.vblInit = GetSecs; vbl = r.vblInit; syncTime(tM);
 				while isempty(r.touchResponse) && vbl < (r.vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);

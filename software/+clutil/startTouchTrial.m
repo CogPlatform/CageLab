@@ -26,8 +26,9 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 		if c(quitKey); r.keepRunning = false; break; end
 	end
 
-	dt.data.times.initRT(r.trialN+1) = vbl - vlbInit;
-	fprintf('===> touchInit: <%s> hld:%i fail:%i touch:%i RT:%.2fs\n', r.touchInit, hld, fail,tch, vlb-vblInit);
+	dt.data.times.initRT(r.trialN+1) = vbl - vblInit;
+	fprintf('===> touchInit: <%s> hld:%i fail:%i touch:%i RT:%.2fs\n', ...
+		r.touchInit, hld, fail,tch, vbl - vblInit);
 
 	%%% Wait for release
 	while isTouch(tM)

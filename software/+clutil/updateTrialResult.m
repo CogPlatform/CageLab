@@ -50,7 +50,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			dt.data.rewards = dt.data.rewards + 1;
 		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
-		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,'correct',tM.xAll,tM.yAll,tM.tAll,r.value);
+		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,...
+			'correct',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -69,7 +70,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	%% incorrect
 	elseif r.result == 0
 
-		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'incorrect',tM.xAll,tM.yAll,tM.tAll,r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
+			'incorrect',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -90,7 +92,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	%% otherwise
 	else
 
-		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,'unknown',tM.xAll,tM.yAll,tM.tAll,r.value);
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
+			'unknown',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 

@@ -154,12 +154,6 @@ function startMatchToSample(in)
 
 			update(set);
 			update(set2);
-			
-			% reset touch window for initial touch
-			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
-			tM.updateWindow(in.initPosition(1), in.initPosition(2),fix.size/2,...
-				true, [], [], 5, 0.05, 1.0);
-			tM.exclusionZone = [];
 
 			r.loopN = r.loopN + 1;
 			r.keepRunning = true;
@@ -193,7 +187,7 @@ function startMatchToSample(in)
 				[x,y] = set.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				tM.updateWindow(x, y, target2.size/2,...
-				[], [], [], in.trialTime, 0.05, 1.0);
+				[], [], [], in.trialTime, in.targetHoldTime, 1.0);
 
 				if matches(in.task,'dmts')
 					vblInit = GetSecs; vbl = vblInit;

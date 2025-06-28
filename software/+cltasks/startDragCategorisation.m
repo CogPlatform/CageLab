@@ -53,12 +53,6 @@ function startDragCategorisation(in)
 			show(set,4);
 
 			update(set);
-			
-			% reset touch window for initial touch
-			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
-			tM.updateWindow(in.initPosition(1), in.initPosition(2), fix.size/2,...
-				true, [], [], in.trialTime, 0.05, 1);
-			tM.exclusionZone = [];
 
 			r.loopN = r.loopN + 1;
 			r.keepRunning = true;
@@ -80,7 +74,7 @@ function startDragCategorisation(in)
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				radius = [in.targetSize/2 in.targetSize/2];
 				tM.updateWindow(target1.xFinalD, target1.yFinalD, radius,...
-				false, [], [], in.trialTime, in.trialTime, 1.0);
+				false, [], [], in.trialTime, 60, 1.0);
 
 				rect = CenterRectOnPointd([0 0 5*s.ppd 5*s.ppd],target2.xFinal,target2.yFinal);
 				tM.exclusionZone = rect;

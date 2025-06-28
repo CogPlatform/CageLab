@@ -1,5 +1,11 @@
 function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
-	% v1.02
+	
+	% reset touch window for initial touch
+	% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+	tM.updateWindow(in.initPosition(1), in.initPosition(2),fix.size/2,...
+		true, [], [], 5, in.initHoldTime, 1.0);
+	tM.exclusionZone = [];
+
 	fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN, r.phase, r.stimulus);
 	fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
 		tM.window.X, tM.window.Y, tM.window.radius, tM.window.init, tM.window.hold, tM.window.release);

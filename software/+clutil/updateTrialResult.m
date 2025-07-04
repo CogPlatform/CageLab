@@ -7,10 +7,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	%% register some times if subject touched
 	if r.anyTouch
-		r.reactionTime = r.vblFinal - r.vblInit;
 		dt.data.times.taskStart(r.trialN) = r.vblInit;
 		dt.data.times.taskEnd(r.trialN) = r.vblFinal;
 		dt.data.times.taskRT(r.trialN) = r.reactionTime;
+		dt.data.times.firstTouch(r.trialN) = r.firstTouchTime;
 	end
 
 	%% lets check the results:
@@ -44,14 +44,14 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	%% correct
 	elseif r.result == 1
-
+		r.summary = 'correct';
 		if in.reward
 			giveReward(rM, in.rewardTime);
 			dt.data.rewards = dt.data.rewards + 1;
 		end
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
 		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,...
-			'correct',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
+			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -69,9 +69,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	%% incorrect
 	elseif r.result == 0
-
+		r.summary = 'incorrect';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
-			'incorrect',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
+			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -91,9 +91,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	%% otherwise
 	else
-
+		r.summary = 'unknown';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
-			'unknown',tM.xAll,tM.yAll,tM.tAll-tM.queueTime,r.value);
+			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 

@@ -54,17 +54,12 @@ function startDragCategorisation(in)
 
 			update(set);
 
-			r.loopN = r.loopN + 1;
-			r.keepRunning = true;
-			r.touchResponse = '';
-			r.touchInit = '';
-			r.anyTouch = false;
-			r.hldtime = false;
+			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
 			
 			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
 			%% Success at initiation
 			if matches(string(r.touchInit),"yes")
@@ -89,8 +84,10 @@ function startDragCategorisation(in)
 				r.reachTarget = false; r.exclusion = false;
 				flush(tM);
 
-				if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-				vbl = flip(s); r.vblInit = vbl; syncTime(tM);
+				vbl = GetSecs; 
+				r.vblInit = vbl + sv.ifi; %start is actually next flip
+				syncTime(tM, r.vblInit);
+
 				while ~r.reachTarget && ~r.exclusion && vbl < r.vblInit + in.trialTime+1
 					if ~isempty(sbg); draw(sbg); end
 					draw(set)
@@ -104,12 +101,12 @@ function startDragCategorisation(in)
 					vbl = flip(s);
 					[success, r.inTouch, nowX, nowY, tx, ty, object] = clutil.processTouch(tM, in, object, target1, fix, s, r.inTouch, nowX, nowY, tx, ty);
 					if tM.eventPressed
-						r.firstTouchTime = vbl - r.vblInit;
+						r.reactionTime = vbl - r.vblInit;
 						r.anyTouch = true; 
 					end
-					if success==true; r.reachTarget = true; end
+					if success == true; r.reachTarget = true; end
 					if success == -100; r.exclusion = true; r.reachTarget = false; end
-					txt = sprintf('Response=%i x=%.2f y=%.2f',...
+					txt = sprintf('Response = %i x = %.2f y = %.2f',...
 						r.reachTarget, tM.x, tM.y);
 					[~,~,c] = KbCheck();
 					if c(quitKey); r.keepRunning = false; break; end

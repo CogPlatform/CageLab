@@ -1,4 +1,4 @@
-function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix, windowed, sf)
+function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
 	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
 	windowed = [];
 	sf = [];

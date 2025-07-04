@@ -100,15 +100,7 @@ function startTouchTraining(in)
 			end
 			update(target);
 
-			r.result = -1;
-			r.value = NaN;
-			r.keepRunning = true;
-			r.touchInit = '';
-			r.touchResponse = '';
-			r.anyTouch = false;
-			r.loopN = r.loopN + 1;
-			r.hldtime = false;
-			r.vblInit = NaN;
+			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
 
@@ -123,7 +115,11 @@ function startTouchTraining(in)
 			flush(tM);
 			
 			if ~isempty(sbg); draw(sbg); end
-			vbl = flip(s); r.vblInit = vbl; syncTime(tM);
+			
+			vbl = flip(s); 
+			r.vblInit = vbl + sv.ifi; %start is actually next flip
+			syncTime(tM, r.vblInit);
+
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
@@ -135,7 +131,7 @@ function startTouchTraining(in)
 				vbl = flip(s);
 				[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
 				if tch
-					r.firstTouchTime = vbl - r.vblInit;
+					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;
 				end
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)

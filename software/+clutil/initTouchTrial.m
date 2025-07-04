@@ -1,4 +1,4 @@
-function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
+function [r, dt, vblInit] = initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 	
 	% reset touch window for initial touch
 	% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
@@ -28,7 +28,7 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 		if ~r.hldtime; draw(fix); end
 		if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 			xy = s.toPixels([tM.x tM.y]);
-			Screen('glPoint', s.win, [1 0.5 0], xy(1), xy(2), 10);
+			Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 		end
 		vbl = flip(s);
 		[r.touchInit, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM, 'yes', 'no');
@@ -54,5 +54,5 @@ function [r, dt, vblInit] = startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
 	flip(s);
 	flush(tM);
-	WaitSecs('YieldSecs',0.02);
+	WaitSecs('YieldSecs',0.01);
 end

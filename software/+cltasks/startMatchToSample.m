@@ -155,58 +155,70 @@ function startMatchToSample(in)
 			update(set);
 			update(set2);
 
-			r.loopN = r.loopN + 1;
-			r.keepRunning = true;
-			r.touchResponse = '';
-			r.touchInit = '';
-			r.anyTouch = false;
-			r.hldtime = false;
+			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
 			
 			% sampleTime and delayTime can be single or range values
 			if isscalar(in.sampleTime)
-				sampleTime = in.sampleTime;
+				r.sampleTime = in.sampleTime;
 			else
-				sampleTime = in.sampleTime(1) + (in.sampleTime(2)-in.sampleTime(1))*rand;
+				r.sampleTime = in.sampleTime(1) + (in.sampleTime(2)-in.sampleTime(1))*rand;
 			end
 			if isscalar(in.delayTime)
-				delayTime = in.delayTime;
+				r.delayTime = in.delayTime;
 			else
-				delayTime = in.delayTime(1) + (in.delayTime(2)-in.delayTime(1))*rand;
+				r.delayTime = in.delayTime(1) + (in.delayTime(2)-in.delayTime(1))*rand;
 			end
 
 			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.startTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
 
 			%% start the actual task
 			if matches(string(r.touchInit),"yes")
 				% update trial number as we enter actal trial
 				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
+				
+				if matches(in.task,'dmts')
+					vbl = GetSecs; vblInit = vbl + sv.ifi;
+					% sample time
+					while vbl <= vblInit + r.sampleTime
+						if ~isempty(sbg); draw(sbg); end
+						draw(set);
+						if in.debug; drawText(s, 'Delay period...'); end
+						vbl = flip(s);
+						if isTouch(tM)
+							r.touchResponse = 'no';
+							break
+						end
+						[~,~,c] = KbCheck(); if c(quitKey); r.keepRunning = false; break; end
+					end
+					% delay time
+					vblInit = vbl + sv.ifi;
+					while vbl <= vblInit + r.delayTime
+						if ~isempty(sbg); draw(sbg); end
+						if in.delayDistractors; draw(set2); end
+						vbl = flip(s);
+						if isTouch(tM)
+							r.touchResponse = 'no';
+							break
+						end
+					end
+					% show distractors
+					showSet(set, 4); %just target2 and distractors
+				end
+
 				[x,y] = set.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				tM.updateWindow(x, y, target2.size/2,...
 				[], [], [], in.trialTime, in.targetHoldTime, 1.0);
 
-				if matches(in.task,'dmts')
-					vblInit = GetSecs; vbl = vblInit;
-					while vbl < vblInit + sampleTime
-						if ~isempty(sbg); draw(sbg); end
-						draw(set);
-						if in.debug; drawText(s, 'Delay period...'); end
-						vbl = flip(s);
-						[~,~,c] = KbCheck(); if c(quitKey); r.keepRunning = false; break; end
-					end
-					if ~isempty(sbg); draw(sbg); end
-					if in.delayDistractors; draw(set2); end
-					flip(s);
-					WaitSecs(delayTime-sv.ifi);
-					showSet(set, 4); %just target2 and distractors
-				end
+				vbl = GetSecs; 
+				r.vblInit = vbl + sv.ifi; %start is actually next flip
+				syncTime(tM, r.vblInit);
 
-				r.vblInit = GetSecs; vbl = r.vblInit; syncTime(tM);
-				while isempty(r.touchResponse) && vbl < (r.vblInit + in.trialTime)
+				while isempty(r.touchResponse) && vbl <= (r.vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(set);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
@@ -217,7 +229,7 @@ function startMatchToSample(in)
 					vbl = flip(s);
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 					if tch
-						r.firstTouchTime = vbl - r.vblInit;
+						r.reactionTime = vbl - r.vblInit;
 						r.anyTouch = true; 
 					end
 					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...

@@ -4,8 +4,9 @@
 %>
 %> This class opens a REP ØMQ and uses a HTTP API to open a REC ØMQ with cogmoteGO
 %> It can run PTB or other tasks, designed to provide a local server for CageLab.
+%> Requires opticka https://github.com/iandol/opticka
 %>
-%> Copyright ©2014-2025 Ian Max Andolina — released: LGPL3, see LICENCE.md
+%> Copyright ©2025 Ian Max Andolina — released: LGPL3, see LICENCE.md
 % ========================================================================
 classdef theConductor < optickaCore
 	
@@ -18,7 +19,7 @@ classdef theConductor < optickaCore
 		port = 6666
 		%> time in seconds to wait before polling for new messages?
 		loopTime = 0.1
-		%>
+		%> more log output to command window?
 		verbose = true
 	end
 

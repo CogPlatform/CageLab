@@ -32,7 +32,8 @@ classdef theConductor < optickaCore
 		data
 		%> is running
 		isRunning = false
-		%>
+		%> hide the OS screen when conductor runs?
+		hideScreen = false
 		%> version
 		version
 		%> commandList
@@ -42,6 +43,7 @@ classdef theConductor < optickaCore
 	end
 
 	properties (Access = private)
+		enableHidden = false;
 		allowedProperties = {'runNow', 'address', 'port', 'verbose'}
 		sendState = false
 		recState = false
@@ -242,6 +244,12 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			stop = false; stopMATLAB = false;
+			
+			sM = screenManager('backgroundColour',[0.25 0.25 0.25]);
+			if me.hideScreen 
+				open(sM); flip(sM);
+			end
+
 			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
 			while ~stop
 				% Call receiveCommand, but tell it NOT to send the default 'ok' reply
@@ -370,6 +378,21 @@ classdef theConductor < optickaCore
 						end
 						replyCommand = 'syncbuffer_ack';
 
+					case 'hidedesktop'
+						me.hideScreen = true;
+						try open(sM); flip(sM); end
+						fprintf('\n===> theConductor: Hiding desktop screen.\n');
+						replyCommand = 'hide-desktop';
+						replyData = {'Desktop Hidden'};
+
+					case 'showdesktop'
+						me.hideScreen = false;
+						me.enableHidden = false;
+						try close(sM); end
+						fprintf('\n===> theConductor: Showing desktop screen.\n');
+						replyCommand = 'show-desktop';
+						replyData = {'Desktop Shown'};
+
 					case 'commandlist'
 						% Placeholder for syncBuffer logic
 						fprintf('===> theConductor: Processing commandlist command.\n');
@@ -396,6 +419,12 @@ classdef theConductor < optickaCore
 
 				if runCommand && isstruct(data) && isfield(data,'command')
 					command = data.command;
+
+					if me.hideScreen && contains(command,{'startTouch','startMatch','startDrag'})
+						me.enableHidden = true;
+						close(sM);
+					end
+
 					try
 						tt=tic;
 						if isfield(data,'args') && matches(data.args,'none')
@@ -411,12 +440,17 @@ classdef theConductor < optickaCore
 					catch ME
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
 					end
+
+					if me.hideScreen && me.enableHidden
+						open(sM); flip(sM);
+					end
 				end
 				
 			end
 
 			fprintf('\n===> theConductor: Command receive loop finished.\n');
 			close(me);
+			close(s);
 			if stopMATLAB
 				fprintf('\n===> theConductor: MATLAB shutdown requested...\n');
 				me.zmq = [];

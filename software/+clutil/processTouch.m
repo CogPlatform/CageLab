@@ -1,5 +1,5 @@
 function [success, inTouch, nowX, nowY, tx, ty, object] = processTouch(tM, in, object, target1, fix, s, inTouch, nowX, nowY, tx, ty)
-% V1.02
+% process the drag events
 success = false; firstRun = false;
 if tM.eventAvail % check we have touch event[s]
 	if ~inTouch

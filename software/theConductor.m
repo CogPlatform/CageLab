@@ -245,9 +245,9 @@ classdef theConductor < optickaCore
 		% ===================================================================
 			stop = false; stopMATLAB = false;
 			
-			sM = screenManager('backgroundColour',[0.25 0.25 0.25]);
+			sM = screenManager('backgroundColour',[0.12 0.12 0.12], 'hideFlash', true);
 			if me.hideScreen 
-				open(sM); flip(sM);
+				open(sM); flip(sM); HideCursor;
 			end
 
 			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
@@ -388,7 +388,7 @@ classdef theConductor < optickaCore
 					case 'showdesktop'
 						me.hideScreen = false;
 						me.enableHidden = false;
-						try close(sM); end
+						try close(sM); ShowCursor; end
 						fprintf('\n===> theConductor: Showing desktop screen.\n');
 						replyCommand = 'show-desktop';
 						replyData = {'Desktop Shown'};
@@ -442,7 +442,7 @@ classdef theConductor < optickaCore
 					end
 
 					if me.hideScreen && me.enableHidden
-						open(sM); flip(sM);
+						open(sM); flip(sM); HideCursor;
 					end
 				end
 				

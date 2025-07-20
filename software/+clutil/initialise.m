@@ -56,6 +56,10 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	if in.smartBackground
 		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
 		setup(sbg, s);
+		if sbg.heightD < sv.heightInDegrees
+			sbg.sizeOut = sbg.sizeOut + (sv.heightInDegrees - sbg.heightD);
+			update(sbg);
+		end
 		draw(sbg);
 	end
 	
@@ -118,8 +122,11 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.rRect = rtarget.mvRect;
 	r.result = -1;
 	r.value = NaN;
-	r.vblInit = NaN;
 	r.txt = '';
 	r.aspect = sv.widthInDegrees / sv.heightInDegrees;
 	r.quitKey = quitKey;
+	r.vblInit = NaN;
+	r.vblFinal = NaN;
+	r.reactionTime = NaN;
+	r.firstTouchTime = NaN;
 end

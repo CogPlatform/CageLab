@@ -19,6 +19,8 @@ classdef theConductor < optickaCore
 		port = 6666
 		%> time in seconds to wait before polling for new messages?
 		loopTime = 0.1
+		%> hide the OS screen when conductor runs?
+		hideScreen = false
 		%> more log output to command window?
 		verbose = true
 	end
@@ -32,8 +34,6 @@ classdef theConductor < optickaCore
 		data
 		%> is running
 		isRunning = false
-		%> hide the OS screen when conductor runs?
-		hideScreen = false
 		%> version
 		version
 		%> commandList
@@ -43,8 +43,10 @@ classdef theConductor < optickaCore
 	end
 
 	properties (Access = private)
+		screenChangeTime = 300
+		timeStamp = NaN
 		enableHidden = false;
-		allowedProperties = {'runNow', 'address', 'port', 'verbose'}
+		allowedProperties = {'runNow', 'address', 'port', 'verbose', 'loopTime', 'hideScreen'}
 		sendState = false
 		recState = false
 	end
@@ -244,20 +246,26 @@ classdef theConductor < optickaCore
 		%>   using `WaitSecs` to prevent busy-waiting.
 		% ===================================================================
 			stop = false; stopMATLAB = false;
+			me.timeStamp = GetSecs;
+			sM = screenManager('backgroundColour',[0.12 0.12 0.12], ...
+				'disableSyncTests', true, 'hideFlash', true);
+			quitKey = KbName('escape');
+			RestrictKeysForKbCheck(quitKey);
 			
-			sM = screenManager('backgroundColour',[0.12 0.12 0.12], 'hideFlash', true);
-			if me.hideScreen 
-				open(sM); flip(sM); HideCursor;
-			end
-
 			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
 			while ~stop
+				% configure screen hiding
+				if me.hideScreen && GetSecs > me.timeStamp + me.screenChangeTime
+					open(sM); 
+					flip(sM); 
+					HideCursor;
+				end
 				% Call receiveCommand, but tell it NOT to send the default 'ok' reply
 				if poll(me.zmq, 'in')
 					[cmd, data] = receiveCommand(me.zmq, false);
 				else
 					WaitSecs('YieldSecs',me.loopTime);
-					KbCheck;
+					if KbCheck && sM.isOpen; close(sM); end
 					continue
 				end
 
@@ -451,6 +459,7 @@ classdef theConductor < optickaCore
 			fprintf('\n===> theConductor: Command receive loop finished.\n');
 			close(me);
 			close(s);
+			RestrictKeysForKbCheck([]); ShowCursor;
 			if stopMATLAB
 				fprintf('\n===> theConductor: MATLAB shutdown requested...\n');
 				me.zmq = [];

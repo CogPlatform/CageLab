@@ -5,8 +5,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	vblEnd = flip(s);
 	WaitSecs('YieldSecs',0.02);
 
+
 	%% register some times if subject touched
-	if r.anyTouch
+	if r.anyTouch && r.trialN > 0
 		dt.data.times.taskStart(r.trialN) = r.vblInit;
 		dt.data.times.taskEnd(r.trialN) = r.vblFinal;
 		dt.data.times.taskRT(r.trialN) = r.reactionTime;

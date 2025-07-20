@@ -1,5 +1,5 @@
 function startMatchToSample(in)
-	if ~exist('in','var') || isempty(in); in = clutil.checkInput(pth); end
+	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	if matches(in.task,'mts')
 		bgName = 'abstract2.jpg';
 		prefix = 'MTS';
@@ -7,7 +7,7 @@ function startMatchToSample(in)
 		bgName = 'abstract3.jpg';
 		prefix = 'DMTS';
 	end
-	
+
 	try
 		%% ============================subfunction for shared initialisation
 		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
@@ -69,7 +69,7 @@ function startMatchToSample(in)
 		set2 = metaStimulus('stimuli',{distractor5, distractor6, distractor7});
 		set2.edit(1:3,'alpha',0.75);
 		set2.edit(1:3,'yPosition',in.sampleY);
-		
+
 		%% ============================ custom stimuli setup
 		setup(fix, s);
 		setup(set, s);
@@ -138,7 +138,7 @@ function startMatchToSample(in)
 			else
 				showSet(set, 2); % pedestal, target and distractors
 			end
-			
+
 			rs = randi(target1.nImages); r.stimulus = rs;
 			target1.selectionOut = rs;
 			target2.selectionOut = rs;
@@ -158,7 +158,7 @@ function startMatchToSample(in)
 			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
-			
+
 			% sampleTime and delayTime can be single or range values
 			if isscalar(in.sampleTime)
 				r.sampleTime = in.sampleTime;
@@ -179,7 +179,7 @@ function startMatchToSample(in)
 				% update trial number as we enter actal trial
 				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
-				
+
 				if matches(in.task,'dmts')
 					vbl = GetSecs; vblInit = vbl + sv.ifi;
 					% sample time
@@ -214,7 +214,7 @@ function startMatchToSample(in)
 				tM.updateWindow(x, y, target2.size/2,...
 				[], [], [], in.trialTime, in.targetHoldTime, 1.0);
 
-				vbl = GetSecs; 
+				vbl = GetSecs;
 				r.vblInit = vbl + sv.ifi; %start is actually next flip
 				syncTime(tM, r.vblInit);
 
@@ -230,7 +230,7 @@ function startMatchToSample(in)
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 					if tch
 						r.reactionTime = vbl - r.vblInit;
-						r.anyTouch = true; 
+						r.anyTouch = true;
 					end
 					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
 						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, se, fail, tch, ...
@@ -252,7 +252,7 @@ function startMatchToSample(in)
 
 			%% update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
-			
+
 		end % while keepRunning
 		target = [];
 		clutil.shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);

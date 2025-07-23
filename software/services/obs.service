@@ -15,8 +15,6 @@ Type=simple
 ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming --disable-shutdown-check --minimize-to-tray
 Restart=always
 RestartSec=5
-StartLimitInterval=100
-StartLimitBurst=5
 
 [Install]
 WantedBy=default.target

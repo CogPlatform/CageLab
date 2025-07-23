@@ -119,7 +119,7 @@ classdef theConductor < optickaCore
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, me.headers, msgBody);
 			
 			% send request
-			maxRetries = 5;
+			maxRetries = 15;
 			for retry = 1:maxRetries
 				response = me.sendRequest(request, cmdProxyUrl);
 				if ~isempty(response)
@@ -128,10 +128,20 @@ classdef theConductor < optickaCore
 				else
 					if retry == maxRetries
 						error('request failed, reached maximum retry count (%d times)', maxRetries);
+					elseif retry > 5
+						try 
+							if IsLinux
+								!systemctl --user restart cogmoteGO
+							else
+								!cogmoteGO service start
+							end
+						catch ME
+							warning('Failed to restart cogmoteGO service: %s...', ME.message);
+						end
 					else
 						warning('request failed, retrying (%d/%d)', retry, maxRetries);
 					end
-
+					WaitSecs(2);
 				end
 			end
 		end

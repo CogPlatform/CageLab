@@ -1,20 +1,19 @@
 # User service file for mediamtx
-# Place this file in /etc/systemd/system/mediamtx@.service
+# Place this file in ~/.config/systemd/user/
 # systemctl --user daemon-reload
-# systemctl --user enable mediamtx@<username>.service
-# systemctl --user start mediamtx@<username>.service
+# systemctl --user enable mediamtx.service
+# systemctl --user start mediamtx.service
 
 [Unit]
 Description=Mediamtx Service
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=exec
 ExecStart=/home/prisys/.local/bin/mediamtx
 Restart=always
 RestartSec=5
-StartLimitInterval=100
-StartLimitBurst=5
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

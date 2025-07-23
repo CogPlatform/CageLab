@@ -6,13 +6,13 @@
 # journalctl --user -f -u theConductor
 
 [Unit]
-Description=Opticka ØMQ Experiment Conductor Service
+Description=CageLab ØMQ Experiment Conductor Service
 Documentation=https://github.com/CogPlatform/CageLab
 StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStart=/usr/local/MATLAB/R2024a/bin/matlab -nodesktop -nosplash -r "c = theConductor('loopTime',0.1); run(c);"
+ExecStart=/usr/local/MATLAB/R2025a/bin/matlab -nosplash -nodesktop -r "c = theConductor('loopTime',0.1); run(c);"
 # we should release the proxy manually using curl on stop
 ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/cmds/proxies"
 Restart=always

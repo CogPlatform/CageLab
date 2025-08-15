@@ -2,12 +2,12 @@ function [session, success] = initAlyxSession(alyx, session)
 %INITALYXSESSION.M Summary of this function goes here
 %   Detailed explanation goes here
 arguments (Input)
-	alyx = []
+	alyx alyxManager
 	session struct = []
 end
 
 arguments (Output)
-	url string
+	session struct
 	success logical
 end
 
@@ -20,7 +20,13 @@ end
 if ~alyx.loggedIn; alyx.login; end
 
 [url] = alyx.newExp(alyx.paths.ALFPath, session.paths.sessionID, session);
-session.sessionURL = url;
-fprintf('≣≣≣≣⊱ Alyx File Path Path: %s \n\t  Alyx URL: %s...\n',me.paths.ALFPath, me.paths.sessionURL);
+if ~isempty(url)
+	success = true;
+	session.sessionURL = url;
+	fprintf('≣≣≣≣⊱ Alyx File Path: %s \n\t  Alyx URL: %s...\n', paths.ALFPath, session.sessionURL);
+else
+	success = false;
+	warning('≣≣≣≣⊱ Failed to init Alyx File Path: %s\n',alyx.paths.ALFPath);
+end
 	
 end

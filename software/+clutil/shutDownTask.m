@@ -3,6 +3,12 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	if ~isempty(sbg); draw(sbg); end
 	drawTextNow(s, 'FINISHED!');
 
+	%% final broadcast
+	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',false,'loop',r.loopN,'trial',r.trialN,...
+		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
+		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
+		'hostname',r.hostname));
+
 	%% reset and close stims and devices
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
 	try touchManager.enableTouchDevice(tM.deviceName, "disable"); end

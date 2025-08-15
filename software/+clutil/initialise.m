@@ -108,6 +108,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	%% ============================ run variables
 	r = [];
+	try r.hostname = getenv('HOSTNAME'); end %#ok<*TRYNC>
 	r.zmq = in.zmq;
 	r.broadcast = matmoteGO.broadcast();
 	r.keepRunning = true;
@@ -129,4 +130,16 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.vblFinal = NaN;
 	r.reactionTime = NaN;
 	r.firstTouchTime = NaN;
+
+	if in.useAlyx
+		r.alyxUUID = '';
+	else
+		r.alyxUUID = '';
+	end
+
+	%% broadcast the initial to cogmoteGO
+	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',true,'loop',r.loopN,'trial',r.trialN,...
+		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
+		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
+		'sessionID',r.alyxUUID,'hostname',r.hostname));
 end

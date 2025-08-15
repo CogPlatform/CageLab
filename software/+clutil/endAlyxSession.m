@@ -2,46 +2,60 @@ function session = endAlyxSession(alyx, session, result)
 %FINALISEALYXSESSION Summary of this function goes here
 %   Detailed explanation goes here
 arguments (Input)
-	alyx
+	alyx alyxManager
 	result string = "FAIL"
+end
+
+arguments (Output)
+	session struct
 end
 
 if ~session.useAlyx; return; end
 
-if isempty(result); result = "FAIL"; end
+%% close the session
+fprintf('≣≣≣≣⊱ Closing ALYX Session: %s\n', alyx.sessionURL);
+session = me.alyx.closeSession("", result);
 
-fprintf('Closing ALYX Session: %s\n', alyx.sessionURL);
-session = alyx.closeSession("", result);
-
-if isSecret("AWS_ID")
-	aws = awsManager(getSecret("AWS_ID"),getSecret("AWS_KEY"), "http://172.16.102.77:9000");
-	buckets = aws.list;
-	if ~contains(buckets,lower(session.labName))
-		aws.createBucket(lower(session.labName));
-	end
-	p = alyx.paths.ALFPath;
-	rp = [session.subjectName '/' alyx.paths.dateIDShort '/' sprintf('%0.3d',alyx.paths.sessionID)];
-	try
-		r = aws.copyFiles(p,lower(session.labName));
-	catch
-		warning('aws.copyFiles FAILED!');
-	end
-	d = dir(p);
-	for i = 3:length(d)
-		if r
-			try
-				dataset = alyx.registerFile(['Minio-' session.labName], d(i).name, rp);
-				disp(dataset);
-			catch
-				warning('Failed to upload %s to minio',d(i).name);
+%% upload the data
+try
+	%% register the files to ALYX
+	[datasets, filenames] = me.alyx.registerALFFiles(alyx.paths, session);
+	fprintf('≣≣≣≣⊱ Added Files to ALYX Session: %s\n', alyx.sessionURL);
+	try arrayfun(@(ss)disp([ss.name ' - bytes: ' num2str(ss.file_size)]),datasets); end
+	
+	%% get the ALYX UUID for each file registered
+	uuids = {};
+	if length(datasets) == length(filenames)
+		for ii = 1:length(filenames)
+			if contains(filenames{ii},datasets(ii).name)
+				uuids{ii} = datasets(ii).id;
+			else
+				uuids{ii} = '';
 			end
 		end
-		%dataset = alyx.registerFile('Local-Files', sname, rp);
 	end
-else
-	warning("AWS ID and KEY are not present, cannot upload data to MINIO!!!");
+
+	%% upload the files to MINIO AWS server
+	if isSecret("AWS_ID")
+		aws = awsManager(getSecret("AWS_ID"),getSecret("AWS_KEY"), session.dataRepo);
+		bucket = lower(session.labName);
+		aws.checkBucket(bucket);
+		for ii = 1:length(filenames)
+			[~,f,e] = fileparts(filenames{ii});
+			if ~isempty(uuids) && ~isempty(uuids{ii})
+				% append the uuid to the filename, seems to
+				% be required by ONE protocol
+				key = [paths.ALFKeyShort filesep f '.' uuids{ii} e];
+			else
+				key = [paths.ALFKeyShort filesep f e];
+			end
+			aws.copyFiles(filenames{ii}, bucket, key);
+		end
+	else
+		warning('To upload Alyx files you need to set setSecrets: AWS_ID and AWS_KEY!!!'); 
+	end
+catch ME
+	getReport(ME)
 end
-
-
 
 end

@@ -106,10 +106,20 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	if ~in.debug; Priority(1); end
 	if ~in.debug || ~in.dummy; HideCursor; end
 
+	[~,hname] = system('hostname');
+	hname = strip(hname);
+	if isempty(hname); hname = 'unknown'; end
+
 	%% ============================ run variables
 	r = [];
-	try r.hostname = getenv('HOSTNAME'); end %#ok<*TRYNC>
-	r.zmq = in.zmq;
+	r.hostname = hname;
+	if in.remote
+		r.remote = true;
+		r.zmq = in.zmq;
+	else
+		r.remote = false;
+		r.zmq = [];
+	end
 	r.broadcast = matmoteGO.broadcast();
 	r.keepRunning = true;
 	r.phase = in.phase;

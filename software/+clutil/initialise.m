@@ -46,10 +46,11 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	%% ============================reward
 	if in.reward
-		rM = PTBSimia.pumpManager(); 
+		dummy = false;
 	else %dummy mode pass true to constructor
-		rM = PTBSimia.pumpManager(true); 
+		dummy = true;
 	end
+	rM = PTBSimia.pumpManager(dummy); 
 	
 	%% ============================setup
 	sv = open(s); % open screen

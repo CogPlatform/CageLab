@@ -9,7 +9,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		PsychDebugWindowConfiguration
 	end
 	
-	%% ============================screen & background
+	%% ============================ screen & background
 	s = screenManager('screen', in.screen,'blend', true,...
 		'pixelsPerCm', in.density, 'distance', in.distance,...
 		'disableSyncTests', true, 'hideFlash', true, ...
@@ -20,12 +20,12 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		sbg = [];
 	end
 
-	%% s============================stimuli
+	%% s============================ stimuli
 	rtarget = imageStimulus('colour', [0 1 0], 'filePath', 'star.png');
 	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
-	%% ============================audio
+	%% ============================ audio
 	a = audioManager('device',in.audioDevice);
 	if in.debug; a.verbose = true; end
 	if in.audioVolume == 0 || in.audio == false
@@ -77,12 +77,15 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	createQueue(tM);
 	start(tM);
 
-	%% ==============================save file name
-	[path, sessionID, dateID, name] = s.getALF(in.name, in.lab, true);
+	%% ================================ save file name
+	alyx = alyxManager();
+	[alyxPath, sessionID, dateID, alyxName] = alyx.getALF(in.name, in.lab, true);
 	in.sessionID = sessionID;
 	in.dateID = dateID;
-	saveName = [ path filesep prefix '-' name '.mat'];
-	dt = touchData;
+	saveName = [ alyxPath filesep 'opticka.raw.' alyxName '.mat'];
+
+	%% ================================ touch data
+	dt = touchData();
 	dt.name = saveName;
 	dt.subject = in.name;
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
@@ -99,7 +102,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	dt.info.screenVals = sv;
 	dt.info.settings = in;
 
-	%% ============================settings
+	%% ============================ settings
 	quitKey = KbName('escape');
 	RestrictKeysForKbCheck(quitKey);
 	Screen('Preference','Verbosity',4);
@@ -114,6 +117,9 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	%% ============================ run variables
 	r = [];
 	r.hostname = hname;
+	r.saveName = saveName;
+	r.alyx = alyx;
+	r.alyxPath = alyxPath;
 	if in.remote
 		r.remote = true;
 		r.zmq = in.zmq;
@@ -142,15 +148,11 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.reactionTime = NaN;
 	r.firstTouchTime = NaN;
 
-	if in.useAlyx
-		r.alyxUUID = '';
-	else
-		r.alyxUUID = '';
-	end
-
+	
+	
 	%% broadcast the initial to cogmoteGO
 	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',true,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
-		'sessionID',r.alyxUUID,'hostname',r.hostname));
+		'sessionID',alyxPath,'hostname',r.hostname));
 end

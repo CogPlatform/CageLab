@@ -3,6 +3,7 @@ function session = endAlyxSession(alyx, session, result)
 %   Detailed explanation goes here
 arguments (Input)
 	alyx alyxManager
+	session struct
 	result string = "FAIL"
 end
 

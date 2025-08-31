@@ -7,7 +7,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',false,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
-		'hostname',r.hostname));
+		'sessionID',r.alyxPath,'hostname',r.hostname));
 
 	%% reset and close stims and devices
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
@@ -57,4 +57,13 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	if in.remote == false; try dt.plotData; end; end
 	disp(' . '); disp(' . '); disp(' . ');
 	WaitSecs('YieldSecs',0.1);
+
+	if in.useAlyx
+		[session, success] = clutil.initAlyxSession(r.alyx, in.session);
+		if success
+			session = endAlyxSession(r.alyx, r.session, result);
+		end
+	end
+
+
 end

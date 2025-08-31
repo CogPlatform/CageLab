@@ -1,11 +1,11 @@
 function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)		
 	
-	%% blank display
+	%% ================================ blank display
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
 	vblEnd = flip(s);
 	WaitSecs('YieldSecs',0.02);
 
-	%% register some times if subject touched
+	%% ================================ register some times if subject touched
 	if r.anyTouch && r.trialN > 0
 		dt.data.times.taskStart(r.trialN) = r.vblInit;
 		dt.data.times.taskEnd(r.trialN) = r.vblFinal;
@@ -13,9 +13,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		dt.data.times.firstTouch(r.trialN) = r.firstTouchTime;
 	end
 
-	%% lets check the results:
+	% lets check the results:
 
-	%% no touch and first training phases, give some random rewards
+	%% ================================ no touch and first training phases, give some random rewards
 	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
 		tt = vblEnd - r.randomRewardTimer;
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
@@ -38,11 +38,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			WaitSecs(0.75+rand);
 		end
 
-	%% no touch, just wait a bit
+	%% ================================ no touch, just wait a bit
 	elseif r.anyTouch == false
 		WaitSecs(0.5+rand);
 
-	%% correct
+	%% ================================ correct
 	elseif r.result == 1
 		r.summary = 'correct';
 		if in.reward
@@ -67,7 +67,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
 
-	%% incorrect
+	%% ================================ incorrect
 	elseif r.result == 0
 		r.summary = 'incorrect';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
@@ -89,7 +89,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
 		r.randomRewardTimer = GetSecs;
 
-	%% otherwise
+	%% ================================ otherwise
 	else
 		r.summary = 'unknown';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
@@ -111,7 +111,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.randomRewardTimer = GetSecs;
 	end
 
-	%% logic for training starcase
+	%% ================================ logic for training starcase
 	if matches(in.task, 'train') && r.trialW >= in.stepBack
 		r.phase = r.phase - 1;
 		r.trialW = 0;
@@ -137,7 +137,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
-	%% finalise this trial
+	%% ================================ finalise this trial
 	if r.keepRunning == false; return; end
 	drawBackground(s,in.bg)
 	if ~isempty(sbg); draw(sbg); end
@@ -158,11 +158,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		end
 	end
 
-	%% broadcast the data to cogmoteGO
+	%% =============================== broadcast the data to cogmoteGO
 	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',true,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
-		'hostname',r.hostname));
+		'sessionID',r.alyxPath,'hostname',r.hostname));
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function txt = getResultsText()

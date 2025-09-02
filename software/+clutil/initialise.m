@@ -78,11 +78,22 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	start(tM);
 
 	%% ================================ save file name
-	alyx = alyxManager();
+	% but remember alyx comes from remote machine, need to regenerate
+	% paths.
+	if isfield(in,'alyx') && isa(in.alyx,'alyxManager')
+		alyx = in.alyx;
+	else
+		alyx = alyxManager();
+	end
+	checkPaths(alyx);
+	alyx.user = in.session.researcherName;
+	alyx.lab = in.session.labName;
+	alyx.subject = in.session.subjectName;
 	[alyxPath, sessionID, dateID, alyxName] = alyx.getALF(in.name, in.lab, true);
 	in.sessionID = sessionID;
 	in.dateID = dateID;
 	saveName = [ alyxPath filesep 'opticka.raw.' alyxName '.mat'];
+	fprintf('===>>> CageLab Save: %s', saveName);
 
 	%% ================================ touch data
 	dt = touchData();
@@ -147,8 +158,6 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.vblFinal = NaN;
 	r.reactionTime = NaN;
 	r.firstTouchTime = NaN;
-
-	
 	
 	%% broadcast the initial to cogmoteGO
 	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',true,'loop',r.loopN,'trial',r.trialN,...

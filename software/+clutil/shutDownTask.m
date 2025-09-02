@@ -58,12 +58,13 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp(' . '); disp(' . '); disp(' . ');
 	WaitSecs('YieldSecs',0.1);
 
+	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%  Send data to Alyx if enabled
 	if in.useAlyx
-		[session, success] = clutil.initAlyxSession(r.alyx, in.session);
+		[in.session, success] = clutil.initAlyxSession(r.alyx, in.session);
 		if success
-			session = endAlyxSession(r.alyx, r.session, result);
+			in.session = endAlyxSession(r.alyx, in.session, result);
 		end
 	end
-
 
 end

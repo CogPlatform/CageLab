@@ -1,3 +1,8 @@
+# Place this file in ~/.config/systemd/user/
+# systemctl --user daemon-reload
+# systemctl --user enable sunshine.service
+# systemctl --user start sunshine.service
+
 [Unit]
 Description=Sunshine is a self-hosted game stream host for Moonlight.
 StartLimitIntervalSec=500
@@ -7,10 +12,8 @@ StartLimitBurst=5
 After=graphical-session.target
 
 [Service]
-ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/sunshine
-# uncomment the line below if your system is reporting session initialization prematurely
-# ExecStartPre=/usr/bin/sleep 30 # wait  30s before starting sunshine
+ExecStartPre=/usr/bin/sleep 30 # wait 30s before starting sunshine
 Restart=on-failure
 RestartSec=5s
 

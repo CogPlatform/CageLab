@@ -1,13 +1,16 @@
 function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
-	%[s, sbg, rtarget, a, rM, tM] = +clutils.initialise(pth, in, bgName, prefix, windowed, sf);
+	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName, prefix);
 	windowed = [];
 	sf = [];
 
-	% =========================== debug mode?
+	%% =========================== debug mode?
 	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
 		%sf = kPsychGUIWindow; windowed = [0 0 1300 800]; 
 		PsychDebugWindowConfiguration
 	end
+	
+	% initial config for PTB
+	PsychDefaultSetup(2);
 	
 	%% ============================ screen & background
 	s = screenManager('screen', in.screen,'blend', true,...

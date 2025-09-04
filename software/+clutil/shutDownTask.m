@@ -51,8 +51,8 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp('=========================================');
 	dt.info.runInfo = r;
 	dt.info.settings = in;
-	save('-v7', saveName, 'dt', 'r', 'in', 'tM', 's');
-	save('-v7', "~/lastTaskRun.mat", 'dt');
+	save(saveName, 'dt', 'r', 'in', 'tM', 's', '-v7.3');
+	save("~/lastTaskRun.mat", 'dt', '-v7.3');
 	disp('Done (and a copy of touch data saved to ~/lastTaskRun.mat)!!!');
 	if in.remote == false; try dt.plotData; end; end
 	disp(' . '); disp(' . '); disp(' . ');

@@ -12,9 +12,10 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
+ExecStartPre=/usr/bin/sleep 35
 ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming --disable-shutdown-check --minimize-to-tray
 Restart=always
-RestartSec=5
+RestartSec=35
 
 [Install]
 WantedBy=default.target

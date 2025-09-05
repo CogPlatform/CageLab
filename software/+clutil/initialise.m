@@ -88,14 +88,13 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	else
 		alyx = alyxManager();
 	end
+	try in = rmfield(in,'alyx'); end %#ok<*TRYNC>
 	checkPaths(alyx);
 	alyx.user = in.session.researcherName;
 	alyx.lab = in.session.labName;
 	alyx.subject = in.session.subjectName;
-	[alyxPath, sessionID, dateID, alyxName] = alyx.getALF(in.name, in.lab, true);
-	in.sessionID = sessionID;
-	in.dateID = dateID;
-	saveName = [ alyxPath filesep 'opticka.raw.' alyxName '.mat'];
+	[in.alyxPath, in.sessionID, in.dateID, in.alyxName] = alyx.getALF(in.name, in.lab, true);
+	saveName = [ in.alyxPath filesep 'opticka.raw.' in.alyxName '.mat'];
 	fprintf('===>>> CageLab Save: %s', saveName);
 
 	%% ================================ touch data
@@ -140,7 +139,9 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	else
 		r.remote = false;
 		r.zmq = [];
+		
 	end
+	try in = rmfield(in,'zmq'); end
 	r.broadcast = matmoteGO.broadcast();
 	r.keepRunning = true;
 	r.phase = in.phase;
@@ -166,5 +167,5 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.broadcast.send(struct('task',in.task,'name',in.name,'isRunning',true,'loop',r.loopN,'trial',r.trialN,...
 		'phase', r.phase, 'result', r.result, 'reactionTime', r.reactionTime,...
 		'correctRate', r.correctRate,'rewards', dt.data.rewards,'randomRewards',dt.data.random,...
-		'sessionID',alyxPath,'hostname',r.hostname));
+		'sessionID',r.alyxPath,'hostname',r.hostname));
 end

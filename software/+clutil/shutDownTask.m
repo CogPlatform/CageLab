@@ -29,9 +29,9 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	%% show some basic results
 	try
 		disp('');
-		disp('=========================================');
+		disp('==================================================');
 		fprintf('===> Data for %s\n', saveName)
-		disp('=========================================');
+		disp('==================================================');
 		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
 		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
 		cor = sum(dt.data.result==1);
@@ -46,9 +46,9 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	end
 	
 	%% save trial data
-	disp('=========================================');
+	disp('======================================================');
 	fprintf('===> Saving data to %s\n', saveName)
-	disp('=========================================');
+	disp('======================================================');
 	dt.info.runInfo = r;
 	dt.info.settings = in;
 	save(saveName, 'dt', 'r', 'in', 'tM', 's', '-v7.3');

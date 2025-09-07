@@ -1,4 +1,4 @@
-function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)		
+function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	
 	%% ================================ blank display
 	if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end

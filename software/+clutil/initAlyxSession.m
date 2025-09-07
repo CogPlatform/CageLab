@@ -1,26 +1,32 @@
-function [session, success] = initAlyxSession(alyx, session)
+function [session, success] = initAlyxSession(r, session)
 %INITALYXSESSION.M init a alyx session
 %   Detailed explanation goes here
 	arguments (Input)
-		alyx alyxManager
+		r struct
 		session struct = []
 	end
 	arguments (Output)
 		session struct
 		success logical
 	end
-	
-	if isempty(alyx) || ~isa(alyx, 'alyxManager')
-		alyx = alyxManager;
-		setSecrets(alyx);
+
+	if isempty(r.alyx) || ~isa(r.alyx, 'alyxManager')
+		r.alyx = alyxManager;
+		setSecrets(r.alyx);
 	end
+
+	alyx = r.alyx;
+	alyx.logout;
+	alyx.login;
 	
 	% create new session folder and name
-	[path,id,dateID,name] = alyx.getALF(session.subjectName, session.labName, true);
-	
-	if ~alyx.loggedIn; alyx.login; end
-	
-	[url] = alyx.newExp(alyx.paths.ALFPath, session.paths.sessionID, session);
+	if ~exist(r.alyxPath)
+		[path,id,dateID,name] = alyx.getALF(session.subjectName, session.labName, true);
+		url = alyx.newExp(path, id, session);
+	else
+		url = alyx.newExp(r.alyxPath, r.sessionID, session);
+	end
+
 	if ~isempty(url)
 		success = true;
 		session.sessionURL = url;

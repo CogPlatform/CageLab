@@ -1,4 +1,18 @@
 function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
+	arguments
+		s (1,1) screenManager
+		sbg % can be [] or imageStimulus; leave untyped to allow empty
+		fix (1,1) discStimulus
+		set % typically metaStimulus; may be []
+		target % [] or imageStimulus
+		rtarget (1,1) imageStimulus
+		tM (1,1) touchManager
+		rM (1,1) PTBSimia.pumpManager
+		saveName (1,:) char
+		dt (1,1) touchData
+		in struct
+		r struct
+	end
 	
 	if ~isempty(sbg); draw(sbg); end
 	drawTextNow(s, 'FINISHED!');
@@ -46,12 +60,12 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	end
 	
 	%% save trial data
-	disp('======================================================');
-	fprintf('===> Saving data to %s\n', saveName)
-	disp('======================================================');
+	disp('=========================================');
+	fprintf('===> Saving data to %s\n', r.saveName)
+	disp('=========================================');
 	dt.info.runInfo = r;
 	dt.info.settings = in;
-	save(saveName, 'dt', 'r', 'in', 'tM', 's', '-v7.3');
+	save(r.saveName, 'dt', 'r', 'in', 'tM', 's', '-v7.3');
 	save("~/lastTaskRun.mat", 'dt', '-v7.3');
 	disp('Done (and a copy of touch data saved to ~/lastTaskRun.mat)!!!');
 	if in.remote == false; try dt.plotData; end; end
@@ -61,9 +75,11 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%  Send data to Alyx if enabled
 	if in.useAlyx
-		[in.session, success] = clutil.initAlyxSession(r.alyx, in.session);
+		in.session.dataBucket = 'Minio-CognitionPlatform';
+		in.session.dataRepo = 'http://172.16.102.77:9000';
+		[in.session, success] = clutil.initAlyxSession(r, in.session);
 		if success
-			in.session = endAlyxSession(r.alyx, in.session, result);
+			in.session = clutil.endAlyxSession(r, in.session, "PASS");
 		end
 	end
 

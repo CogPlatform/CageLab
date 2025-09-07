@@ -1,5 +1,25 @@
-function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
-	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName, prefix);
+function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName)
+	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
+	arguments (Input)
+		in struct
+		bgName (1,:) char {mustBeNonempty} % background image filename
+	end
+	arguments (Output)
+		s (1,1) screenManager
+		sv struct
+		r struct
+		sbg % can be [] or imageStimulus; leave untyped to allow empty
+		rtarget (1,1) imageStimulus
+		fix (1,1) discStimulus
+		a (1,1) audioManager
+		rM (1,1) PTBSimia.pumpManager
+		tM (1,1) touchManager
+		dt (1,1) touchData
+		quitKey (1,1) double
+		saveName (1,:) char
+		in struct
+	end
+	
 	windowed = [];
 	sf = [];
 
@@ -93,13 +113,15 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	alyx.user = in.session.researcherName;
 	alyx.lab = in.session.labName;
 	alyx.subject = in.session.subjectName;
+
 	[in.alyxPath, in.sessionID, in.dateID, in.alyxName] = alyx.getALF(in.name, in.lab, true);
 	saveName = [ in.alyxPath filesep 'opticka.raw.' in.alyxName '.mat'];
+
 	fprintf('===>>> CageLab Save: %s', saveName);
 
 	%% ================================ touch data
 	dt = touchData();
-	dt.name = saveName;
+	dt.name = in.saveName;
 	dt.subject = in.name;
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
 	dt.data(1).random = 0;
@@ -130,9 +152,11 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	%% ============================ run variables
 	r = [];
 	r.hostname = hname;
-	r.saveName = saveName;
+	r.saveName = in.saveName;
 	r.alyx = alyx;
-	r.alyxPath = alyxPath;
+	r.alyxPath = in.alyxPath;
+	r.alyxName = in.alyxName;
+	r.sessionID = in.sessionID;
 	if in.remote
 		r.remote = true;
 		r.zmq = in.zmq;

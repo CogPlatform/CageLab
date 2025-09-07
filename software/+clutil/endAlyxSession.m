@@ -1,8 +1,8 @@
-function session = endAlyxSession(alyx, session, result)
+function session = endAlyxSession(r, session, result)
 %FINALISEALYXSESSION Summary of this function goes here
 %   Detailed explanation goes here
 arguments (Input)
-	alyx alyxManager
+	r struct
 	session struct
 	result string = "FAIL"
 end
@@ -13,14 +13,16 @@ end
 
 if ~session.useAlyx; return; end
 
+alyx = r.alyx;
+
 %% close the session
 fprintf('≣≣≣≣⊱ Closing ALYX Session: %s\n', alyx.sessionURL);
-session = me.alyx.closeSession("", result);
+finalisedSession = alyx.closeSession('', result);
 
 %% upload the data
 try
 	%% register the files to ALYX
-	[datasets, filenames] = me.alyx.registerALFFiles(alyx.paths, session);
+	[datasets, filenames] = alyx.registerALFFiles(alyx.paths, session);
 	fprintf('≣≣≣≣⊱ Added Files to ALYX Session: %s\n', alyx.sessionURL);
 	try arrayfun(@(ss)disp([ss.name ' - bytes: ' num2str(ss.file_size)]),datasets); end
 	
@@ -37,8 +39,9 @@ try
 	end
 
 	%% upload the files to MINIO AWS server
-	if isSecret("AWS_ID")
-		aws = awsManager(getSecret("AWS_ID"),getSecret("AWS_KEY"), session.dataRepo);
+	secrets = alyx.getSecrets;
+	if ~isempty(secrets.AWS_ID)
+		aws = awsManager(secrets.AWS_ID,secrets.AWS_KEY, session.dataRepo);
 		bucket = lower(session.labName);
 		aws.checkBucket(bucket);
 		for ii = 1:length(filenames)

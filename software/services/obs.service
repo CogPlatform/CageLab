@@ -12,11 +12,13 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStartPre=/usr/bin/sleep 35
+# to find some tools installed by pixi or brew etc
+Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2025a/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+ExecStartPre=/usr/bin/sleep 15
 ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming --disable-shutdown-check --minimize-to-tray
 ExecStopPost=/usr/bin/flatpak kill com.obsproject.Studio
 Restart=always
-RestartSec=35
+RestartSec=15
 
 [Install]
 WantedBy=default.target

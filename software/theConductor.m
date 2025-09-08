@@ -486,8 +486,12 @@ classdef theConductor < optickaCore
 			end
 			PsychDefaultSetup(2);
 			if IsLinux
-				try !powerprofilesctl set performance; end
-				try !xset -dpms s off; end
+				try
+					!powerprofilesctl set performance;
+				end
+				try
+					!xset -dpms s off;
+				end
 			end
 		end
 

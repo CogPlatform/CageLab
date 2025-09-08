@@ -1,8 +1,9 @@
-function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName)
+function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
 	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
 	arguments (Input)
 		in struct
 		bgName (1,:) char {mustBeNonempty} % background image filename
+		prefix (1,:) char = '' % prefix to add to save name
 	end
 	arguments (Output)
 		s (1,1) screenManager

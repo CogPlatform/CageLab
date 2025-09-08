@@ -116,9 +116,9 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	alyx.subject = in.session.subjectName;
 
 	[in.alyxPath, in.sessionID, in.dateID, in.alyxName] = alyx.getALF(in.name, in.lab, true);
-	saveName = [ in.alyxPath filesep 'opticka.raw.' in.alyxName '.mat'];
-
-	fprintf('===>>> CageLab Save: %s', saveName);
+	in.saveName = [ in.alyxPath filesep 'opticka.raw.' in.alyxName '.mat'];
+	saveName = in.saveName;
+	fprintf('===>>> CageLab Save: %s', in.saveName);
 
 	%% ================================ touch data
 	dt = touchData();

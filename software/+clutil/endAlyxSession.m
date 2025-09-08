@@ -49,9 +49,9 @@ try
 			if ~isempty(uuids) && ~isempty(uuids{ii})
 				% append the uuid to the filename, seems to
 				% be required by ONE protocol
-				key = [paths.ALFKeyShort filesep f '.' uuids{ii} e];
+				key = [alyx.paths.ALFKeyShort filesep f '.' uuids{ii} e];
 			else
-				key = [paths.ALFKeyShort filesep f e];
+				key = [alyx.paths.ALFKeyShort filesep f e];
 			end
 			aws.copyFiles(filenames{ii}, bucket, key);
 		end

@@ -12,6 +12,9 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
+# to find some tools installed by pixi or brew etc
+Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2025a/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+# our main command
 ExecStart=/usr/local/MATLAB/R2025a/bin/matlab -nosplash -nodesktop -r "c = theConductor('loopTime',0.1); run(c);"
 # we MUST release the proxy manually using curl on stop
 ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/cmds/proxies"

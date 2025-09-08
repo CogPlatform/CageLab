@@ -122,7 +122,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	%% ================================ touch data
 	dt = touchData();
-	dt.name = in.saveName;
+	dt.name = in.alyxName;
 	dt.subject = in.name;
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
 	dt.data(1).random = 0;

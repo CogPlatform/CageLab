@@ -1,0 +1,24 @@
+# Place this file in ~/.config/systemd/user/
+# systemctl --user daemon-reload
+# systemctl --user enable obs-fix.service
+# systemctl --user start obs-fix.service
+
+[Unit]
+Description=Restart mediamtx and OBS to stop stream errors
+StartLimitIntervalSec=500
+StartLimitBurst=5
+After=obs.service
+Requires=obs.service
+
+# delay initialization to after graphical-session.target has been started
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/Code/CageLab/software/services/obs-fix.sh
+ExecStartPre=/usr/bin/sleep 45 # wait 60s before starting
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+# activate this unit alongside graphical-session.target
+WantedBy=graphical-session.target

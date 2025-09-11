@@ -32,6 +32,9 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	
 	% initial config for PTB
 	PsychDefaultSetup(2);
+	try 
+		!xset -dpms s off
+	end
 	
 	%% ============================ screen & background
 	s = screenManager('screen', in.screen,'blend', true,...
@@ -116,7 +119,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	alyx.subject = in.session.subjectName;
 
 	[in.alyxPath, in.sessionID, in.dateID, in.alyxName] = alyx.getALF(in.name, in.lab, true);
-	in.saveName = [ in.alyxPath filesep 'opticka.raw.' in.alyxName '.mat'];
+	in.saveName = [ in.alyxPath filesep 'opticka.raw.' prefix in.alyxName '.mat'];
 	saveName = in.saveName;
 	fprintf('===>>> CageLab Save: %s', in.saveName);
 

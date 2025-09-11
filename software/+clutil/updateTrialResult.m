@@ -52,7 +52,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		beep(a, in.correctBeep, 0.1, in.audioVolume);
 		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
-		r.correctRate = getCorrectRate();
+		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
 		animateRewardTarget(1);
@@ -159,13 +159,15 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	end
 
 	%% broadcast the trial to cogmoteGO
-	r.broadcast.send(struct('task',in.task,'name',in.name,'is_running',false,...
-		'loop_id',r.loopN,'trial_id',r.trialN,...
-		'correct_rate', r.correctRate,'rewards',dt.data.rewards,...
-		'result', r.result, 'reaction_time', r.reactionTime, 'phase', r.phase,...
-		'random_rewards',dt.data.random,...
-		'start_time',r.startTime,'end_time',r.endTime,...
-		'session_id',r.alyxPath,'hostname',r.hostname));
+	clutil.broadcastTrial(in, r, dt, true);
+
+	%% save copy of data every 5 trials just in case of crash
+	if mod(r.trialN, 5)
+		disp('=========================================');
+		fprintf('===> Saving data to %s\n', r.saveName)
+		disp('=========================================');
+		save(r.saveName, 'dt', 'r', 'in', 'tM', '-v7.3');
+	end
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function txt = getResultsText()
@@ -174,13 +176,14 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	end
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	function cr = getCorrectRate()
+	function [recent,overall] = getCorrectRate()
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		overall = length(find(dt.data.result == 1)) / length(dt.data.result);
 		if length(dt.data.result) >= in.stepForward
-			cr = dt.data.result(end - (in.stepForward-1):end);
-			cr = length(find(cr == 1)) / length(cr);
+			recent = dt.data.result(end - (in.stepForward-1):end);
+			recent = length(find(recent == 1)) / length(recent);
 		else 
-			cr = NaN;
+			recent = NaN;
 		end
 	end
 

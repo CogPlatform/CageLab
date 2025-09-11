@@ -91,8 +91,8 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	drawTextNow(s,'Initialising...');
 	
 	rtarget.size = 5;
-	rtarget.xPosition = sv.rightInDegrees - 6;
-	rtarget.yPosition = sv.topInDegrees + 6;
+	rtarget.xPosition = sv.rightInDegrees - 4;
+	rtarget.yPosition = sv.topInDegrees + 4;
 	setup(rtarget, s);
 	in.rRect = rtarget.mvRect;
 
@@ -125,6 +125,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	dt.name = in.alyxName;
 	dt.subject = in.name;
 	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
+	dt.data(1).result = [];
 	dt.data(1).random = 0;
 	dt.data(1).rewards = 0;
 	dt.data(1).times.initStart = [];
@@ -164,13 +165,13 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	else
 		r.remote = false;
 		r.zmq = [];
-		
 	end
 	try in = rmfield(in,'zmq'); end
 	r.broadcast = matmoteGO.broadcast();
 	r.keepRunning = true;
 	r.phase = in.phase;
 	r.correctRate = NaN;
+	r.correctRateRecent = NaN;
 	r.loopN = 0;
 	r.trialN = 0;
 	r.trialW = 0;
@@ -191,11 +192,6 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.endTime = NaN;
 	
 	%% broadcast the initial to cogmoteGO
-	r.broadcast.send(struct('task',in.task,'name',in.name,'is_running',false,...
-		'loop_id',r.loopN,'trial_id',r.trialN,...
-		'correct_rate', r.correctRate,'rewards',dt.data.rewards,...
-		'result', r.result, 'reaction_time', r.reactionTime, 'phase', r.phase,...
-		'random_rewards',dt.data.random,...
-		'start_time',r.startTime,'end_time',r.endTime,...
-		'session_id',r.alyxPath,'hostname',r.hostname));
+	clutil.broadcastTrial(in, r, dt, true);
+
 end

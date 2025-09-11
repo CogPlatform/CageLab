@@ -25,28 +25,28 @@ function startTouchTraining(in)
 			if r.phase > 9; r.phase = 9; end
 			pn = 1; p = [];
 			%size
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
 			% position
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = 11;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 11;
 		else
 			pn = 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.02; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
 			% 6
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.02; p(pn).rel = 1; p(pn).pos = 11;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
+			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 11;
 			% 10
 			p(pn).size = sz(end); p(pn).hold = 0.1;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
 			p(pn).size = sz(end); p(pn).hold = 0.2;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
@@ -129,7 +129,11 @@ function startTouchTraining(in)
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
 				vbl = flip(s);
-				[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
+				if phase < 9
+					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
+				else
+					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
+				end
 				if tch
 					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;

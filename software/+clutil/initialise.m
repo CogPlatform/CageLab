@@ -91,7 +91,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		draw(sbg);
 	end
 	
-	drawTextNow(s,'Initialising...');
+	drawTextNow(s,['Initialising CageLab V' clutil.version '...']);
 	
 	rtarget.size = 5;
 	rtarget.xPosition = sv.rightInDegrees - 4;
@@ -171,6 +171,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	end
 	try in = rmfield(in,'zmq'); end
 	r.broadcast = matmoteGO.broadcast();
+	r.status = matmoteGO.status();
 	r.keepRunning = true;
 	r.phase = in.phase;
 	r.correctRate = NaN;
@@ -194,7 +195,13 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.startTime = NaN;
 	r.endTime = NaN;
 	
-	%% broadcast the initial to cogmoteGO
+	%% enable task status to cogmoteGO
+	currentStatus = r.status.updateStatusToRunning();
+	disp(currentStatus.Body.Data);
+
+	%% broadcast the initial status to cogmoteGO
 	clutil.broadcastTrial(in, r, dt, true);
+
+
 
 end

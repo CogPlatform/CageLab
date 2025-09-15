@@ -14,8 +14,13 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 		r struct
 	end
 	
+	%% final drawing
 	if ~isempty(sbg); draw(sbg); end
 	drawTextNow(s, 'FINISHED!');
+
+	%% change status for cogmoteGO
+	currentStatus = r.status.updateStatusToStopped();
+	disp(currentStatus.Body.Data);
 
 	%% final broadcast to cogmoteGO
 	clutil.broadcastTrial(in, r, dt, false);

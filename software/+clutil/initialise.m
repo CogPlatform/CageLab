@@ -120,6 +120,8 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	[in.alyxPath, in.sessionID, in.dateID, in.alyxName] = alyx.getALF(in.name, in.lab, true);
 	in.saveName = [ in.alyxPath filesep 'opticka.raw.' prefix in.alyxName '.mat'];
+	in.diaryName = [ in.alyxPath filesep '_matlab_diary.' prefix in.alyxName '.mat'];
+	diary(in.diaryName);
 	saveName = in.saveName;
 	fprintf('===>>> CageLab Save: %s', in.saveName);
 
@@ -201,7 +203,5 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	%% broadcast the initial status to cogmoteGO
 	clutil.broadcastTrial(in, r, dt, true);
-
-
 
 end

@@ -84,5 +84,5 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 			in.session = clutil.endAlyxSession(r, in.session, "PASS");
 		end
 	end
-
+	diary off
 end

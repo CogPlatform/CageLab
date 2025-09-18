@@ -8,8 +8,8 @@ After=obs.service
 Requires=obs.service
 
 [Service]
-ExecStart=%h/Code/CageLab/software/services/obs-fix.sh
-ExecStartPre=/usr/bin/sleep 45 # wait 45s before starting
+ExecStartPre=/usr/bin/sleep 60s
+ExecStart=%h/Code/CageLab/software/scripts/obs-fix.sh
 
 [Install]
 # activate this unit alongside graphical-session.target

@@ -112,8 +112,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	end
 
 	%% ================================ logic for training starcase
+	r.phaseMax = max(r.phaseMax, r.phase);
 	if matches(in.task, 'train') && r.trialW >= in.stepBack
+		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
 		r.phase = r.phase - 1;
+		if r.phase < r.phaseMax - in.phaseMaxBack; r.phas = r.phaseMax - in.phaseMaxBack; end
 		r.trialW = 0;
 		r.phaseN = 0;
 		if r.phase < 1; r.phase = 1; end

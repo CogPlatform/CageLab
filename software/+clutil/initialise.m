@@ -182,6 +182,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	r.trialN = 0;
 	r.trialW = 0;
 	r.phaseN = 0;
+	r.phaseMax = r.phase;
 	r.stimulus = 1;
 	r.randomRewardTimer = GetSecs;
 	r.rRect = rtarget.mvRect;

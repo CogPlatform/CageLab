@@ -20,47 +20,35 @@ function startTouchTraining(in)
 		setup(target, s);
 
 		%% ============================steps table
-		sz = linspace(in.maxSize, in.minSize, 5);
-		if matches(in.task, 'Simple') % simple task
-			if r.phase > 9; r.phase = 9; end
-			pn = 1; p = [];
-			%size
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% position
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 11;
-		else
-			pn = 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0]; pn = pn + 1;
-			% 6
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 3; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 5; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 7; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 1; p(pn).pos = 11;
-			% 10
-			p(pn).size = sz(end); p(pn).hold = 0.1;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.2;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.4;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 0.8;   p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = 1;     p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
-			% 16
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 2;	p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.75; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.5;	p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1.25; p(pn).pos = 11; pn = pn + 1;
-			p(pn).size = sz(end); p(pn).hold = [1 2]; p(pn).rel = 1;	p(pn).pos = 11; pn = pn + 1;
+		sz = linspace(in.maxSize, in.minSize, 15);
+		%SIZE
+		for pn = 1:length(sz)
+			p = [];
+			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0];
 		end
+		pn = length(p) + 1;
+		% POSITION
+		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
+		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
+		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
+		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+		if matches(in.task, 'Simple') % simple task
+			if r.phase > length(p); r.phase = length(p); end
+		else
+			% HOLD
+			hl = linspace(0.01, 0.8, 9);
+			for hld = hl
+				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			end
+			p(pn).size = sz(end); p(pn).hold = [0.5 1.2]; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+			% RELEASE
+			rl = linspace(3, 1, 6);
+			for rel = hl
+				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = rel; p(pn).pos = 11; pn = pn + 1;
+			end
+			if r.phase > length(p); r.phase = length(p); end
+		end
+		fprintf('===> Total phases: %i\n', length(p));
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

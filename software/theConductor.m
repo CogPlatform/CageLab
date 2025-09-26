@@ -368,7 +368,8 @@ classdef theConductor < optickaCore
 						replyData = data; % Send back the data we received
 
 					case 'gettime'
-						replyData(1).comment = "PTB GetSecs and datetime";
+						replyData(1).comment = "theConductor Timing Test";
+						replyData.remoteVersion = +clutil.version;
 						replyData.remoteGetSecs = GetSecs;
 						if isfield(data,'GetSecs')
 							replyData.clientGetSecs = data.GetSecs;
@@ -383,7 +384,7 @@ classdef theConductor < optickaCore
 							replyData.clientTime = NaN;
 						end
 						replyData.timeDiff = replyData.remoteTime - replyData.clientTime;
-						if me.verbose > 0; fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.remoteTime); end
+						fprintf('\n===> theConductor: Replying with current time: %s\n', replyData.remoteTime);
 						disp(replyData);
 						replyCommand = 'timesync_reply';
 

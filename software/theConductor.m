@@ -261,6 +261,7 @@ classdef theConductor < optickaCore
 				'disableSyncTests', true, 'hideFlash', true);
 			quitKey = KbName('escape');
 			RestrictKeysForKbCheck(quitKey);
+			Priority(1);
 			
 			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
 			while ~stop
@@ -467,9 +468,9 @@ classdef theConductor < optickaCore
 			end
 
 			fprintf('\n===> theConductor: Command receive loop finished.\n');
-			close(me);
-			close(s);
-			RestrictKeysForKbCheck([]); ShowCursor;
+			try close(me); end
+			try close(sM); end
+			Priority(0); RestrictKeysForKbCheck([]); ShowCursor;
 			if stopMATLAB
 				fprintf('\n===> theConductor: MATLAB shutdown requested...\n');
 				me.zmq = [];
@@ -487,10 +488,12 @@ classdef theConductor < optickaCore
 			PsychDefaultSetup(2);
 			if IsLinux
 				try
-					!powerprofilesctl set performance;
+					[~,b]=system('powerprofilesctl list');
+					c = regexpi(b,'performance','match');
+					if ~isempty(c); system('powerprofilesctl set performance');end
 				end
 				try
-					!xset -dpms s off;
+					system('xset -dpms s off');
 				end
 			end
 		end

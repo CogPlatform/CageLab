@@ -369,7 +369,7 @@ classdef theConductor < optickaCore
 
 					case 'gettime'
 						replyData(1).comment = "theConductor Timing Test";
-						replyData.remoteVersion = +clutil.version;
+						replyData.remoteVersion = string(clutil.version);
 						replyData.remoteGetSecs = GetSecs;
 						if isfield(data,'GetSecs')
 							replyData.clientGetSecs = data.GetSecs;

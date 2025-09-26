@@ -19,11 +19,11 @@ function startTouchTraining(in)
 		%% ============================ custom stimuli setup
 		setup(target, s);
 
-		%% ============================steps table
+		%% ============================ phase table
 		sz = linspace(in.maxSize, in.minSize, 15);
-		%SIZE
+		p = [];
+		% SIZE
 		for pn = 1:length(sz)
-			p = [];
 			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0];
 		end
 		pn = length(p) + 1;

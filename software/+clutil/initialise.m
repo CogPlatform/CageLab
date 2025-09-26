@@ -26,8 +26,11 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 
 	%% =========================== debug mode?
 	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
-		%sf = kPsychGUIWindow; windowed = [0 0 1300 800]; 
-		PsychDebugWindowConfiguration
+		if IsLinux || IsOSX
+			sf = kPsychGUIWindow; windowed = [0 0 1600 900]; 
+		else
+			PsychDebugWindowConfiguration;
+		end
 	end
 	
 	% initial config for PTB

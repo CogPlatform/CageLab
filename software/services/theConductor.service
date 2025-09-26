@@ -20,6 +20,10 @@ ExecStart=/usr/local/MATLAB/R2025a/bin/matlab -nosplash -nodesktop -r "c = theCo
 ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/cmds/proxies"
 Restart=always
 RestartSec=30
+#CPUSchedulingPolicy=rr
+#CPUSchedulingPriority=99
+#IOSchedulingClass=realtime
+#Nice=-20
 
 [Install]
 WantedBy=default.target

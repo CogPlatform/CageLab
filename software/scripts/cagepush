@@ -1,0 +1,397 @@
+#!/usr/bin/env zsh
+# cagepush: Push local project directories to one or more remote servers via rsync over SSH
+# - Designed for CageLab development environment, but easily adaptable.
+# - Syncs each listed local source dir to every specified remote host under DEST_BASE/<dirname>/
+# - Multiple remote hosts may be given with repeated -s flags.
+# - Uses robust SSH options for non-interactive use.
+# - Supports dry-run mode, custom remote host(s), and parallel pushes via -j.
+# - Excludes files/dirs listed in ~/.config/.rsync-excludes if present.
+# - Creates remote dirs if needed (with --mkpath if available).
+# - Use with SSH keys for passwordless auth (e.g., ssh-agent).
+# ===== ARGUMENTS =====
+# Usage:
+#   cagepush [-n] [-j N] [-s user@host ...] <src_dir1> [src_dir2 ...]
+#   cagepush -j 4 -s hostA -s hostB projectA projectB
+#   cagepush -suser@hostA -suser@hostB projectA
+# If no sources are given, defaults to ~/Code/CageLab.
+# If no -s is supplied, defaults to the built-in DEST_USER_HOST.
+# -n / --dry-run : rsync dry-run
+# -j / --jobs N  : parallel transfers (default 1) or -j auto for automatic
+# -s user@host : add a remote host (may repeat)
+# -suser@host  : attached form (may repeat)
+set -uo pipefail  # removed -e to manage errors manually (debug-friendly)
+
+# ===== CONFIG (edit as needed) =====
+DEFAULT_DEST_USER_HOST="cagelab@cagelab-dev.cloud.lab"  # remote SSH user@host
+DEST_BASE="~/Code"                              # remote base dir; ~ expands on remote
+EXCLUDES="${HOME}/.config/.rsync-excludes"      # optional common exclude list
+
+# SSH options for robustness & non-interactive automation
+SSH_OPTS=(
+  -o BatchMode=yes
+  -o ConnectTimeout=10
+  -o ServerAliveInterval=30
+  -o ServerAliveCountMax=3
+)
+
+# Base rsync flags (archive, compress, mirror, human output, progress & stats)
+RSYNC_FLAGS=(
+  -a -z --delete
+  --human-readable
+  --itemize-changes
+  --info=stats2,progress2
+  --partial --partial-dir=.rsync-partial
+)
+
+# Uncomment if you need these across Linux↔Linux with matching filesystems:
+# RSYNC_FLAGS+=(-H -A -X)   # hardlinks, ACLs, xattrs
+
+# Optional bandwidth cap (KB/s): e.g., 20000 ≈ 20 MB/s
+# RSYNC_FLAGS+=(--bwlimit=20000)
+
+# ===== ARG PARSING =====
+DRYRUN=0
+DEBUG=0
+JOBS=1
+sources=()
+remote_hosts=()
+
+# Distinct exit code for skipped transfers (e.g., source not a directory)
+SKIP_CODE=100
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -n|--dry-run)
+      DRYRUN=1
+      shift
+      ;;
+    -j|--jobs)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: -j requires an argument (jobs|auto)" >&2
+        exit 2
+      fi
+      JOBS="$2"
+      shift 2
+      ;;
+    -j*)
+      JOBS="${1#-j}"
+      shift
+      ;;
+    -s)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: -s requires an argument (user@host)" >&2
+        exit 2
+      fi
+      remote_hosts+=("$2")
+      shift 2
+      ;;
+    -s*)
+      # Attached form: -suser@host
+      remote_hosts+=("${1#-s}")
+      shift
+      ;;
+    --debug)
+      DEBUG=1
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      exit 2
+      ;;
+    *)
+      sources+=("$1")
+      shift
+      ;;
+  esac
+done
+
+# Any remaining args after -- go in sources
+while [[ $# -gt 0 ]]; do
+  sources+=("$1")
+  shift
+done
+
+# If nothing was added after options, default to one project
+if [[ ${#sources} -eq 0 ]]; then
+  sources=("${HOME}/Code/CageLab")
+fi
+
+# If no remote hosts were specified, fall back to default
+AUTO_JOBS=0
+if [[ "$JOBS" == auto ]]; then
+  AUTO_JOBS=1
+else
+  if ! [[ "$JOBS" =~ ^[0-9]+$ ]] || (( JOBS < 1 )); then
+    echo "Error: -j must be a positive integer or 'auto'" >&2
+    exit 2
+  fi
+fi
+
+if [[ ${#remote_hosts} -eq 0 ]]; then
+  remote_hosts=("${DEFAULT_DEST_USER_HOST}")
+fi
+
+# Deduplicate remote hosts (preserve first occurrence order)
+typeset -A _seen_hosts
+_unique_hosts=()
+for _h in "${remote_hosts[@]}"; do
+  if [[ -z "${_seen_hosts[$_h]:-}" ]]; then
+    _seen_hosts[$_h]=1
+    _unique_hosts+=("$_h")
+  fi
+done
+remote_hosts=(${_unique_hosts[@]})
+
+########################################
+# Debug helper / initial state logging
+########################################
+dbg() { (( DEBUG )) && print -u2 "[DBG $(date +%H:%M:%S)] $*" || true }
+(( DEBUG )) && dbg "Debug enabled"
+
+# If auto jobs requested, compute after sources/hosts known
+if (( AUTO_JOBS )); then
+  # Try get CPU count (Linux /proc, getconf, fallback 4)
+  local _cpu
+  if [[ -r /proc/cpuinfo ]]; then
+    _cpu=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || echo 4)
+  else
+    _cpu=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
+  fi
+  # Total tasks = hosts * sources
+  local _tasks=$(( ${#remote_hosts[@]} * ${#sources[@]} ))
+  # Heuristic: min(tasks, max(2, cpu*2/3)) but at least 1
+  local _suggest=$((_cpu * 2 / 3))
+  (( _suggest < 2 )) && _suggest=2
+  (( _suggest > _tasks )) && _suggest=$_tasks
+  (( _suggest < 1 )) && _suggest=1
+  JOBS=$_suggest
+fi
+
+(( DEBUG )) && {
+  dbg "Remote hosts: ${remote_hosts[*]}"
+  dbg "Sources: ${sources[*]}"
+  dbg "Jobs: $JOBS (auto=${AUTO_JOBS}) DryRun: $DRYRUN"
+}
+rsync_ec_desc() {
+  # Map common rsync exit codes. See 'man rsync'
+  case "$1" in
+    0) echo "Success" ;;
+    1) echo "Syntax or usage error" ;;
+    2) echo "Protocol incompatibility" ;;
+    3) echo "Errors selecting input/output files, dirs" ;;
+    4) echo "Requested action not supported" ;;
+    5) echo "Error starting client-server protocol" ;;
+    6) echo "Daemon unable to append to log-file" ;;
+    10) echo "Error in socket I/O" ;;
+    11) echo "Error in file I/O" ;;
+    12) echo "Error in rsync protocol data stream" ;;
+    13) echo "Errors with program diagnostics" ;;
+    14) echo "Error in IPC code" ;;
+    20) echo "Received SIGUSR1/SIGINT" ;;
+    21) echo "Some error returned by waitpid" ;;
+    22) echo "Error allocating core memory" ;;
+    23) echo "Partial transfer (file vanished / permissions)" ;;
+    24) echo "Partial transfer (files vanished)" ;;
+    25) echo "The --max-delete limit stopped deletions" ;;
+    30) echo "Timeout in data send/receive" ;;
+    35) echo "Timeout waiting for daemon connection" ;;
+    $SKIP_CODE) echo "Skipped (not a directory)" ;;
+    *) echo "Unknown" ;;
+  esac
+}
+
+# Add exclude list if present
+[[ -f "${EXCLUDES}" ]] && RSYNC_FLAGS+=("--exclude-from=${EXCLUDES}")
+
+# Dry run requested?
+(( DRYRUN )) && RSYNC_FLAGS+=("--dry-run")
+
+# ===== FEATURE DETECTION: --mkpath =====
+HAS_MKPATH=0
+if rsync --help 2>&1 | grep -q -- '--mkpath'; then
+  HAS_MKPATH=1
+  RSYNC_FLAGS+=("--mkpath")
+fi
+
+# ===== FUNCTIONS =====
+sync_one() {
+  local host="$1"; shift
+  local src_raw="$1"
+  dbg "sync_one enter host=$host src_raw=$src_raw"
+  # Resolve to absolute path locally; ensure trailing slash to copy *contents*
+  local src_abs="${src_raw:A}"
+  if [[ ! -d "$src_abs" ]]; then
+    echo "Skipping: $src_abs (not a directory)" >&2
+    dbg "skip src=$src_abs reason=not-a-directory host=$host"
+    return $SKIP_CODE
+  fi
+  local src_with_slash="${src_abs%/}/"
+
+  # Destination path: DEST_BASE/<basename(src)>/
+  local base_name
+  base_name="$(basename "$src_abs")"
+  local dest_path="${DEST_BASE%/}/${base_name}/"  # keep trailing slash
+
+  # Create destination path if mkpath isn't available
+  if (( ! HAS_MKPATH )); then
+    dbg "mkdir remote host=$host path=$dest_path"
+    ssh "${SSH_OPTS[@]}" "${host}" "mkdir -p '${dest_path%/}'" >/dev/null || return 2
+  fi
+
+  echo "→ Syncing: ${src_with_slash}  ➜  ${host}:${dest_path}"
+  dbg "rsync start host=$host src=$src_abs dest=$dest_path"
+  if ! rsync "${RSYNC_FLAGS[@]}" \
+    -e "ssh ${SSH_OPTS[*]}" \
+    -- \
+    "${src_with_slash}" "${host}:${dest_path}"; then
+      local ec=$?
+      dbg "rsync fail host=$host src=$src_abs ec=$ec"
+      return $ec
+  fi
+  dbg "rsync ok host=$host src=$src_abs"
+}
+
+# ===== RUN (iterate all sources) =====
+rc=0
+total=0
+ok=0
+failed=0
+skipped=0
+
+typeset -a FAIL_IDS FAIL_ECS SKIP_IDS
+
+record_result() {
+  local rstate="$1" ident="$2" ec="${3:-}"
+  (( total++ ))
+  case "$rstate" in
+    ok) (( ok++ )) ;;
+  fail) (( failed++ )); [[ -n "$ident" ]] && FAIL_IDS+=("$ident") && FAIL_ECS+=("${ec:-?}") ;;
+  skip) (( skipped++ )); [[ -n "$ident" ]] && SKIP_IDS+=("$ident") ;;
+  esac
+  dbg "record status=$rstate ident=$ident ec=${ec:-} totals: ok=$ok skip=$skipped fail=$failed total=$total"
+}
+
+printed_summary=0
+print_summary() {
+  (( printed_summary )) && return 0
+  printed_summary=1
+  (( DEBUG )) && dbg "counters total=$total ok=$ok skipped=$skipped failed=$failed rc=$rc (summary)"
+  {
+    echo "==== cagepush summary ===="
+    echo " Total tasks : $total"
+    echo " Successful  : $ok"
+    echo " Failed      : $failed"
+    echo " Skipped     : $skipped"
+    if (( failed > 0 )); then
+      echo " Result      : FAIL (some transfers failed)"
+      if (( ${#FAIL_IDS[@]} > 0 )); then
+        echo " Failures:"
+        local i
+        for (( i=1; i<=${#FAIL_IDS[@]}; i++ )); do
+          local _fec=${FAIL_ECS[i]}
+          echo "   - ${FAIL_IDS[i]} (exit=${_fec} $(rsync_ec_desc $_fec))"
+        done
+      fi
+    elif (( skipped > 0 )); then
+      echo " Result      : PARTIAL (some skipped)"
+      if (( ${#SKIP_IDS[@]} > 0 )); then
+        echo " Skipped:"
+        local i
+        for (( i=1; i<=${#SKIP_IDS[@]}; i++ )); do
+          echo "   - ${SKIP_IDS[i]} (exit=$SKIP_CODE $(rsync_ec_desc $SKIP_CODE))"
+        done
+      fi
+    else
+      echo " Result      : OK"
+    fi
+  } >&2
+}
+
+trap 'print_summary' EXIT
+
+if (( JOBS == 1 )); then
+  # Sequential mode with exit-code based classification
+  for host in "${remote_hosts[@]}"; do
+    echo "== Host: $host =="
+    for s in "${sources[@]}"; do
+      if out=$(sync_one "$host" "$s" 2>&1); then
+        ec=0
+      else
+        ec=$?
+      fi
+      dbg "sequential host=$host src=$s ec=$ec"
+      case $ec in
+        0)
+          record_result ok "$host:$s";
+          printf '%s\n' "$out" >&2 ;;
+        $SKIP_CODE)
+          record_result skip "$host:$s";
+          printf '%s\n' "$out" >&2 ;;
+        *)
+          rc=1
+          dbg "classify fail host=$host src=$s ec=$ec"
+          record_result fail "$host:$s" "$ec";
+          printf '%s\n' "$out" >&2 ;;
+      esac
+    done
+    dbg "host-complete host=$host totals: ok=$ok skipped=$skipped failed=$failed"
+  done
+else
+  echo "Parallel pushes: $JOBS jobs" >&2
+  typeset -A JOB_MAP
+  typeset -a pids
+  pids=()
+  launch_job() {
+    local host="$1" src="$2"
+    (
+      sync_one "$host" "$src"
+    ) &
+    local pid=$!
+    JOB_MAP[$pid]="$host:$src"
+    pids+=($pid)
+    dbg "launch pid=$pid job=${JOB_MAP[$pid]} active=${#pids[@]}/$JOBS"
+  }
+  wait_for_slot() {
+    # If we already have capacity, return immediately
+    (( ${#pids[@]} < JOBS )) && return 0
+    # Otherwise wait for the *oldest* job (FIFO) to finish to free exactly one slot
+    local pid=${pids[1]}
+    dbg "wait_for_slot blocking pid=$pid job=${JOB_MAP[$pid]} active=${#pids[@]}/$JOBS"
+    wait $pid
+    local ec=$?
+    dbg "complete pid=$pid job=${JOB_MAP[$pid]} ec=$ec (slot freed)"
+    case $ec in
+      0) record_result ok "${JOB_MAP[$pid]}" ;;
+      $SKIP_CODE) dbg "classify skip job=${JOB_MAP[$pid]} ec=$ec"; record_result skip "${JOB_MAP[$pid]}" "$ec" ;;
+  *) echo "Job failed (${JOB_MAP[$pid]}) exit=$ec ($(rsync_ec_desc $ec))" >&2; rc=1; dbg "classify fail job=${JOB_MAP[$pid]} ec=$ec"; record_result fail "${JOB_MAP[$pid]}" "$ec" ;;
+    esac
+    # Remove first element (FIFO pop)
+    pids=(${pids[@]:1})
+  }
+  for host in "${remote_hosts[@]}"; do
+    echo "== Host: $host =="
+    for s in "${sources[@]}"; do
+      wait_for_slot
+      launch_job "$host" "$s"
+    done
+  done
+  # Drain any remaining jobs
+  for pid in "${pids[@]}"; do
+    wait $pid
+    ec=$?
+    dbg "complete pid=$pid job=${JOB_MAP[$pid]} ec=$ec (drain)"
+    case $ec in
+      0) record_result ok "${JOB_MAP[$pid]}" ;;
+      $SKIP_CODE) dbg "classify skip job=${JOB_MAP[$pid]} ec=$ec (drain)"; record_result skip "${JOB_MAP[$pid]}" "$ec" ;;
+  *) echo "Job failed (${JOB_MAP[$pid]}) exit=$ec ($(rsync_ec_desc $ec))" >&2; rc=1; dbg "classify fail job=${JOB_MAP[$pid]} ec=$ec (drain)"; record_result fail "${JOB_MAP[$pid]}" "$ec" ;;
+    esac
+  done
+fi
+
+print_summary
+dbg "exit rc=$rc"; exit "$rc"

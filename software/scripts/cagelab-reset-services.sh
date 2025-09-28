@@ -17,4 +17,4 @@ for s in $sl; do
 done
 sleep 1
 systemctl --user daemon-reload
-systemctl --user start mediamtx cogmoteGO theConductor obs
+systemctl --user enable --now mediamtx cogmoteGO theConductor obs

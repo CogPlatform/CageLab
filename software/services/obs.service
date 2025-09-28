@@ -14,9 +14,11 @@ StartLimitIntervalSec=0
 Type=simple
 # to find some tools installed by pixi or brew etc
 Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2025a/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+ExecStartPre=-rm -rf %h/.var/app/com.obsproject.Studio/config/obs-studio/.sentinel
 ExecStartPre=/usr/bin/sleep 15s
 ExecStart=/usr/bin/flatpak run com.obsproject.Studio --startstreaming --disable-shutdown-check --minimize-to-tray
-ExecStopPost=/usr/bin/flatpak kill com.obsproject.Studio
+ExecStop=/usr/bin/flatpak kill com.obsproject.Studio
+ExecStopPost=-rm -rf %h/.var/app/com.obsproject.Studio/config/obs-studio/.sentinel
 Restart=always
 RestartSec=15
 

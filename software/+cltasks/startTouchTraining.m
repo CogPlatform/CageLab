@@ -49,6 +49,8 @@ function startTouchTraining(in)
 			if r.phase > length(p); r.phase = length(p); end
 		end
 		fprintf('===> Total phases: %i\n', length(p));
+		disp(p);
+		disp('=====================================');
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -97,25 +99,27 @@ function startTouchTraining(in)
 				tM.window.X, tM.window.Y, tM.window.radius, tM.window.init, tM.window.hold, tM.window.release);
 			
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
-			
+			fprintf('DBG-1');
 			WaitSecs(0.01);
 			reset(tM);
 			flush(tM);
-			
+			fprintf('-2');
 			if ~isempty(sbg); draw(sbg); end
-			
+			fprintf('-3');
 			vbl = flip(s); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
-
+			fprintf('-4');
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
+				fprintf('-5');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(s, txt);
 					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
+				fprintf('-6');
 				vbl = flip(s);
 				if r.phase < 5
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
@@ -126,6 +130,7 @@ function startTouchTraining(in)
 					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;
 				end
+				fprintf('-7');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
 						r.phase,r.touchResponse,tM.x,tM.y,hld, r.hldtime, rel, reli, se,...
@@ -133,6 +138,7 @@ function startTouchTraining(in)
 				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
+				fprintf('-8\n');
 			end
 
 			%% check logic of task result

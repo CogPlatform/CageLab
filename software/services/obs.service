@@ -1,18 +1,16 @@
 # User service file for flatpak OBS Studio
 # Place this file in ~/.config/systemd/user/
 # systemctl --user daemon-reload
-# systemctl --user enable obs.service
-# systemctl --user start obs.service
+# systemctl --user enable --now obs.service
 
 [Unit]
-Description=OBS Studio Service
+Description=OBS Studio Automatic Streaming Service
 After=mediamtx.service
 Requires=mediamtx.service
 StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-# to find some tools installed by pixi or brew etc
 Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2025a/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
 ExecStartPre=-rm -rf %h/.var/app/com.obsproject.Studio/config/obs-studio/.sentinel
 ExecStartPre=/usr/bin/sleep 15s

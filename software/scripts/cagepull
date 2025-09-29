@@ -13,20 +13,26 @@
 # Features:
 #  - Multiple -s host specifications (user@host allowed)
 #  - Dry run (-n) support
-#  - Parallel pulls with -j <N> (default 1) or -j auto
+#  - Parallel pulls with -j <N> (default auto chooses based on CPUs/tasks)
 #  - Optional global exclude file (~/.config/.rsync-excludes)
 #  - Rsync --mkpath auto-detection
 #  - Robust SSH options
+#  - Deletion control: --delete[=true|false] (default true) or --no-delete
 #
 # Usage:
-#   cagepull -l <local_base_dir> [-n] [-j N] -s hostA [-s hostB ...] <remote_dir1> [remote_dir2 ...]
+#   cagepull -l <local_base_dir> [-n] [-j N|auto] [--no-delete] -s hostA [-s hostB ...] <remote_dir1> [remote_dir2 ...]
 #   cagepull -l ./downloads -j 4 -s user@alpha -s beta data/raw logs
+#   cagepull --delete=false -s user@alpha data/raw
 # If -l omitted, defaults to ./cagepull-data
 # If no remote dirs supplied, error.
 #
+# Deletion semantics:
+#   By default rsync runs with --delete to mirror remote paths exactly.
+#   Use --no-delete or --delete=false to keep remote-only files.
+#
 # Exit codes: 0 success (even with some skips), 1 if any rsync failed, 2 usage error.
 set -uo pipefail  # removed -e to manage errors manually
-
+cd $HOME
 # Distinct exit code for skipped transfers (remote path missing / empty path)
 SKIP_CODE=100
 
@@ -41,7 +47,7 @@ SSH_OPTS=(
 )
 
 RSYNC_FLAGS=(
-	-a -z --delete
+	-a -z
 	--human-readable
 	--itemize-changes
 	--info=stats2,progress2
@@ -50,7 +56,9 @@ RSYNC_FLAGS=(
 
 DRYRUN=0
 DEBUG=0
-JOBS=1
+# Default to automatic job count selection
+JOBS=auto
+DO_DELETE=1
 local_base=""
 remote_hosts=()
 remote_paths=()
@@ -69,6 +77,18 @@ while [[ $# -gt 0 ]]; do
 			JOBS="$2"; shift 2 ;;
 		-j*)
 			JOBS="${1#-j}"; shift ;;
+		--no-delete)
+			DO_DELETE=0; shift ;;
+		--delete)
+			DO_DELETE=1; shift ;;
+		--delete=*)
+			_val="${1#--delete=}"
+			case "${_val}" in
+				1|true|yes|on) DO_DELETE=1 ;;
+				0|false|no|off) DO_DELETE=0 ;;
+				*) echo "Error: --delete must be true|false" >&2; exit 2 ;;
+			esac
+			shift ;;
 		-s)
 			if [[ $# -lt 2 ]]; then echo "Error: -s requires host" >&2; exit 2; fi
 			remote_hosts+=("$2"); shift 2 ;;
@@ -176,6 +196,11 @@ rsync_ec_desc() {
 # Add exclude list if present
 [[ -f "$EXCLUDES" ]] && RSYNC_FLAGS+=("--exclude-from=$EXCLUDES")
 (( DRYRUN )) && RSYNC_FLAGS+=("--dry-run")
+
+# Apply delete flag preference (default enabled)
+if (( DO_DELETE )); then
+	RSYNC_FLAGS+=("--delete")
+fi
 
 # Detect mkpath availability
 HAS_MKPATH=0

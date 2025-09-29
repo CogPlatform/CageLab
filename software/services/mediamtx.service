@@ -10,8 +10,7 @@ After=network.target
 StartLimitIntervalSec=0
 
 [Service]
-Type=exec
-ExecStart=/usr/local/bin/mediamtx
+ExecStart=/usr/local/bin/mediamtx /usr/local/etc/mediamtx.yml
 Restart=always
 RestartSec=5
 

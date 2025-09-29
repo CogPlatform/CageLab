@@ -16,11 +16,12 @@
 # If no sources are given, defaults to ~/Code/CageLab.
 # If no -s is supplied, defaults to the built-in DEST_USER_HOST.
 # -n / --dry-run : rsync dry-run
-# -j / --jobs N  : parallel transfers (default 1) or -j auto for automatic
+# -j / --jobs N  : parallel transfers (default auto) or explicit number
 # -s user@host : add a remote host (may repeat)
 # -suser@host  : attached form (may repeat)
+# --no-delete / --delete[=true|false] : control rsync deletion (default true)
 set -uo pipefail  # removed -e to manage errors manually (debug-friendly)
-
+cd $HOME
 # ===== CONFIG (edit as needed) =====
 DEFAULT_DEST_USER_HOST="cagelab@cagelab-dev.cloud.lab"  # remote SSH user@host
 DEST_BASE="~/Code"                              # remote base dir; ~ expands on remote
@@ -36,7 +37,7 @@ SSH_OPTS=(
 
 # Base rsync flags (archive, compress, mirror, human output, progress & stats)
 RSYNC_FLAGS=(
-  -a -z --delete
+  -a -z
   --human-readable
   --itemize-changes
   --info=stats2,progress2
@@ -52,7 +53,9 @@ RSYNC_FLAGS=(
 # ===== ARG PARSING =====
 DRYRUN=0
 DEBUG=0
-JOBS=1
+# Default to automatic job calculation unless user overrides
+JOBS=auto
+DO_DELETE=1
 sources=()
 remote_hosts=()
 
@@ -78,6 +81,18 @@ while [[ $# -gt 0 ]]; do
       JOBS="${1#-j}"
       shift
       ;;
+    --no-delete)
+      DO_DELETE=0; shift ;;
+    --delete)
+      DO_DELETE=1; shift ;;
+    --delete=*)
+      _val="${1#--delete=}"
+      case "$_val" in
+        1|true|yes|on) DO_DELETE=1 ;;
+        0|false|no|off) DO_DELETE=0 ;;
+        *) echo "Error: --delete must be true|false" >&2; exit 2 ;;
+      esac
+      shift ;;
     -s)
       if [[ $# -lt 2 ]]; then
         echo "Error: -s requires an argument (user@host)" >&2
@@ -210,6 +225,11 @@ rsync_ec_desc() {
 
 # Dry run requested?
 (( DRYRUN )) && RSYNC_FLAGS+=("--dry-run")
+
+# Apply deletion preference (default true)
+if (( DO_DELETE )); then
+  RSYNC_FLAGS+=("--delete")
+fi
 
 # ===== FEATURE DETECTION: --mkpath =====
 HAS_MKPATH=0

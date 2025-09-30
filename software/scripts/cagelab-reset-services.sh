@@ -5,8 +5,8 @@
 cd "$HOME/.config/systemd/user" || return
 systemctl --user disable cogmoteGO.service
 rm -f cogmoteGO.service
-cogmoteGO service
-sl=(theConductor.service mediamtx.service obs.service toggleInput.service)
+cogmoteGO service -u
+sl=(theConductor.service mediamtx.service obs.service obs-fix.service toggleInput.service)
 for s in $sl; do
 	systemctl --user stop $s
 	systemctl --user disable $s
@@ -17,4 +17,4 @@ for s in $sl; do
 done
 sleep 1
 systemctl --user daemon-reload
-systemctl --user enable --now mediamtx cogmoteGO theConductor obs
+systemctl --user restart mediamtx cogmoteGO theConductor obs obs-fix

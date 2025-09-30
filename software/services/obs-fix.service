@@ -5,11 +5,10 @@
 [Unit]
 Description=Restart mediamtx and OBS to stop stream errors
 After=obs.service
-Requires=obs.service
 
 [Service]
-ExecStartPre=/usr/bin/sleep 60s
-ExecStart=%h/Code/CageLab/software/scripts/obs-fix.sh
+ExecStartPre=/usr/bin/sleep 90s
+ExecStart=%h/Code/CageLab/software/scripts/cagelab-reset-OBS.sh
 
 [Install]
 # activate this unit alongside graphical-session.target

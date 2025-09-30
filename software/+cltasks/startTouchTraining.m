@@ -138,9 +138,9 @@ function startTouchTraining(in)
 				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
-				fprintf('-8\n');
+				fprintf('-8');
 			end
-
+			fprintf('\n');
 			%% check logic of task result
 			r.vblFinal = GetSecs;
 			if r.anyTouch

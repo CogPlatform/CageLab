@@ -1,4 +1,14 @@
 function startTouchTraining(in)
+	% startTouchTraining(in)
+	% Start a touch training task, using automated steps to train hold and release
+	% in comes from CageLab GUI or can be a struct with the following fields:
+	%   in.task = 'Simple' or 'Full' (default = 'Full')
+	%   in.stimulus = 'Picture' or 'Disc' (default = 'Picture')
+	%   in.fg = [0 0 0] (default) or [1 1 1]
+	%   in.minSize = minimum stimulus size in degrees (default = 2)
+	%   in.maxSize = maximum stimulus size in degrees (default = 10)
+	%   in.trialTime = maximum trial time in seconds (default = 5)
+
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	bgName = 'abstract1.jpg';
 	prefix = 'TT';

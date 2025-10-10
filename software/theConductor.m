@@ -1,4 +1,5 @@
 % ========================================================================
+classdef theConductor < optickaCore
 %> @class theConductor
 %> @brief theConductor — ØMQ REP server to run behavioural tasks
 %>
@@ -7,9 +8,7 @@
 %> Requires opticka https://github.com/iandol/opticka
 %>
 %> Copyright ©2025 Ian Max Andolina — released: LGPL3, see LICENCE.md
-% ========================================================================
-classdef theConductor < optickaCore
-	
+% ========================================================================	
 	properties
 		%> run the zmq server immediately?
 		runNow = false
@@ -60,9 +59,24 @@ classdef theConductor < optickaCore
 	methods
 		% ===================================================================
 		function me = theConductor(varargin)
-		%> @brief 
-		%> @details 
-		%> @note 
+		%> @brief theConductor constructor
+		%> @param varargin PropertyName/PropertyValue pairs to set properties on
+		%>   object creation. Allowed properties are:
+		%>   - `runNow` (default: false) — run the server immediately
+		%>   - `address` (default: '0.0.0.0') — IP address to bind to
+		%>   - `port` (default: 6666) — port to bind to
+		%>   - `loopTime` (default: 0.1) — time in seconds to wait before polling for new messages
+		%>   - `hideScreen` (default: false) — hide the OS screen when conductor runs
+		%>   - `verbose` (default: true) — more log output to command window
+		%> @details This constructor initializes the `theConductor` object,
+		%>   setting default values for properties and parsing any provided
+		%>   property name/value pairs. It also sets up Psychtoolbox (PTB) if
+		%>   available, and creates a ØMQ REP socket connection using
+		%>   `jzmqConnection`. If `runNow` is true, it immediately calls the
+		%>   `run` method to start processing commands.
+		%> @note Requires the `opticka` package for core functionality.
+		%>   Ensure that Psychtoolbox is installed and configured properly if
+		%>   using PTB features.
 		% ===================================================================	
 			args = optickaCore.addDefaults(varargin,struct('name','theConductor'));
 			me=me@optickaCore(args); %superclass constructor
@@ -110,6 +124,18 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function createProxy(me)
+		%> @brief Create a command proxy with cogmoteGO via HTTP API.
+		%> @details This method constructs a HTTP POST request to create a
+		%>   command proxy with the cogmoteGO service. It sends the request
+		%>   to the specified base URI and path, including the necessary
+		%>   headers and body containing the nickname, hostname, and port.
+		%>   The method implements a retry mechanism to handle potential
+		%>   failures, attempting to resend the request up to a maximum
+		%>   number of retries. If the request is successful, it processes
+		%>   the response accordingly.
+		%> @note Ensure that the cogmoteGO service is running and accessible
+		%>   at the specified base URI and path.
+		% ===================================================================
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
 			cmdProxyUrl.Path = me.basePath;
@@ -148,6 +174,15 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function closeProxy(me)
+		%> @brief Close the command proxy with cogmoteGO via HTTP API.
+		%> @details This method constructs a HTTP DELETE request to close
+		%>   the command proxy with the cogmoteGO service. It sends the
+		%>   request to the specified base URI and path, including the
+		%>   necessary headers. The method processes the response to
+		%>   determine if the request was successful.
+		%> @note Ensure that the cogmoteGO service is running and accessible
+		%>   at the specified base URI and path.
+		% ===================================================================
 			% create the URL for the request
 			cmdProxyUrl = me.baseURI;
 			cmdProxyUrl.Path = [me.basePath, "matlab"];
@@ -161,6 +196,20 @@ classdef theConductor < optickaCore
 		
 		% ===================================================================
 		function response = sendRequest(~, request, uri)
+		%> @brief Send a HTTP request and return the response.
+		%> @param request A `matlab.net.http.RequestMessage` object representing
+		%>   the HTTP request to be sent.
+		%> @param uri A `matlab.net.URI` object representing the target URI
+		%>   for the request.
+		%> @return response A `matlab.net.http.ResponseMessage` object containing
+		%>   the response from the server, or empty if the request failed.
+		%> @details This method sends the provided HTTP request to the specified
+		%>   URI using a `matlab.net.http.HTTPOptions` object to configure
+		%>   connection and response timeouts. It handles any exceptions that
+		%>   may occur during the request and returns the response if successful.
+		%> @note Ensure that the target server is accessible and that the
+		%>   request is properly formatted.
+		% ===================================================================
 			opts = matlab.net.http.HTTPOptions;
 			opts.ConnectTimeout = 5;
 			opts.ResponseTimeout = 10;
@@ -175,6 +224,16 @@ classdef theConductor < optickaCore
 		
 		% ===================================================================
 		function response = handleResponse(~, response)
+		%> @brief Handle the HTTP response based on its status code.
+		%> @param response A `matlab.net.http.ResponseMessage` object containing
+		%>   the response from the server.
+		%> @details This method processes the provided HTTP response by
+		%>   checking its status code and displaying appropriate messages or
+		%>   warnings based on the code. It handles various status codes such
+		%>   as OK, Created, Conflict, BadRequest, and NotFound.
+		%> @note Ensure that the response object is valid and contains a
+		%>   status code.
+		% ===================================================================
 			% handle HTTP response based on status code
 			if isempty(response)
 				return;
@@ -196,6 +255,18 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function success = handShake(me)
+		%> @brief Perform a handshake with the connected client.
+		%> @details This method waits for a handshake message from the connected
+		%>   client. It expects a JSON-encoded message with a 'request' field
+		%>   set to 'Hello'. Upon receiving the correct handshake message, it
+		%>   responds with a JSON-encoded message containing a 'response' field
+		%>   set to 'World'. The method implements a retry mechanism to handle
+		%>   potential failures, continuously attempting to receive and process
+		%>   the handshake message until successful.
+		%> @note Ensure that the client is properly configured to send the
+		%>   expected handshake message.
+		% ===================================================================
+			fprintf('===> theConductor: Waiting for handshake...\n');
 			success = false;
 			while ~success
 				try
@@ -206,14 +277,14 @@ classdef theConductor < optickaCore
 					msgStr = native2unicode(msgBytes, 'UTF-8');
 					try 
 						receivedMsg = jsondecode(msgStr);
-						fprintf('===> theConductor Received:\n%s\n', receivedMsg.request); 
+						fprintf('===> theConductor Received: %s\n', receivedMsg.request); 
 					end %#ok<*TRYNC>
 					if isstruct(receivedMsg) && strcmpi(receivedMsg.request, 'Hello')
 						response = struct('response', 'World');
 						responseStr = jsonencode(response);
 						responseBytes = unicode2native(responseStr, 'UTF-8');
-						fprintf('===> theConductor Replying:\n%s\n', 'World'); 
 						me.zmq.send(responseBytes);
+						fprintf('===> theConductor Replying: %s\n', 'World'); 
 						success = true;
 					else
 						error("theConductor:invalidHandshake",'Invalid handshake request: %s', msgStr);
@@ -227,6 +298,15 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function close(me)
+		%> @brief Close the theConductor server and associated resources.
+		%> @details This method stops the server by setting the `isRunning`
+		%>   property to false. It attempts to close the command proxy with
+		%>   `closeProxy(me)` and the ØMQ connection with `close(me.zmq)`.
+		%>   Any errors during these operations are caught and ignored to
+		%>   ensure that the method completes without interruption.
+		%> @note This method should be called to gracefully shut down the
+		%>   server and release associated resources.
+		% ===================================================================
 			me.isRunning = false;
 			try closeProxy(me); end
 			try close(me.zmq); end
@@ -234,6 +314,14 @@ classdef theConductor < optickaCore
 		
 		% ===================================================================
 		function delete(me)
+		%> @brief Destructor for the theConductor class.
+		%> @details This method is called when the theConductor object is
+		%>   being deleted. It ensures that the server is properly closed
+		%>   by calling the `close` method to release resources and
+		%>   terminate any ongoing operations.
+		%> @note This method is automatically invoked by MATLAB when the
+		%>   object is deleted or goes out of scope.
+		% ===================================================================
 			close(me);
 		end
 		
@@ -482,6 +570,16 @@ classdef theConductor < optickaCore
 
 		% ===================================================================
 		function setupPTB(~)
+		%> @brief Setup Psychtoolbox (PTB) preferences.
+		%> @details This method configures Psychtoolbox (PTB) preferences
+		%>   for optimal performance. It sets the visual debug level to 3,
+		%>   skips synchronization tests on macOS and Windows, and performs
+		%>   additional configurations for Linux systems, such as setting
+		%>   the power profile to 'performance' and disabling display power
+		%>   management.
+		%> @note Ensure that Psychtoolbox is installed and properly configured
+		%>   on the system before calling this method.
+		% ===================================================================
 			Screen('Preference', 'VisualDebugLevel', 3);
 			if ismac || IsWin
 				Screen('Preference', 'SkipSyncTests', 2);

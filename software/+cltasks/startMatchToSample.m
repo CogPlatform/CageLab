@@ -1,11 +1,35 @@
 function startMatchToSample(in)
+	% startMatchToSample(in)
+	% Start a match-to-sample task (MTS, DMTS or DNTS)
+	% in comes from CageLab GUI or can be a struct with the following fields:
+	% Example:
+	%   in = struct();
+	%   in.task = 'mts'; % 'mts', 'dmts' or 'dnts'
+	%   in.object = 'fractals'; % 'fractals', 'quaddles' or 'flowers'
+	%   in.objectSize = 10; % size of objects in degrees
+	%   in.objectSep = 15; % separation of objects in degrees
+	%   in.sampleY = 0; % vertical position of sample object in degrees
+	%   in.distractorY = -10; % vertical position of distractor objects in degrees
+	%   in.distractorN = 2; % number of distractors (1-4)
+	%   in.sampleTime = 1.0; % sample time in seconds (or [min max] range)
+	%   in.delayTime = 1.0; % delay time in seconds (or [min max] range)
+	%   in.delayDistractors = true; % show distractors during delay
+	%   in.trialTime = 5.0; % max trial time in seconds
+	%   in.targetHoldTime = 0.2; % target hold time in seconds
+	%   in.folder = 'C:\data\stimuli'; % folder containing object images
+	%   in.fixSize = 2; % fixation size in degrees
+	%   in.fixWindow = 4; % fixation window size in degrees
+
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	if matches(in.task,'mts')
 		bgName = 'abstract2.jpg';
 		prefix = 'MTS';
-	else
+	elseif matches(in.task,'dmts')
 		bgName = 'abstract3.jpg';
 		prefix = 'DMTS';
+	elseif matches(in.task,'dnts')
+		bgName = 'abstract4.jpg';
+		prefix = 'DNTS';
 	end
 
 	try
@@ -79,7 +103,13 @@ function startMatchToSample(in)
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
-			set.fixationChoice = 3;
+			% For DNTS, we need to select distractors (4-7) as correct choices
+			% For MTS/DMTS, we select target2 (3) as correct choice
+			if matches(in.task,'dnts')
+				set.fixationChoice = 4:7; % distractors are correct for non-match
+			else
+				set.fixationChoice = 3; % target2 is correct for match
+			end
 			pedestal.xPositionOut = 0;
 			pedestal.yPositionOut = in.sampleY;
 			target1.xPositionOut = 0;
@@ -96,7 +126,11 @@ function startMatchToSample(in)
 					target2.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					set.stimulusSets{2} = [1 2 3 4];
-					set.stimulusSets{4} = [3 4];
+					if matches(in.task,'dnts')
+						set.stimulusSets{4} = [4]; % only distractor1 is correct
+					else
+						set.stimulusSets{4} = [3 4]; % target2 and distractor1
+					end
 				case 2
 					[~,idx] = Shuffle([1 2 3]);
 					x = (0:sep:sep*N) - (sep*N/2);
@@ -106,7 +140,11 @@ function startMatchToSample(in)
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					set.stimulusSets{2} = [1 2 3 4 5];
-					set.stimulusSets{4} = [3 4 5];
+					if matches(in.task,'dnts')
+						set.stimulusSets{4} = [4 5]; % only distractors are correct
+					else
+						set.stimulusSets{4} = [3 4 5]; % target2 and distractors
+					end
 				case 3
 					[~,idx] = Shuffle([1 2 3 4]);
 					x = (0:sep:sep*N) - (sep*N/2);
@@ -117,7 +155,11 @@ function startMatchToSample(in)
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					set.stimulusSets{2} = [1 2 3 4 5 6];
-					set.stimulusSets{4} = [3 4 5 6];
+					if matches(in.task,'dnts')
+						set.stimulusSets{4} = [4 5 6]; % only distractors are correct
+					else
+						set.stimulusSets{4} = [3 4 5 6]; % target2 and distractors
+					end
 				otherwise
 					[~,idx] = Shuffle([1 2 3 4 5]);
 					x = (0:sep:sep*N) - (sep*N/2);
@@ -129,7 +171,11 @@ function startMatchToSample(in)
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					distractor4.updateXY(xy(1,5), xy(2,5), true);
 					set.stimulusSets{2} = [1 2 3 4 5 6 7];
-					set.stimulusSets{4} = [3 4 5 6 7];
+					if matches(in.task,'dnts')
+						set.stimulusSets{4} = [4 5 6 7]; % only distractors are correct
+					else
+						set.stimulusSets{4} = [3 4 5 6 7]; % target2 and distractors
+					end
 			end
 
 			hide(set);

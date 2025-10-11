@@ -104,32 +104,38 @@ function startTouchTraining(in)
 			txt = '';
 			fail = false; hld = false;
 
-			fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus);
-			fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
-				tM.window.X, tM.window.Y, tM.window.radius, tM.window.init, tM.window.hold, tM.window.release);
-			
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
+
+
+			fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus);
+			%fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
+			%	sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
+			%	sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...
+			%	sprintf("<%.2f>",tM.window.hold), sprintf("<%.1f>",tM.window.release));
+			
 			fprintf('DBG-1');
 			WaitSecs(0.01);
+
 			reset(tM);
-			flush(tM);
 			fprintf('-2');
-			if ~isempty(sbg); draw(sbg); end
+			flush(tM);
 			fprintf('-3');
+			if ~isempty(sbg); draw(sbg); end
+			fprintf('-4');
 			vbl = flip(s); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
-			fprintf('-4');
+			fprintf('-5');
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
-				fprintf('-5');
+				fprintf('-6');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(s, txt);
 					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
-				fprintf('-6');
+				fprintf('-7');
 				vbl = flip(s);
 				if r.phase < 5
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
@@ -140,7 +146,7 @@ function startTouchTraining(in)
 					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;
 				end
-				fprintf('-7');
+				fprintf('-8');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
 						r.phase,r.touchResponse,tM.x,tM.y,hld, r.hldtime, rel, reli, se,...
@@ -148,7 +154,7 @@ function startTouchTraining(in)
 				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
-				fprintf('-8');
+				fprintf('-9');
 			end
 			fprintf('\n');
 			%% check logic of task result

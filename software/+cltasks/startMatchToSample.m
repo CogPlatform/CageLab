@@ -64,24 +64,24 @@ function startMatchToSample(in)
 				[pfix1, pfix2, pfix3, pfix4, pfix5] = deal("");
 		end
 		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
-		target1 = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
+		sample = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
 			'filePath', string(in.folder) + filesep + in.object + filesep + pfix1,'yPosition',in.sampleY);
-		target2 = clone(target1);
-		target2.yPosition = in.distractorY;
-		distractor1 = clone(target2);
+		target = clone(sample);
+		target.yPosition = in.distractorY;
+		distractor1 = clone(target);
 		distractor1.filePath = string(in.folder) + filesep + in.object + filesep + pfix2;
-		distractor2 = clone(target2);
+		distractor2 = clone(target);
 		distractor2.filePath = string(in.folder) + filesep + in.object + filesep + pfix3;
-		distractor3 = clone(target2);
+		distractor3 = clone(target);
 		distractor3.filePath = string(in.folder) + filesep + in.object + filesep + pfix4;
-		distractor4 = clone(target2);
+		distractor4 = clone(target);
 		distractor4.filePath = string(in.folder) + filesep + in.object + filesep + pfix5;
-		set = metaStimulus('stimuli',{pedestal, target1, target2, distractor1, distractor2, distractor3, distractor4});
-		set.fixationChoice = 3;
-		set.stimulusSets{1} = 1:7;
-		set.stimulusSets{2} = 1:7;
-		set.stimulusSets{3} = 1:2;
-		set.stimulusSets{4} = 3:7;
+		targets = metaStimulus('stimuli',{pedestal, sample, target, distractor1, distractor2, distractor3, distractor4});
+		targets.fixationChoice = 3;
+		targets.stimulusSets{1} = 1;
+		targets.stimulusSets{2} = 2;
+		targets.stimulusSets{3} = 3:4;
+		targets.stimulusSets{4} = 3:7;
 
 		% distractors to optionally show in the delay period
 		distractor5 = clone(distractor2);
@@ -90,30 +90,23 @@ function startMatchToSample(in)
 		distractor6.xPosition = 0;
 		distractor7 = clone(distractor4);
 		distractor7.xPosition = +in.objectSep;
-		set2 = metaStimulus('stimuli',{distractor5, distractor6, distractor7});
-		set2.edit(1:3,'alpha',0.75);
-		set2.edit(1:3,'yPosition',in.sampleY);
+		delayDistractors = metaStimulus('stimuli',{distractor5, distractor6, distractor7});
+		delayDistractors.edit(1:3,'alpha',0.75);
+		delayDistractors.edit(1:3,'yPosition',in.sampleY);
 
 		%% ============================ custom stimuli setup
 		setup(fix, s);
-		setup(set, s);
-		setup(set2, s);
-		show(set2);
+		setup(targets, s);
+		setup(delayDistractors, s);
+		show(delayDistractors);
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
-			% For DNTS, we need to select distractors (4-7) as correct choices
-			% For MTS/DMTS, we select target2 (3) as correct choice
-			if matches(in.task,'dnts')
-				set.fixationChoice = 4:7; % distractors are correct for non-match
-			else
-				set.fixationChoice = 3; % target2 is correct for match
-			end
 			pedestal.xPositionOut = 0;
 			pedestal.yPositionOut = in.sampleY;
-			target1.xPositionOut = 0;
-			target1.yPositionOut = in.sampleY;
+			sample.xPositionOut = 0;
+			sample.yPositionOut = in.sampleY;
 			sep = in.objectSep;
 			N = in.distractorN;
 			Y = in.distractorY;
@@ -123,83 +116,83 @@ function startMatchToSample(in)
 					x = (0:sep:sep*N) - (sep*N/2);
 					xy = [x; Y+rand Y-rand];
 					xy = xy(:,idx);
-					target2.updateXY(xy(1,1), xy(2,1), true);
+					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
-					set.stimulusSets{2} = [1 2 3 4];
+					targets.stimulusSets{2} = [1 2 3 4];
 					if matches(in.task,'dnts')
-						set.stimulusSets{4} = [4]; % only distractor1 is correct
+						targets.fixationChoice = 4; % only distractor1 is correct
 					else
-						set.stimulusSets{4} = [3 4]; % target2 and distractor1
+						targets.fixationChoice = [3 4]; % target2 and distractor1
 					end
 				case 2
 					[~,idx] = Shuffle([1 2 3]);
 					x = (0:sep:sep*N) - (sep*N/2);
 					xy = [x; Y+rand Y-rand Y+rand];
 					xy = xy(:,idx);
-					target2.updateXY(xy(1,1), xy(2,1), true);
+					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
-					set.stimulusSets{2} = [1 2 3 4 5];
+					targets.stimulusSets{2} = [1 2 3 4 5];
 					if matches(in.task,'dnts')
-						set.stimulusSets{4} = [4 5]; % only distractors are correct
+						targets.stimulusSets{4} = [4 5]; % only distractors are correct
 					else
-						set.stimulusSets{4} = [3 4 5]; % target2 and distractors
+						targets.stimulusSets{4} = [3 4 5]; % target2 and distractors
 					end
 				case 3
 					[~,idx] = Shuffle([1 2 3 4]);
 					x = (0:sep:sep*N) - (sep*N/2);
 					xy = [x; Y+rand Y-rand Y+rand Y-rand];
 					xy = xy(:,idx);
-					target2.updateXY(xy(1,1), xy(2,1), true);
+					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
-					set.stimulusSets{2} = [1 2 3 4 5 6];
+					targets.stimulusSets{2} = [1 2 3 4 5 6];
 					if matches(in.task,'dnts')
-						set.stimulusSets{4} = [4 5 6]; % only distractors are correct
+						targets.stimulusSets{4} = [4 5 6]; % only distractors are correct
 					else
-						set.stimulusSets{4} = [3 4 5 6]; % target2 and distractors
+						targets.stimulusSets{4} = [3 4 5 6]; % target2 and distractors
 					end
 				otherwise
 					[~,idx] = Shuffle([1 2 3 4 5]);
 					x = (0:sep:sep*N) - (sep*N/2);
 					xy = [x; Y+rand Y-rand Y+rand Y-rand Y+rand];
 					xy = xy(:,idx);
-					target2.updateXY(xy(1,1), xy(2,1), true);
+					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					distractor4.updateXY(xy(1,5), xy(2,5), true);
-					set.stimulusSets{2} = [1 2 3 4 5 6 7];
+					targets.stimulusSets{2} = [1 2 3 4 5 6 7];
 					if matches(in.task,'dnts')
-						set.stimulusSets{4} = [4 5 6 7]; % only distractors are correct
+						targets.stimulusSets{4} = [4 5 6 7]; % only distractors are correct
 					else
-						set.stimulusSets{4} = [3 4 5 6 7]; % target2 and distractors
+						targets.stimulusSets{4} = [3 4 5 6 7]; % target2 and distractors
 					end
 			end
 
-			hide(set);
+			hide(targets);
 			if matches(in.task,'dmts')
-				showSet(set, 3); % just pedestal and target1
+				showSet(targets, 3); % just pedestal and target1
 			else
-				showSet(set, 2); % pedestal, target and distractors
+				showSet(targets, 2); % pedestal, target and distractors
 			end
 
-			rs = randi(target1.nImages); r.stimulus = rs;
-			target1.selectionOut = rs;
-			target2.selectionOut = rs;
+			rs = randi(sample.nImages); r.stimulus = rs;
+			sample.selectionOut = rs;
+			target.selectionOut = rs;
 			rr = rs;
 			for jj = 4:7
-				rn = randi(set{jj}.nImages);
+				rn = randi(targets{jj}.nImages);
 				while any(rn == rr)
-					rn = randi(set{jj}.nImages);
+					rn = randi(targets{jj}.nImages);
 				end
-				set{jj}.selectionOut = rn;
+				targets{jj}.selectionOut = rn;
 				rr = [rr rn];
 			end
 
-			update(set);
-			update(set2);
+			update(targets);
+			update(delayDistractors);
 
 			r = clutil.initTrialVariables(r);
 			txt = '';
@@ -226,12 +219,12 @@ function startMatchToSample(in)
 				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
 
-				if matches(in.task,'dmts')
+				if matches(in.task,["dmts","dnts"])
 					vbl = GetSecs; vblInit = vbl + sv.ifi;
 					% sample time
 					while vbl <= vblInit + r.sampleTime
 						if ~isempty(sbg); draw(sbg); end
-						draw(set);
+						draw(targets);
 						if in.debug; drawText(s, 'Delay period...'); end
 						vbl = flip(s);
 						if isTouch(tM)
@@ -244,7 +237,7 @@ function startMatchToSample(in)
 					vblInit = vbl + sv.ifi;
 					while vbl <= vblInit + r.delayTime
 						if ~isempty(sbg); draw(sbg); end
-						if in.delayDistractors; draw(set2); end
+						if in.delayDistractors; draw(delayDistractors); end
 						vbl = flip(s);
 						if isTouch(tM)
 							r.touchResponse = 'no';
@@ -252,13 +245,15 @@ function startMatchToSample(in)
 						end
 					end
 					% show distractors
-					showSet(set, 4); %just target2 and distractors
+					showSet(targets, 4); %just target2 and distractors
 				end
 
-				[x,y] = set.getFixationPositions;
+				[x, y, s] = targets.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
-				tM.updateWindow(x, y, target2.size/2,...
-				[], [], [], in.trialTime, in.targetHoldTime, 1.0);
+				tM.updateWindow(x, y, repmat(target.size/2,1,length(x)),...
+				[], [], [], repmat(in.trialTime,1,length(x)), ...
+				repmat(in.targetHoldTime,1,length(x)), ...
+				ones(1,length(x)));
 
 				vbl = GetSecs;
 				r.vblInit = vbl + sv.ifi; %start is actually next flip
@@ -266,7 +261,7 @@ function startMatchToSample(in)
 
 				while isempty(r.touchResponse) && vbl <= (r.vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
-					draw(set);
+					draw(targets);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 						drawText(s, txt);
 						[xy] = s.toPixels([tM.x tM.y]);
@@ -285,7 +280,8 @@ function startMatchToSample(in)
 					if c(quitKey); r.keepRunning = false; break; end
 				end
 			end
-
+			
+			%% ============================== check logic of task result
 			r.vblFinal = GetSecs;
 			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no') || matches(r.touchInit,'no')
@@ -296,18 +292,27 @@ function startMatchToSample(in)
 				r.result = -1;
 			end
 
-			%% update this trials reults
+			%% ============================== Wait for release
+			while isTouch(tM)
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+				if in.debug; drawText(s,'Please release touchscreen...'); end
+				flip(s);
+			end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+			flip(s);
+
+			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
 
 		end % while keepRunning
 		target = [];
-		clutil.shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);
+		clutil.shutDownTask(s, sbg, fix, targets, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)
 		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
-		try reset(set); end
+		try reset(targets); end
 		try close(s); end
 		try close(tM); end
 		try close(rM); end

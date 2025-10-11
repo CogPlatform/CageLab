@@ -106,38 +106,35 @@ function startTouchTraining(in)
 
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
 
-
 			fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus);
-			%fprintf('===> Touch params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
+			%fprintf('===> Touch Params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
 			%	sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
 			%	sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...
 			%	sprintf("<%.2f>",tM.window.hold), sprintf("<%.1f>",tM.window.release));
 			
-			fprintf('DBG-1');
-			WaitSecs(0.01);
-
+	fprintf('DBG-1');
 			reset(tM);
-			fprintf('-2');
+	fprintf('-2');
 			flush(tM);
-			fprintf('-3');
-			if ~isempty(sbg); draw(sbg); end
-			fprintf('-4');
+	fprintf('-3');
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+	fprintf('-4');
 			vbl = flip(s); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
-			fprintf('-5');
+	fprintf('-5');
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
-				fprintf('-6');
+	fprintf('-6');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(s, txt);
 					[xy] = s.toPixels([tM.x tM.y]);
 					Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 				end
-				fprintf('-7');
+	fprintf('-7');
 				vbl = flip(s);
-				if r.phase < 5
+				if r.phase < 3
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 				else
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
@@ -146,7 +143,7 @@ function startTouchTraining(in)
 					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;
 				end
-				fprintf('-8');
+	fprintf('-8');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
 						r.phase,r.touchResponse,tM.x,tM.y,hld, r.hldtime, rel, reli, se,...
@@ -154,10 +151,10 @@ function startTouchTraining(in)
 				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
-				fprintf('-9');
+	fprintf('-9');
 			end
-			fprintf('\n');
-			%% check logic of task result
+	fprintf('\n');
+			%% ============================== check logic of task result
 			r.vblFinal = GetSecs;
 			if r.anyTouch
 				r.trialN = r.trialN + 1; 
@@ -171,7 +168,16 @@ function startTouchTraining(in)
 				r.result = -1;
 			end
 
-			%% update this trials reults
+			%% ============================== Wait for release
+			while isTouch(tM)
+				if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+				if in.debug; drawText(s,'Please release touchscreen...'); end
+				flip(s);
+			end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
+			flip(s);
+
+			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
 
 		end % while keepRunning

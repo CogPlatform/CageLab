@@ -113,10 +113,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% ================================ logic for training starcase
 	r.phaseMax = max(r.phaseMax, r.phase);
-	if matches(in.task, 'train') && r.trialW >= in.stepBack
+	if matches(in.task, 'train') && r.trialW >= inf
 		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
 		r.phase = r.phase - 1;
-		if r.phase < r.phaseMax - in.phaseMaxBack; r.phas = r.phaseMax - in.phaseMaxBack; end
+		if r.phase < r.phaseMax - in.phaseMaxBack; r.phase = r.phaseMax - in.phaseMaxBack; end
 		r.trialW = 0;
 		r.phaseN = 0;
 		if r.phase < 1; r.phase = 1; end
@@ -128,9 +128,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
 			if r.correctRate >= in.stepPercent
 				r.phase = r.phase + 1;
-			elseif r.correctRate <= 0.2
+			elseif r.correctRate <= in.stepBackPercent
 				r.phase = r.phase - 1;
 			end
+			if r.phase < r.phaseMax - in.phaseMaxBack; r.phase = r.phaseMax - in.phaseMaxBack; end
 			r.phaseN = 0;
 			r.trialW = 0;
 			if r.phase < 1; r.phase = 1; end
@@ -141,6 +142,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	end
 
 	%% ================================ finalise this trial
+	if dt.data.rewards > in.totalRewards; r.keepRunning = false; end
 	if r.keepRunning == false; return; end
 	drawBackground(sM,in.bg)
 	if ~isempty(sbg); draw(sbg); end

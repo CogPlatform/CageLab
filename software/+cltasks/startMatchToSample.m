@@ -31,7 +31,7 @@ function startMatchToSample(in)
 		bgName = 'creammarbleB.jpg';
 		prefix = 'DNTS';
 	end
-% taskType 'training 1'
+
 	try
 		%% ============================subfunction for shared initialisation
 		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
@@ -100,6 +100,16 @@ function startMatchToSample(in)
 		setup(delayDistractors, sM);
 		show(delayDistractors);
 
+		%% ============================ training, only use 1 arget
+		if contains(in.taskType, 'training')
+			in.doNegation = false;
+			tM.window.doNegation = false;
+			in.distractorN = 0;
+			in.delayDistractors = false;
+			r.sampleTime = 1;
+			r.delayTime = 0.1;
+		end
+
 		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
@@ -164,6 +174,15 @@ function startMatchToSample(in)
 					end
 			end
 
+			if contains(in.taskType, 'training')
+				targets.stimulusSets{1} = [1 2 3];
+				if matches(in.task,"dnts")
+					targets.stimulusSets{4} = 4;
+				else
+					targets.stimulusSets{3} = 3;
+				end
+			end
+
 			hide(targets);
 			if matches(in.task,"mts")
 				showSet(targets, 1); % pedestal, target and distractors for mts
@@ -191,7 +210,8 @@ function startMatchToSample(in)
 			txt = '';
 			fail = false; hld = false;
 
-			% sampleTime and delayTime can be single or range values
+			%% =============================== timers for sample and delay
+			%  sampleTime and delayTime can be single or range values
 			if isscalar(in.sampleTime)
 				r.sampleTime = in.sampleTime;
 			else
@@ -245,7 +265,7 @@ function startMatchToSample(in)
 				[x, y] = targets.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				tM.updateWindow(x, y, repmat(target.size/2,1,length(x)),...
-				true(1,length(x)), ones(1,length(x)), true(1,length(x)),...
+				repmat(in.doNegation,1,length(x)), ones(1,length(x)), true(1,length(x)),...
 				repmat(in.trialTime,1,length(x)), ...
 				repmat(in.targetHoldTime,1,length(x)), ones(1,length(x)));
 

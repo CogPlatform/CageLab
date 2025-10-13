@@ -15,6 +15,7 @@ function r = initTrialVariables(r)
 	r.hldtime = false;
 	r.vblInit = NaN;
 	r.vblFinal = NaN;
+	r.stimOnsetTime = NaN;
 	r.reactionTime = NaN;
 	r.firstTouchTime = NaN;
 	r.txt = '';

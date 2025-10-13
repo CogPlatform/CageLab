@@ -241,14 +241,17 @@ function startMatchToSample(in)
 					showSet(targets, 4); %just target and distractors
 				end
 
+				%% ================================== update the touch windows for correct targets
 				[x, y] = targets.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				tM.updateWindow(x, y, repmat(target.size/2,1,length(x)),...
-				[], [], [], repmat(in.trialTime,1,length(x)), ...
-				repmat(in.targetHoldTime,1,length(x)), ...
-				ones(1,length(x)));
+				true(1,length(x)), ones(1,length(x)), true(1,length(x)),...
+				repmat(in.trialTime,1,length(x)), ...
+				repmat(in.targetHoldTime,1,length(x)), ones(1,length(x)));
 
+				%% Get our start time
 				vbl = GetSecs;
+				r.stimOnsetTime = vbl;
 				r.vblInit = vbl + sv.ifi; %start is actually next flip
 				syncTime(tM, r.vblInit);
 

@@ -24,7 +24,7 @@ set -uo pipefail  # removed -e to manage errors manually (debug-friendly)
 cd $HOME
 # ===== CONFIG (edit as needed) =====
 DEFAULT_DEST_USER_HOST="cagelab@cagelab-dev.cloud.lab"  # remote SSH user@host
-DEST_BASE="~/Code"                              # remote base dir; ~ expands on remote
+DEST_BASE="~"                                   # remote base dir; ~ expands on remote
 EXCLUDES="${HOME}/.config/.rsync-excludes"      # optional common exclude list
 
 # SSH options for robustness & non-interactive automation
@@ -252,15 +252,24 @@ sync_one() {
   fi
   local src_with_slash="${src_abs%/}/"
 
-  # Destination path: DEST_BASE/<basename(src)>/
-  local base_name
-  base_name="$(basename "$src_abs")"
-  local dest_path="${DEST_BASE%/}/${base_name}/"  # keep trailing slash
+  # Determine relative path from $HOME to preserve directory structure on remote
+  local rel_path
+  if [[ "$src_abs" == "$HOME"/* ]]; then
+    # Path is under home, extract relative portion
+    rel_path="${src_abs#$HOME/}"
+  else
+    # Path is outside home, use basename only
+    rel_path="$(basename "$src_abs")"
+  fi
+  
+  # Destination path: DEST_BASE/<rel_path>/
+  local dest_path="${DEST_BASE%/}/${rel_path}/"  # keep trailing slash
 
   # Create destination path if mkpath isn't available
   if (( ! HAS_MKPATH )); then
     dbg "mkdir remote host=$host path=$dest_path"
-    ssh "${SSH_OPTS[@]}" "${host}" "mkdir -p '${dest_path%/}'" >/dev/null || return 2
+    # Use eval to allow ~ expansion on remote; escape other shell metacharacters
+    ssh "${SSH_OPTS[@]}" "${host}" "eval mkdir -p ${dest_path%/}" >/dev/null || return 2
   fi
 
   echo "→ Syncing: ${src_with_slash}  ➜  ${host}:${dest_path}"

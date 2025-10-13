@@ -1,4 +1,4 @@
-function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
+function [sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
 	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
 	arguments (Input)
 		in struct
@@ -6,7 +6,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		prefix (1,:) char = '' % prefix to add to save name
 	end
 	arguments (Output)
-		s (1,1) screenManager
+		sM (1,1) screenManager
 		sv struct
 		r struct
 		sbg % can be [] or imageStimulus; leave untyped to allow empty
@@ -40,7 +40,7 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	end
 	
 	%% ============================ screen & background
-	s = screenManager('screen', in.screen,'blend', true,...
+	sM = screenManager('screen', in.screen,'blend', true,...
 		'pixelsPerCm', in.density, 'distance', in.distance,...
 		'disableSyncTests', true, 'hideFlash', true, ...
 		'backgroundColour', in.bg,'windowed', windowed,'specialFlags', sf);
@@ -83,10 +83,10 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 	rM = PTBSimia.pumpManager(dummy); 
 	
 	%% ============================setup
-	sv = open(s); % open screen
+	sv = open(sM); % open screen
 	if in.smartBackground
 		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
-		setup(sbg, s);
+		setup(sbg, sM);
 		if sbg.heightD < sv.heightInDegrees
 			sbg.sizeOut = sbg.sizeOut + (sv.heightInDegrees - sbg.heightD);
 			update(sbg);
@@ -94,16 +94,16 @@ function [s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = i
 		draw(sbg);
 	end
 	
-	drawTextNow(s,['Initialising CageLab V' clutil.version '...']);
+	drawTextNow(sM,['Initialising CageLab V' clutil.version '...']);
 	
 	rtarget.size = 5;
 	rtarget.xPosition = sv.rightInDegrees - 4;
 	rtarget.yPosition = sv.topInDegrees + 4;
-	setup(rtarget, s);
+	setup(rtarget, sM);
 	in.rRect = rtarget.mvRect;
 
-	setup(fix, s);
-	setup(tM, s);
+	setup(fix, sM);
+	setup(tM, sM);
 	createQueue(tM);
 	start(tM);
 

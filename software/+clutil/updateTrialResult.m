@@ -1,8 +1,8 @@
-function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
+function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	
 	%% ================================ blank display
-	if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-	vblEnd = flip(s);
+	if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
+	vblEnd = flip(sM);
 	WaitSecs('YieldSecs',0.02);
 
 	%% ================================ register some times if subject touched
@@ -21,8 +21,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
 			WaitSecs(rand/2);
 			animateRewardTarget(0.33);
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			flip(s);
+			if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
+			flip(sM);
 			giveReward(rM, in.rewardTime);
 			dt.data.rewards = dt.data.rewards + 1;
 			dt.data.random = dt.data.random + 1;
@@ -33,8 +33,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		else
 			fprintf('===> TIMEOUT :-)\n');
 			if ~isempty(sbg); draw(sbg); end
-			drawText(s,'TIMEOUT!');
-			flip(s);
+			drawText(sM,'TIMEOUT!');
+			flip(sM);
 			WaitSecs(0.75+rand);
 		end
 
@@ -62,8 +62,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.phaseN = r.phaseN + 1;
 		r.trialW = 0;
 		
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-		flip(s);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
+		flip(sM);
 		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
 
@@ -75,9 +75,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
-		drawBackground(s,[1 0 0]);
-		if in.debug; drawText(s,r.txt); end
-		flip(s);
+		drawBackground(sM,[1 0 0]);
+		if in.debug; drawText(sM,r.txt); end
+		flip(sM);
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
 		
 		r.phaseN = r.phaseN + 1;
@@ -86,7 +86,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		fprintf('===> FAIL :-( %s\n',r.txt);
 		
 		WaitSecs('YieldSecs',in.timeOut);
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
 		r.randomRewardTimer = GetSecs;
 
 	%% ================================ otherwise
@@ -97,9 +97,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		r.correctRate = getCorrectRate();
 		r.txt = getResultsText();
 
-		if in.debug; drawText(s,r.txt); end
+		if in.debug; drawText(sM,r.txt); end
 		if ~isempty(sbg); draw(sbg); end
-		flip(s);
+		flip(sM);
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
@@ -107,7 +107,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 		fprintf('===> UNKNOWN :-| %s\n',r.txt);
 
 		WaitSecs('YieldSecs',in.timeOut);
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end; flip(s);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
 		r.randomRewardTimer = GetSecs;
 	end
 
@@ -142,9 +142,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 
 	%% ================================ finalise this trial
 	if r.keepRunning == false; return; end
-	drawBackground(s,in.bg)
+	drawBackground(sM,in.bg)
 	if ~isempty(sbg); draw(sbg); end
-	flip(s);
+	flip(sM);
 	if ~isempty(r.zmq) && r.zmq.poll('in')
 		[cmd, dat] = r.zmq.receiveCommand();
 		if ischar(cmd); cmd = string(cmd); end
@@ -193,7 +193,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function animateRewardTarget(time)
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		frames = round(time * s.screenVals.fps);
+		frames = round(time * sM.screenVals.fps);
 		rtarget.mvRect = r.rRect;
 		rtarget.angleOut = 0;
 		rtarget.alphaOut = 0;
@@ -202,15 +202,15 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a)
 			rtarget.angleOut = rtarget.angleOut + (inc * 5);
 			%rect = ScaleRect(rtarget.mvRect, inc, inc);
 			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-			if in.debug && ~isempty(r.txt); drawText(s,r.txt); end
+			if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
+			if in.debug && ~isempty(r.txt); drawText(sM,r.txt); end
 			draw(rtarget);
-			flip(s);
+			flip(sM);
 			rtarget.alphaOut = rtarget.alphaOut + 0.1;
 			if rtarget.alphaOut > 1; rtarget.alphaOut = 1; end
 		end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(s,in.bg); end
-		flip(s);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
+		flip(sM);
 	end
 
 end

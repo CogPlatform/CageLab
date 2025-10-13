@@ -28,13 +28,13 @@ function startMatchToSample(in)
 		bgName = 'abstract3.jpg';
 		prefix = 'DMTS';
 	elseif matches(in.task,'dnts')
-		bgName = 'abstract4.jpg';
+		bgName = 'creammarbleB.jpg';
 		prefix = 'DNTS';
 	end
-
+% taskType 'training 1'
 	try
 		%% ============================subfunction for shared initialisation
-		[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		switch lower(in.object)
@@ -78,10 +78,10 @@ function startMatchToSample(in)
 		distractor4.filePath = string(in.folder) + filesep + in.object + filesep + pfix5;
 		targets = metaStimulus('stimuli',{pedestal, sample, target, distractor1, distractor2, distractor3, distractor4});
 		targets.fixationChoice = 3;
-		targets.stimulusSets{1} = 1;
-		targets.stimulusSets{2} = 2;
-		targets.stimulusSets{3} = 3:4;
-		targets.stimulusSets{4} = 3:7;
+		targets.stimulusSets{1} = 1:7; % all stimuli for mts
+		targets.stimulusSets{2} = 1:2; % pedestal + sample
+		targets.stimulusSets{3} = 3; %target 
+		targets.stimulusSets{4} = 3:7; % all targets + distractors
 
 		% distractors to optionally show in the delay period
 		distractor5 = clone(distractor2);
@@ -95,9 +95,9 @@ function startMatchToSample(in)
 		delayDistractors.edit(1:3,'yPosition',in.sampleY);
 
 		%% ============================ custom stimuli setup
-		setup(fix, s);
-		setup(targets, s);
-		setup(delayDistractors, s);
+		setup(fix, sM);
+		setup(targets, sM);
+		setup(delayDistractors, sM);
 		show(delayDistractors);
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,6 +110,7 @@ function startMatchToSample(in)
 			sep = in.objectSep;
 			N = in.distractorN;
 			Y = in.distractorY;
+			targets.fixationChoice = 3;
 			switch N
 				case 1
 					[~,idx] = Shuffle([1 2]);
@@ -118,11 +119,9 @@ function startMatchToSample(in)
 					xy = xy(:,idx);
 					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
-					targets.stimulusSets{2} = [1 2 3 4];
-					if matches(in.task,'dnts')
-						targets.fixationChoice = 4; % only distractor1 is correct
-					else
-						targets.fixationChoice = [3 4]; % target2 and distractor1
+					targets.stimulusSets{4} = [3 4];
+					if matches(in.task,"dnms")
+						targets.fixationChoice = 4;
 					end
 				case 2
 					[~,idx] = Shuffle([1 2 3]);
@@ -132,11 +131,9 @@ function startMatchToSample(in)
 					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
-					targets.stimulusSets{2} = [1 2 3 4 5];
-					if matches(in.task,'dnts')
-						targets.stimulusSets{4} = [4 5]; % only distractors are correct
-					else
-						targets.stimulusSets{4} = [3 4 5]; % target2 and distractors
+					targets.stimulusSets{4} = [3 4 5];
+					if matches(in.task,"dnms")
+						targets.fixationChoice = [4 5];
 					end
 				case 3
 					[~,idx] = Shuffle([1 2 3 4]);
@@ -147,11 +144,9 @@ function startMatchToSample(in)
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
-					targets.stimulusSets{2} = [1 2 3 4 5 6];
-					if matches(in.task,'dnts')
-						targets.stimulusSets{4} = [4 5 6]; % only distractors are correct
-					else
-						targets.stimulusSets{4} = [3 4 5 6]; % target2 and distractors
+					targets.stimulusSets{4} = [3 4 5 6];
+					if matches(in.task,"dnms")
+						targets.fixationChoice = [4 5 6];
 					end
 				otherwise
 					[~,idx] = Shuffle([1 2 3 4 5]);
@@ -163,19 +158,17 @@ function startMatchToSample(in)
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					distractor4.updateXY(xy(1,5), xy(2,5), true);
-					targets.stimulusSets{2} = [1 2 3 4 5 6 7];
-					if matches(in.task,'dnts')
-						targets.stimulusSets{4} = [4 5 6 7]; % only distractors are correct
-					else
-						targets.stimulusSets{4} = [3 4 5 6 7]; % target2 and distractors
+					targets.stimulusSets{4} = [3 4 5 6 7];
+					if matches(in.task,"dnms")
+						targets.fixationChoice = [4 5 6 7];
 					end
 			end
 
 			hide(targets);
-			if matches(in.task,'dmts')
-				showSet(targets, 3); % just pedestal and target1
+			if matches(in.task,"mts")
+				showSet(targets, 1); % pedestal, target and distractors for mts
 			else
-				showSet(targets, 2); % pedestal, target and distractors
+				showSet(targets, 2); % only pedestal + sample
 			end
 
 			rs = randi(sample.nImages); r.stimulus = rs;
@@ -211,7 +204,7 @@ function startMatchToSample(in)
 			end
 
 			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, quitKey, dt);
 
 			%% start the actual task
 			if matches(string(r.touchInit),"yes")
@@ -225,8 +218,8 @@ function startMatchToSample(in)
 					while vbl <= vblInit + r.sampleTime
 						if ~isempty(sbg); draw(sbg); end
 						draw(targets);
-						if in.debug; drawText(s, 'Delay period...'); end
-						vbl = flip(s);
+						if in.debug; drawText(sM, 'Sample period...'); end
+						vbl = flip(sM);
 						if isTouch(tM)
 							r.touchResponse = 'no';
 							break
@@ -238,17 +231,17 @@ function startMatchToSample(in)
 					while vbl <= vblInit + r.delayTime
 						if ~isempty(sbg); draw(sbg); end
 						if in.delayDistractors; draw(delayDistractors); end
-						vbl = flip(s);
+						vbl = flip(sM);
 						if isTouch(tM)
 							r.touchResponse = 'no';
 							break
 						end
 					end
 					% show distractors
-					showSet(targets, 4); %just target2 and distractors
+					showSet(targets, 4); %just target and distractors
 				end
 
-				[x, y, s] = targets.getFixationPositions;
+				[x, y] = targets.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 				tM.updateWindow(x, y, repmat(target.size/2,1,length(x)),...
 				[], [], [], repmat(in.trialTime,1,length(x)), ...
@@ -263,19 +256,21 @@ function startMatchToSample(in)
 					if ~isempty(sbg); draw(sbg); end
 					draw(targets);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
-						drawText(s, txt);
-						[xy] = s.toPixels([tM.x tM.y]);
-						Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
+						drawText(sM, txt);
+						[xy] = sM.toPixels([tM.x tM.y]);
+						Screen('glPoint', sM.win, [1 0 0], xy(1), xy(2), 10);
 					end
-					vbl = flip(s);
+					vbl = flip(sM);
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 					if tch
 						r.reactionTime = vbl - r.vblInit;
 						r.anyTouch = true;
 					end
-					txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
-						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, se, fail, tch, ...
-						tM.window.radius,tM.window.init,tM.window.hold,tM.window.release,tM.window.X,tM.window.Y);
+					if in.debug; txt = sprintf('Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i fail:%i tch:%i WR: %.1f WInit: %.2f WHold: %.2f WRel: %.2f WX: %.2f WY: %.2f',...
+						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, ...
+						se, fail, tch, tM.window.radius,tM.window.init, ...
+						tM.window.hold,tM.window.release,tM.window.X, ...
+						tM.window.Y); end
 					[~,~,c] = KbCheck();
 					if c(quitKey); r.keepRunning = false; break; end
 				end
@@ -294,26 +289,26 @@ function startMatchToSample(in)
 
 			%% ============================== Wait for release
 			while isTouch(tM)
-				if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
-				if in.debug; drawText(s,'Please release touchscreen...'); end
-				flip(s);
+				if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+				if in.debug; drawText(sM,'Please release touchscreen...'); end
+				flip(sM);
 			end
-			if ~isempty(sbg); draw(sbg); else; drawBackground(s, in.bg); end
-			flip(s);
+			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+			flip(sM);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, s, tM, rM, a);
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
 
 		end % while keepRunning
 		target = [];
-		clutil.shutDownTask(s, sbg, fix, targets, target, rtarget, tM, rM, saveName, dt, in, r);
+		clutil.shutDownTask(sM, sbg, fix, targets, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)
 		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(targets); end
-		try close(s); end
+		try close(sM); end
 		try close(tM); end
 		try close(rM); end
 		try close(a); end

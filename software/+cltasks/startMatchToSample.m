@@ -100,8 +100,8 @@ function startMatchToSample(in)
 		setup(delayDistractors, sM);
 		show(delayDistractors);
 
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
 			pedestal.xPositionOut = 0;
 			pedestal.yPositionOut = in.sampleY;
@@ -120,7 +120,7 @@ function startMatchToSample(in)
 					target.updateXY(xy(1,1), xy(2,1), true);
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					targets.stimulusSets{4} = [3 4];
-					if matches(in.task,"dnms")
+					if matches(in.task,"dnts")
 						targets.fixationChoice = 4;
 					end
 				case 2
@@ -132,7 +132,7 @@ function startMatchToSample(in)
 					distractor1.updateXY(xy(1,2), xy(2,2), true);
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					targets.stimulusSets{4} = [3 4 5];
-					if matches(in.task,"dnms")
+					if matches(in.task,"dnts")
 						targets.fixationChoice = [4 5];
 					end
 				case 3
@@ -145,7 +145,7 @@ function startMatchToSample(in)
 					distractor2.updateXY(xy(1,3), xy(2,3), true);
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					targets.stimulusSets{4} = [3 4 5 6];
-					if matches(in.task,"dnms")
+					if matches(in.task,"dnts")
 						targets.fixationChoice = [4 5 6];
 					end
 				otherwise
@@ -159,7 +159,7 @@ function startMatchToSample(in)
 					distractor3.updateXY(xy(1,4), xy(2,4), true);
 					distractor4.updateXY(xy(1,5), xy(2,5), true);
 					targets.stimulusSets{4} = [3 4 5 6 7];
-					if matches(in.task,"dnms")
+					if matches(in.task,"dnts")
 						targets.fixationChoice = [4 5 6 7];
 					end
 			end

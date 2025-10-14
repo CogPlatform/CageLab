@@ -113,17 +113,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% ================================ logic for training starcase
 	r.phaseMax = max(r.phaseMax, r.phase);
-	if matches(in.task, 'train') && r.trialW >= inf
-		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
-		r.phase = r.phase - 1;
-		if r.phase < r.phaseMax - in.phaseMaxBack; r.phase = r.phaseMax - in.phaseMaxBack; end
-		r.trialW = 0;
-		r.phaseN = 0;
-		if r.phase < 1; r.phase = 1; end
-		if r.phase > 20; r.phase = 20; end
-		if matches(in.taskType, 'Simple') && r.phase > 9; r.phase = 9; end
-		fprintf('===> Step Back Phase update: %i\n',r.phase);
-	elseif matches(in.task, 'train') && r.trialN >= in.stepForward
+	if matches(in.task, 'train') && r.trialN >= in.stepForward
 		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
 			if r.correctRate >= in.stepPercent
@@ -131,13 +121,15 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			elseif r.correctRate <= in.stepBackPercent
 				r.phase = r.phase - 1;
 			end
-			if r.phase < r.phaseMax - in.phaseMaxBack; r.phase = r.phaseMax - in.phaseMaxBack; end
+			if r.phase < (r.phaseMax - in.phaseMaxBack)
+				r.phase = r.phaseMax - in.phaseMaxBack; 
+			end
 			r.phaseN = 0;
 			r.trialW = 0;
 			if r.phase < 1; r.phase = 1; end
 			if r.phase > 36; r.phase = 36; end
-			if matches(in.task, 'Simple') && r.phase > 20; r.phase = 20; end
-			fprintf('===> Step Forward Phase update: %i\n',r.phase);
+			if matches(in.task, 'Simple') && r.phase > 19; r.phase = 19; end
+			fprintf('===> Step Phase update: %i\n',r.phase);
 		end
 	end
 

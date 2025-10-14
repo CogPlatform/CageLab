@@ -102,7 +102,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		flip(sM);
 		
 		r.phaseN = r.phaseN + 1;
-		r.trialW = r.trialW + 1;
+		r.trialW = r.trialW + 1; 
 
 		fprintf('===> UNKNOWN :-| %s\n',r.txt);
 
@@ -135,8 +135,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			r.phaseN = 0;
 			r.trialW = 0;
 			if r.phase < 1; r.phase = 1; end
-			if r.phase > 20; r.phase = 20; end
-			if matches(in.task, 'Simple') && r.phase > 9; r.phase = 9; end
+			if r.phase > 36; r.phase = 36; end
+			if matches(in.task, 'Simple') && r.phase > 20; r.phase = 20; end
 			fprintf('===> Step Forward Phase update: %i\n',r.phase);
 		end
 	end

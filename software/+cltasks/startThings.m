@@ -1,11 +1,10 @@
-function startMatchToSample(in)
-	% startMatchToSample(in)
-	% Start a match-to-sample task (MTS, DMTS or DNTS)
+function startThings(in)
+	% startThings(in)
+	% Start an odd-one-out task
 	% in comes from CageLab GUI or can be a struct with the following fields:
 	% Example:
 	%   in = struct();
-	%   in.task = 'mts'; % 'mts', 'dmts' or 'dnts'
-	%   in.object = 'fractals'; % 'fractals', 'quaddles' or 'flowers'
+	%   in.task = 'ooo'
 	%   in.objectSize = 10; % size of objects in degrees
 	%   in.objectSep = 15; % separation of objects in degrees
 	%   in.sampleY = 0; % vertical position of sample object in degrees
@@ -21,49 +20,22 @@ function startMatchToSample(in)
 	%   in.fixWindow = 4; % fixation window size in degrees
 
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
-	if matches(in.task,'mts')
-		bgName = 'abstract2.jpg';
-		prefix = 'MTS';
-	elseif matches(in.task,'dmts')
-		bgName = 'abstract3.jpg';
-		prefix = 'DMTS';
-	elseif matches(in.task,'dnts')
-		bgName = 'creammarbleB.jpg';
-		prefix = 'DNTS';
-	end
+	
+	bgName = 'abstract4.jpg';
+	prefix = 'OOO';
+	
 
 	try
 		%% ============================subfunction for shared initialisation
 		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
-		switch lower(in.object)
-			case 'fractals'
-				pfix = ["A" "B" "C" "D" "E" "F" "G" "H" "I"];
-				pfix1 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix1);
-				pfix2 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix2);
-				pfix3 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix3);
-				pfix4 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix3,pfix4);
-				pfix5 = pfix(randi(length(pfix)));
-			case 'quaddles'
-				pfix = ["A" "B" "C" "D" "E" "F" "G" "H"];
-				pfix1 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix1);
-				pfix2 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix2);
-				pfix3 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix,pfix3);
-				pfix4 = pfix(randi(length(pfix)));
-				pfix = setxor(pfix3,pfix4);
-				pfix5 = pfix(randi(length(pfix)));
-			case 'flowers'
-				[pfix1, pfix2, pfix3, pfix4, pfix5] = deal("");
-		end
+		
+		[object, file] = clutil.getThingsImages(in);
+
+		% for training use only 1 object
 		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
+		
 		sample = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
 			'filePath', string(in.folder) + filesep + in.object + filesep + pfix1,'yPosition',in.sampleY);
 		target = clone(sample);

@@ -51,7 +51,7 @@ function [sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = 
 	end
 
 	%% s============================ stimuli
-	rtarget = imageStimulus('colour', [0 1 0], 'filePath', 'star.png');
+	rtarget = imageStimulus('size', 2, 'colour', [0 1 0], 'filePath', 'star.png');
 	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	

@@ -23,6 +23,7 @@ function startThings(in)
 	
 	bgName = 'creammarbleD.jpg';
 	prefix = 'OOO';
+	in.sampleY = in.distractorY;
 	
 	try
 		%% ============================subfunction for shared initialisation
@@ -30,14 +31,14 @@ function startThings(in)
 
 		%% ============================task specific figures
 		
-		[object, file] = clutil.getThingsImages(in);
+		object = clutil.getThingsImages(in);
 
 		% for training use only
 		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
 
 		% our three samples
 		sampleA = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
-			'filePath', 'star.png','yPosition',in.sampleY);
+			'yPosition',in.sampleY);
 		sampleB = clone(sampleA);
 		sampleC = clone(sampleA);
 		
@@ -57,26 +58,28 @@ function startThings(in)
 		hide(samples); % hide all stimuli at start
 
 		%% ============================ training mode parameters
-		switch in.taskType, 
+		switch in.taskType
 			case 'training 1'
-				images = ["heptagon.png", "rectangle.png", "circle.png"];
+				images = ["heptagon.png", "rect1.png", "circle.png"];
 				colours = {[1 0 0],[0 1 0],[0 0 1]};
-				samples.edit(2:4,'randomizeSelection',false);
+				samples.edit(2:4,'randomiseSelection',false);
 				in.doNegation = false;
 				tM.window.doNegation = false;
 			case 'training 2'
 				pfix = ["A" "G" "L"];
 				images = [" " " " " "];
 				colours = {};
-				samples.edit(2:4,'randomizeSelection',true);
-				
+				samples.edit(2:4,'randomiseSelection',true);
 			case 'training 3'
-				images = ["heptagon.png", "rectangle.png", "circle.png"];
+				images = ["heptagon.png", "rect1.png", "circle.png"];
 				colours = {[1 0 0],[0 1 0],[0 0 1]};
+				samples.edit(2:4,'randomiseSelection',false);
+				in.doNegation = false;
+				tM.window.doNegation = false;
 			otherwise
 				images = [];
 				colours = [];
-				samples.edit(2:4,'randomizeSelection',false);
+				samples.edit(2:4,'randomiseSelection',false);
 		end
 
 		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -90,33 +93,33 @@ function startThings(in)
 					ooo = [A A B];
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
-					samples.fixationChoice = choice;
+					samples.fixationChoice = choice+1;
+					samples{1}.xPositionOut = samples{choice+1}.xPositionOut;
 					samples{2}.filePath = images(ooo(1));
 					samples{3}.filePath = images(ooo(2));
 					samples{4}.filePath = images(ooo(3));
-					samples.edit(2,'colourOut',colours{ooo(1)});
-					samples.edit(3,'colourOut',colours{ooo(2)});
-					samples.edit(4,'colourOut',colours{ooo(3)});
+					samples{2}.colourOut = colours{ooo(1)};
+					samples{3}.colourOut = colours{ooo(2)};
+					samples{4}.colourOut = colours{ooo(3)};
 					showSet(samples, 1); % show all stimuli with pedestal
-					samples.fixationChoice = 2:4;
 				case 'training 2'
 					A = randi(3);
 					B = A; while B == A; B = randi(3); end
 					ooo = [A A B];
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
-					samples.fixationChoice = choice;
-					samples{2}.filePath = "in.folder" + filesep + "fractals" + filesep + pfix(ooo(1));;
-					samples{3}.filePath = "in.folder" + filesep + "fractals" + filesep + pfix(ooo(2));
-					samples{4}.filePath = "in.folder" + filesep + "fractals" + filesep + pfix(ooo(3));
+					samples.fixationChoice = choice+1;
+					samples{1}.xPositionOut = samples{choice+1}.xPositionOut;
+					samples{2}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(1));
+					samples{3}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(2));
+					samples{4}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(3));
 					showSet(samples, 1); % show all stimuli with pedestal
-					
 				case 'training 3'
 
 				otherwise
-					samples{1}.filePath = object.trials(r.trialN,1);
-					samples{2}.filePath = object.trials(r.trialN,2);
-					samples{3}.filePath = object.trials(r.trialN,3);
+					samples{2}.filePath = object.trials{r.trialN+1, "A"};
+					samples{3}.filePath = object.trials{r.trialN+1, "B"};
+					samples{4}.filePath = object.trials{r.trialN+1, "C"};
 					showSet(samples, 3); % show all stimuli without pedestal
 					samples.fixationChoice = 2:4;
 			end
@@ -137,9 +140,9 @@ function startThings(in)
 				r.touchResponse = '';
 
 				%% ================================== update the touch windows for correct targets
-				[x, y] = targets.getFixationPositions;
+				[x, y] = samples.getFixationPositions;
 				% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
-				tM.updateWindow(x, y, repmat(target.size/2,1,length(x)),...
+				tM.updateWindow(x, y, repmat(in.objectSize/1.9,1,length(x)),...
 				repmat(in.doNegation,1,length(x)), ones(1,length(x)), true(1,length(x)),...
 				repmat(in.trialTime,1,length(x)), ...
 				repmat(in.targetHoldTime,1,length(x)), ones(1,length(x)));
@@ -182,6 +185,7 @@ function startThings(in)
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
 				r.result = 1;
+				r.trialN = r.trialN + 1;
 			else
 				r.result = -1;
 			end
@@ -189,7 +193,7 @@ function startThings(in)
 			%% ============================== Wait for release, 
 			% stops subject just holding on the screen
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			if in.debug; drawText(s,'Please release touchscreen...'); end
+			if in.debug; drawText(sM,'Please release touchscreen...'); end
 			flip(sM);
 			while isTouch(tM)
 				WaitSecs(0.5);
@@ -202,13 +206,13 @@ function startThings(in)
 
 		end % while keepRunning
 		target = [];
-		clutil.shutDownTask(sM, sbg, fix, targets, target, rtarget, tM, rM, saveName, dt, in, r);
+		clutil.shutDownTask(sM, sbg, fix, samples, target, rtarget, tM, rM, saveName, dt, in, r);
 
 	catch ME
 		getReport(ME)
-		try reset(rtarget); end %#ok<*TRYNC>
+		try reset(samples); end %#ok<*TRYNC>
 		try reset(fix); end
-		try reset(targets); end
+		try reset(rtarget); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end

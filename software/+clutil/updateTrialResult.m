@@ -200,8 +200,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			if in.debug && ~isempty(r.txt); drawText(sM,r.txt); end
 			draw(rtarget);
 			flip(sM);
-			rtarget.alphaOut = rtarget.alphaOut + 0.025;
-			if rtarget.alphaOut > 0.6; rtarget.alphaOut = 0.6; end
+			rtarget.alphaOut = rtarget.alphaOut + 0.02;
+			if rtarget.alphaOut > 0.5; rtarget.alphaOut = 0.5; end
 		end
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
 		flip(sM);

@@ -39,7 +39,7 @@ function startMatchToSample(in)
 		%% ============================task specific figures
 		switch lower(in.object)
 			case 'fractals'
-				pfix = ["A" "B" "C" "D" "E" "F" "G" "H" "I"];
+				pfix = ["A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L"];
 				pfix1 = pfix(randi(length(pfix)));
 				pfix = setxor(pfix,pfix1);
 				pfix2 = pfix(randi(length(pfix)));

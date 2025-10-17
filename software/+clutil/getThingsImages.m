@@ -8,7 +8,7 @@ imageExts = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tif', '.tiff', '.webp'};
 object = struct;
 files = string.empty;
 
-d = dir(in.folder);
+d = dir(in.folderThings);
 
 for ii = 1:length(d)
 	if d(ii).isdir == false || matches(d(ii).name,[".","..",".git"]); continue; end

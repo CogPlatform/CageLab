@@ -1,5 +1,5 @@
-function [sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
-	%[s, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
+function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
+	%[s, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
 	arguments (Input)
 		in struct
 		bgName (1,:) char {mustBeNonempty} % background image filename
@@ -12,7 +12,7 @@ function [sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = 
 		sbg % can be [] or imageStimulus; leave untyped to allow empty
 		rtarget (1,1) imageStimulus
 		fix (1,1) discStimulus
-		a (1,1) audioManager
+		aM (1,1) audioManager
 		rM (1,1) PTBSimia.pumpManager
 		tM (1,1) touchManager
 		dt (1,1) touchData
@@ -56,14 +56,14 @@ function [sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = 
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
 	%% ============================ audio
-	a = audioManager('device',in.audioDevice);
-	if in.debug; a.verbose = true; end
+	aM = audioManager('device',in.audioDevice);
+	if in.debug; aM.verbose = true; end
 	if in.audioVolume == 0 || in.audio == false
-		a.silentMode = true; 
+		aM.silentMode = true; 
 	else
-		setup(a);
-		beep(a,in.correctBeep,0.1,in.audioVolume);
-		beep(a,in.incorrectBeep,0.1,in.audioVolume);
+		setup(aM);
+		beep(aM,in.correctBeep,0.1,in.audioVolume);
+		beep(aM,in.incorrectBeep,0.1,in.audioVolume);
 	end
 	
 	%% ============================touch

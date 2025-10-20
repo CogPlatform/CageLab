@@ -27,14 +27,14 @@ function startThings(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		
 		object = clutil.getThingsImages(in);
 
 		% for training use only
-		pedestal = discStimulus('size', in.objectSize + 1,'colour',[0.5 1 1],'alpha',0.3,'yPosition',in.sampleY);
+		pedestal = discStimulus('size', in.objectSize + 2,'colour',[1 1 0.5],'alpha',0.5,'yPosition',in.sampleY);
 
 		% our three samples
 		sampleA = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
@@ -60,7 +60,7 @@ function startThings(in)
 		%% ============================ training mode parameters
 		switch in.taskType
 			case 'training 1'
-				images = ["heptagon.png", "rect1.png", "circle.png"];
+				images = ["heptagon.png", "triangle2.png", "circle.png"];
 				colours = {[1 0 0],[0 1 0],[0 0 1]};
 				samples.edit(2:4,'randomiseSelection',false);
 				in.doNegation = false;
@@ -93,14 +93,21 @@ function startThings(in)
 					ooo = [A A B];
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
-					samples.fixationChoice = choice+1;
-					samples{1}.xPositionOut = samples{choice+1}.xPositionOut;
+					al = [0.25 0.25 0.25]; al(choice) = 1;
+					samples.fixationChoice = choice + 1;
+					samples{1}.xPositionOut = samples{choice + 1}.xPosition;
 					samples{2}.filePath = images(ooo(1));
 					samples{3}.filePath = images(ooo(2));
 					samples{4}.filePath = images(ooo(3));
 					samples{2}.colourOut = colours{ooo(1)};
 					samples{3}.colourOut = colours{ooo(2)};
 					samples{4}.colourOut = colours{ooo(3)};
+					samples{2}.alphaOut = al(1);
+					samples{3}.alphaOut = al(2);
+					samples{4}.alphaOut = al(3);
+					samples{2}.angleOut = randi(360);
+					samples{3}.angleOut = randi(360);
+					samples{4}.angleOut = randi(360);
 					showSet(samples, 1); % show all stimuli with pedestal
 				case 'training 2'
 					A = randi(3);
@@ -109,7 +116,7 @@ function startThings(in)
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
 					samples.fixationChoice = choice+1;
-					samples{1}.xPositionOut = samples{choice+1}.xPositionOut;
+					samples{1}.xPositionOut = samples{choice+1}.xPosition;
 					samples{2}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(1));
 					samples{3}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(2));
 					samples{4}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(3));
@@ -202,7 +209,7 @@ function startThings(in)
 			flip(sM);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
 
 		end % while keepRunning
 		target = [];
@@ -216,7 +223,7 @@ function startThings(in)
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
-		try close(a); end
+		try close(aM); end
 		try Priority(0); end
 		try ListenChar(0); end
 		try ShowCursor; end

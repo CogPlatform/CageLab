@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  netbird:
+    image: netbirdio/netbird:latest
+    container_name: netbird
+    hostname: ${HOSTNAME}
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - NB_SETUP_KEY=${SETUP_KEY}
+    volumes:
+      - netbird-client:/var/lib/netbird
+
+  mediamtx:
+    image: bluenviron/mediamtx:1
+    container_name: mediamtx
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  netbird-client:

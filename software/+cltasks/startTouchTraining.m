@@ -19,7 +19,9 @@ function startTouchTraining(in)
 		
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
-			target = imageStimulus('size', in.maxSize, 'filePath', [in.folder filesep 'flowers'], 'crop', 'square', 'circularMask', true);
+			target = imageStimulus('size', in.maxSize, ...
+				'filePath', [in.folder filesep 'flowers'], ...
+				'crop', 'square', 'circularMask', true);
 		else
 			target = discStimulus('size', in.maxSize, 'colour', in.fg);
 		end
@@ -112,9 +114,9 @@ function startTouchTraining(in)
 				fprintf("Subject holding screen before trial start")
 				now = WaitSecs(0.5);
 				fprintf("Subject holding screen before trial start %.1fsecs...\n",now-vbls);
-				if now - vbl > 2
-					drawBackground(sM,[1 0 0]);flip(sM);
-					vbl = WaitSecs(2);
+				if now - vbl > 1
+					drawBackground(sM,[1 0 0]);
+					flip(sM);
 				end
 			end
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
@@ -127,27 +129,20 @@ function startTouchTraining(in)
 			%	sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
 			%	sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...
 			%	sprintf("<%.2f>",tM.window.hold), sprintf("<%.1f>",tM.window.release));
-fprintf('DBG-1');
 			reset(tM);
-fprintf('-2');
 			flush(tM);
-fprintf('-3');
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-fprintf('-4');
 			vbl = flip(sM); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
-fprintf('-5');
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
-fprintf('-6');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(sM, txt);
 					[xy] = sM.toPixels([tM.x tM.y]);
 					Screen('glPoint', sM.win, [1 0 0], xy(1), xy(2), 10);
 				end
-fprintf('-7');
 				vbl = flip(sM);
 				if r.phase < 3
 					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
@@ -158,7 +153,6 @@ fprintf('-7');
 					r.reactionTime = vbl - r.vblInit;
 					r.anyTouch = true;
 				end
-fprintf('-8');
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					txt = sprintf('Phase=%i Response=%i x=%.2f y=%.2f h:%i ht:%i r:%i rs:%i s:%i %.1f Init: %.2f Hold: %.2f Release: %.2f',...
 						r.phase,r.touchResponse,tM.x,tM.y,hld, r.hldtime, rel, reli, se,...
@@ -166,9 +160,7 @@ fprintf('-8');
 				end
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
-fprintf('-9');
 			end
-fprintf('\n');
 			%% ============================== check logic of task result
 			r.vblFinal = GetSecs;
 			if r.anyTouch

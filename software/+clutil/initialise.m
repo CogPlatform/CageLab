@@ -163,6 +163,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	r = [];
 	r.hostname = hname;
 	r.saveName = in.saveName;
+	r.version = clutil.version;
 	r.alyx = alyx;
 	r.alyxPath = in.alyxPath;
 	r.alyxName = in.alyxName;

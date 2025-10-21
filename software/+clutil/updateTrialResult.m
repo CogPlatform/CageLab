@@ -160,10 +160,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% save copy of data every 5 trials just in case of crash
 	if mod(r.trialN, 5)
-		disp('=========================================');
-		fprintf('===> Saving data to %s\n', r.saveName)
-		disp('=========================================');
+		tt=tic;
 		save(r.saveName, 'dt', 'r', 'in', 'tM', '-v7.3');
+		disp('=========================================');
+		fprintf('===> Saving data to %s in %.2fsecs\n', r.saveName, toc(tt));
+		disp('=========================================');
 	end
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

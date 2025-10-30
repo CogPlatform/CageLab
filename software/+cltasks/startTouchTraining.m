@@ -48,16 +48,16 @@ function startTouchTraining(in)
 			if r.phase > length(p); r.phase = length(p); end
 		else
 			% HOLD
-			hl = linspace(0.01, 0.8, 9);
+			hl = linspace(0.01, 0.4, 12);
 			for hld = hl
-				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
 			end
-			p(pn).size = sz(end); p(pn).hold = [0.5 1.2]; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
 			% RELEASE
 			rl = linspace(3, 1, 6);
 			for rel = hl
-				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = rel; p(pn).pos = 11; pn = pn + 1;
+				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = rel; p(pn).pos = 3; pn = pn + 1;
 			end
+			p(pn).size = sz(end); p(pn).hold = [0.5 1.2]; p(pn).rel = 1; p(pn).pos = 7;
 			if r.phase > length(p); r.phase = length(p); end
 		end
 		fprintf('===> Total phases: %i\n', length(p));

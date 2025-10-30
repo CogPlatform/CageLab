@@ -80,7 +80,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	else %dummy mode pass true to constructor
 		dummy = true;
 	end
-	rM = PTBSimia.pumpManager(dummy); 
+	rM = PTBSimia.pumpManager(dummy);
 	
 	%% ============================setup
 	sv = open(sM); % open screen

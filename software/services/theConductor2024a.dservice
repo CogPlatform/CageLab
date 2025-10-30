@@ -1,0 +1,31 @@
+# User service file for theConductor MATLAB R2024a
+# Place this file in /etc/systemd/user/theConductor.service
+# systemctl --user daemon-reload
+# systemctl --user enable theConductor.service
+# systemctl --user start theConductor.service
+# journalctl --user --all -f -u theConductor
+
+[Unit]
+Description=CageLab ØMQ Experiment Conductor Service R2024a
+Documentation=https://github.com/CogPlatform/CageLab
+After=cogmoteGO.service
+Requires=cogmoteGO.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# to find some tools installed by pixi or brew etc
+Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2024a/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+# our main command
+ExecStart=/usr/local/MATLAB/R2024a/bin/matlab -nosplash -nodesktop -r "c = theConductor('loopTime',0.1); run(c);"
+# we MUST release the proxy manually using curl on stop
+ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/cmds/proxies"
+Restart=always
+RestartSec=15
+#CPUSchedulingPolicy=rr
+#CPUSchedulingPriority=99
+#IOSchedulingClass=realtime
+#Nice=-20
+
+[Install]
+WantedBy=default.target

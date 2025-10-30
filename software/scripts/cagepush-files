@@ -1,0 +1,82 @@
+#!/usr/bin/env zsh
+# cagepush-files: Push local files to remote servers with retry on locked files
+# This script is designed to facilitate the transfer of files to local networked servers.
+# Usage: cagepush-files -s host file...
+# Example: cagepush-files -s user@remote /path/to/local/file1 /path/to/local/file2
+
+set -uo pipefail
+SKIP_CODE=100
+
+transfer_one() {
+	local host="$1" file="$2"
+	
+	if [[ ! -f "$file" ]]; then
+		echo "Skipping: $file" >&2
+		return $SKIP_CODE
+	fi
+	
+	if [[ "$file" != /* ]]; then
+		file="$(cd "$(dirname "$file")" && pwd)/$(basename "$file")"
+	fi
+	
+	local remote_dest="$file"
+	if [[ "$file" == "$HOME"/* ]]; then
+		remote_dest="~${file#$HOME}"
+	fi
+	
+	echo "Copying: $file → $host:$remote_dest"
+	
+	local attempt=0
+	local dest="$remote_dest"
+	
+	while (( attempt < 5 )); do
+		(( attempt++ ))
+		
+		scp -p -C -o BatchMode=yes "$file" "${host}:${dest}" 2>&1
+		local ec=$?
+		
+		if (( ec == 0 )); then
+			echo "✓ OK: $host:$dest"
+			return 0
+		fi
+		
+		if (( attempt < 5 && ec == 1 )); then
+			dest="${remote_dest}.${attempt}"
+			echo "⚠ File locked, retrying: $host:$dest"
+		else
+			echo "✗ Failed: $host:$dest (exit $ec)"
+			return $ec
+		fi
+	done
+	
+	return 1
+}
+
+hosts=()
+files=()
+
+while (( $# > 0 )); do
+	case "$1" in
+		-s) hosts+=("$2"); shift 2 ;;
+		-h|--help) echo "Usage: $0 -s host file..."; exit 0 ;;
+		*) files+=("$1"); shift ;;
+	esac
+done
+
+[[ ${#hosts[@]} -gt 0 && ${#files[@]} -gt 0 ]] || { echo "Usage: $0 -s host file..." >&2; exit 2; }
+
+ok=0; failed=0; rc=0
+for h in "${hosts[@]}"; do
+	for f in "${files[@]}"; do
+		if transfer_one "$h" "$f"; then
+			(( ok++ ))
+		else
+			(( failed++ ))
+			rc=1
+		fi
+	done
+done
+
+echo ""
+echo "Summary: OK=$ok Failed=$failed"
+exit $rc

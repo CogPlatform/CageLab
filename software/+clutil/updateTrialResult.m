@@ -11,9 +11,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		dt.data.times.taskEnd(r.trialN) = r.vblFinal;
 		dt.data.times.taskRT(r.trialN) = r.reactionTime;
 		dt.data.times.firstTouch(r.trialN) = r.firstTouchTime;
+		dt.data.times.date(r.trialN) = datetime('now');
 	end
 
-	% lets check the results:
+	% ================================= lets check the results:
 
 	%% ================================ no touch and first training phases, give some random rewards
 	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
@@ -139,6 +140,20 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	drawBackground(sM,in.bg)
 	if ~isempty(sbg); draw(sbg); end
 	flip(sM);
+
+	%% ================================== broadcast the trial to cogmoteGO
+	clutil.broadcastTrial(in, r, dt, true);
+
+	%% ================================== save copy of data every 5 trials just in case of crash
+	if mod(r.trialN, 3)
+		tt=tic;
+		save(r.saveName, 'dt', 'r', 'in', 'tM', '-v7.3');
+		disp('=========================================');
+		fprintf('===> Saving data to %s in %.2fsecs\n', r.saveName, toc(tt));
+		disp('=========================================');
+	end
+
+	%% ================================== check if a command was sent from control system
 	if ~isempty(r.zmq) && r.zmq.poll('in')
 		[cmd, dat] = r.zmq.receiveCommand();
 		if ischar(cmd); cmd = string(cmd); end
@@ -153,18 +168,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 				r.keepRunning = false; return;
 			end
 		end
-	end
-
-	%% broadcast the trial to cogmoteGO
-	clutil.broadcastTrial(in, r, dt, true);
-
-	%% save copy of data every 5 trials just in case of crash
-	if mod(r.trialN, 5)
-		tt=tic;
-		save(r.saveName, 'dt', 'r', 'in', 'tM', '-v7.3');
-		disp('=========================================');
-		fprintf('===> Saving data to %s in %.2fsecs\n', r.saveName, toc(tt));
-		disp('=========================================');
 	end
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

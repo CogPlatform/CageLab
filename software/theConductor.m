@@ -268,11 +268,16 @@ classdef theConductor < optickaCore
 		% ===================================================================
 			fprintf('===> theConductor: Waiting for handshake...\n');
 			success = false;
-			while ~success
+			maxRetries = 100;
+			retryCount = 0;
+			while retryCount <= maxRetries || ~success
 				try
 					msgBytes = me.zmq.receive();
 					if isempty(msgBytes)
 						warning("theConductor:noHandshake", 'No handshake message received');
+						retryCount = retryCount + 1;
+						WaitSecs(0.2);
+						continue;
 					end
 					msgStr = native2unicode(msgBytes, 'UTF-8');
 					try 

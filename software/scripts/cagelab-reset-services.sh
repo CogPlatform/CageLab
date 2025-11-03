@@ -11,7 +11,11 @@ for s in $sl; do
 	systemctl --user stop $s
 	systemctl --user disable $s
 	rm -f $s
-	ln -sf $HOME/Code/CageLab/software/services/$s $HOME/.config/systemd/user
+	ln -sfv $HOME/Code/CageLab/software/services/$s $HOME/.config/systemd/user
+	if [[ $s == "theConductor.service" ]]; then
+		[[ -d "/usr/local/MATLAB/R2025a" ]] && ln -sfv "$HOME/Code/CageLab/software/services/theConductor2025a.dservice" "$HOME/.config/systemd/user/theConductor.service"
+		[[ -d "/usr/local/MATLAB/R2025b" ]] && ln -sfv "$HOME/Code/CageLab/software/services/theConductor2025b.dservice" "$HOME/.config/systemd/user/theConductor.service"
+	fi
 	systemctl --user daemon-reload
 	systemctl --user enable $s
 done

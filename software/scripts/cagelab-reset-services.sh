@@ -4,7 +4,7 @@
 echo "Resetting Cage Lab services to default states..."
 
 # try to ensure no system services are running that might interfere
-sudo systemctl disable --now cogmoteGO.service > /dev/null 2>&1
+sudo systemctl disable --now cogmoteGO@prisys.service > /dev/null 2>&1
 sudo systemctl disable --now theConductor.service  > /dev/null 2>&1
 sudo systemctl disable --now mediamtx.service  > /dev/null 2>&1
 sudo systemctl disable --now obs.service  > /dev/null 2>&1

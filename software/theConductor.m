@@ -270,12 +270,12 @@ classdef theConductor < optickaCore
 			success = false;
 			maxRetries = 100;
 			retryCount = 0;
-			while retryCount <= maxRetries || ~success
+			while retryCount <= maxRetries && ~success
+				retryCount = retryCount + 1;
 				try
 					msgBytes = me.zmq.receive();
 					if isempty(msgBytes)
 						warning("theConductor:noHandshake", 'No handshake message received');
-						retryCount = retryCount + 1;
 						WaitSecs(0.2);
 						continue;
 					end
@@ -285,12 +285,13 @@ classdef theConductor < optickaCore
 						fprintf('===> theConductor Received: %s\n', receivedMsg.request); 
 					end %#ok<*TRYNC>
 					if isstruct(receivedMsg) && strcmpi(receivedMsg.request, 'Hello')
+						success = true;
 						response = struct('response', 'World');
 						responseStr = jsonencode(response);
 						responseBytes = unicode2native(responseStr, 'UTF-8');
 						me.zmq.send(responseBytes);
 						fprintf('===> theConductor Replying: %s\n', 'World'); 
-						success = true;
+						break
 					else
 						error("theConductor:invalidHandshake",'Invalid handshake request: %s', msgStr);
 					end

@@ -29,7 +29,6 @@ EXCLUDES="${HOME}/.config/.rsync-excludes"      # optional common exclude list
 
 # SSH options for robustness & non-interactive automation
 SSH_OPTS=(
-  -o BatchMode=yes
   -o ConnectTimeout=10
   -o ServerAliveInterval=30
   -o ServerAliveCountMax=3

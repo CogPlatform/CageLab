@@ -40,7 +40,6 @@ DEFAULT_LOCAL_BASE="./cagepull-data"
 EXCLUDES="${HOME}/.config/.rsync-excludes"
 
 SSH_OPTS=(
-	-o BatchMode=yes
 	-o ConnectTimeout=10
 	-o ServerAliveInterval=30
 	-o ServerAliveCountMax=3

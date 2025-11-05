@@ -26,6 +26,19 @@ transfer_one() {
 	
 	echo "Copying: $file → $host:$remote_dest"
 	
+	# Create remote directory if it doesn't exist
+	# Extract the directory path from the destination
+	local dest_dir="${remote_dest%/*}"  # Remove the filename component
+	if [[ -n "$dest_dir" && "$dest_dir" != "$remote_dest" ]]; then
+		echo "Creating remote directory: $host:$dest_dir"
+		ssh -o ConnectTimeout=10 "$host" "mkdir -p \"$dest_dir\"" 2>&1
+		local mkdir_ec=$?
+		if (( mkdir_ec != 0 )); then
+			echo "✗ Failed to create remote directory: $host:$dest_dir" >&2
+			return $mkdir_ec
+		fi
+	fi
+	
 	local attempt=0
 	local dest="$remote_dest"
 	

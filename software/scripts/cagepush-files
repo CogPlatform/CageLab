@@ -32,7 +32,8 @@ transfer_one() {
 	while (( attempt < 5 )); do
 		(( attempt++ ))
 		
-		scp -p -C -o BatchMode=yes "$file" "${host}:${dest}" 2>&1
+		# Remove -o BatchMode=yes to allow interactive password prompts for encrypted keys
+		scp -p -C -o ConnectTimeout=10 "$file" "${host}:${dest}" 2>&1
 		local ec=$?
 		
 		if (( ec == 0 )); then

@@ -11,7 +11,7 @@ function touchTest(dev, screenId, verbose)
   end
 
   if nargin < 3 || isempty(verbose)
-    verbose = 0;
+    verbose = 1;
   end
 
   % If no user-specified 'dev' was given, try to auto-select:

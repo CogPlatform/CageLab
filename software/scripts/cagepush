@@ -2,7 +2,7 @@
 # cagepush: Push local project directories to one or more remote servers via rsync over SSH
 # - Designed for CageLab development environment, but easily adaptable.
 # - Syncs each listed local source dir to every specified remote host under DEST_BASE/<dirname>/
-# - Multiple remote hosts may be given with repeated -s flags.
+# - Multiple remote hosts may be given with repeated -s flags or as an array.
 # - Uses robust SSH options for non-interactive use.
 # - Supports dry-run mode, custom remote host(s), and parallel pushes via -j.
 # - Excludes files/dirs listed in ~/.config/.rsync-excludes if present.
@@ -12,13 +12,15 @@
 # Usage:
 #   cagepush [-n] [-j N] [-s user@host ...] <src_dir1> [src_dir2 ...]
 #   cagepush -j 4 -s hostA -s hostB projectA projectB
+#   cagepush -s (hostA hostB hostC) projectA
 #   cagepush -suser@hostA -suser@hostB projectA
 # If no sources are given, defaults to ~/Code/CageLab.
 # If no -s is supplied, defaults to the built-in DEST_USER_HOST.
 # -n / --dry-run : rsync dry-run
 # -j / --jobs N  : parallel transfers (default auto) or explicit number
-# -s user@host : add a remote host (may repeat)
-# -suser@host  : attached form (may repeat)
+# -s user@host   : add a remote host (may repeat)
+# -s (host1 host2 ...) : array syntax for multiple hosts
+# -suser@host    : attached form (may repeat)
 # --no-delete / --delete[=true|false] : control rsync deletion (default true)
 set -uo pipefail  # removed -e to manage errors manually (debug-friendly)
 cd $HOME
@@ -94,10 +96,23 @@ while [[ $# -gt 0 ]]; do
       shift ;;
     -s)
       if [[ $# -lt 2 ]]; then
-        echo "Error: -s requires an argument (user@host)" >&2
+        echo "Error: -s requires an argument (user@host or array)" >&2
         exit 2
       fi
-      remote_hosts+=("$2")
+      # Check if the argument looks like an array (starts with '(')
+      if [[ "$2" == "("* ]]; then
+        # Array syntax: -s (host1 host2 ...)
+        # Extract hosts from parentheses and add to remote_hosts
+        local array_str="${2#\(}"   # Remove leading '('
+        array_str="${array_str%\)}" # Remove trailing ')'
+        # Use eval to properly handle the array syntax
+        local _hosts
+        eval "_hosts=($array_str)"
+        remote_hosts+=("${_hosts[@]}")
+      else
+        # Single host: -s host1
+        remote_hosts+=("$2")
+      fi
       shift 2
       ;;
     -s*)

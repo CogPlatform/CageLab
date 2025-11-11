@@ -2,7 +2,9 @@
 # cagepush-files: Push local files to remote servers with retry on locked files
 # This script is designed to facilitate the transfer of files to local networked servers.
 # Usage: cagepush-files -s host file...
+# Usage: cagepush-files -s (host1 host2 ...) file...
 # Example: cagepush-files -s user@remote /path/to/local/file1 /path/to/local/file2
+# Example: cagepush-files -s (user@host1 user@host2) /path/to/local/file1
 
 set -uo pipefail
 SKIP_CODE=100
@@ -71,9 +73,35 @@ files=()
 
 while (( $# > 0 )); do
 	case "$1" in
-		-s) hosts+=("$2"); shift 2 ;;
-		-h|--help) echo "Usage: $0 -s host file..."; exit 0 ;;
-		*) files+=("$1"); shift ;;
+		-s)
+			if (( $# < 2 )); then
+				echo "Error: -s requires an argument (user@host or array)" >&2
+				exit 2
+			fi
+			# Check if the argument looks like an array (starts with '(')
+			if [[ "$2" == "("* ]]; then
+				# Array syntax: -s (host1 host2 ...)
+				local array_str="${2#\(}"     # Remove leading '('
+				array_str="${array_str%\)}"   # Remove trailing ')'
+				# Use eval to properly handle the array syntax
+				local _hosts
+				eval "_hosts=($array_str)"
+				hosts+=("${_hosts[@]}")
+			else
+				# Single host: -s host1
+				hosts+=("$2")
+			fi
+			shift 2
+			;;
+		-h|--help)
+			echo "Usage: $0 -s host file..."
+			echo "       $0 -s (host1 host2) file..."
+			exit 0
+			;;
+		*)
+			files+=("$1")
+			shift
+			;;
 	esac
 done
 

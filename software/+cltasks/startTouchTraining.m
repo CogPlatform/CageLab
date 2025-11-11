@@ -60,7 +60,8 @@ function startTouchTraining(in)
 			p(pn).size = sz(end); p(pn).hold = [0.5 1.2]; p(pn).rel = 1; p(pn).pos = 7;
 			if r.phase > length(p); r.phase = length(p); end
 		end
-		fprintf('===> Total phases: %i\n', length(p));
+		r.totalPhases = length(p);
+		fprintf('===> Total phases: %i\n', r.totalPhases);
 		disp(p);
 		disp('=====================================');
 
@@ -124,7 +125,7 @@ function startTouchTraining(in)
 
 			%% ============================== Get ready to start trial
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
-			fprintf('\n===> START %s: %i - %i -- phase %i stim %i \n', upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus);
+			fprintf('\n===> START %s %s: %i - %i -- phase %i stim %i rewards %i\n', in.session.subjectName, upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus, dt.data.rewards);
 			%fprintf('===> Touch Params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
 			%	sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
 			%	sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...

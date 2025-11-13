@@ -14,7 +14,7 @@ classdef status < handle
 	end
 
 	methods
-		function obj = status(ip,port)
+		function obj = status(ip, port)
 			if exist('ip','var'); obj.ip = ip; end
 			if exist('port','var'); obj.port = port; end
 		end
@@ -24,8 +24,16 @@ classdef status < handle
 		end
 
 		function response = updateStatus(obj, isRunning, id)
-			if exist('isRunning','var'); msg.is_running = isRunning; end
-			if exist('id','var'); msg.id = id; end
+			arguments(Input)
+				obj (1,1) status
+				isRunning (1,1) logical = []
+				id (1,:) char = []
+			end
+			arguments(Output)
+				response
+			end
+			if ~isempty('isRunning','var'); msg.is_running = isRunning; end
+			if ~isempty('id','var'); msg.id = id; end
 			msgBody = matlab.net.http.MessageBody(msg);
 			request = matlab.net.http.RequestMessage(obj.http_patch, obj.headers, msgBody);
 
@@ -46,6 +54,14 @@ classdef status < handle
 		end
 
 		function [isRunning, id, response] = getStatus(obj)
+			arguments(Input)
+				obj
+			end
+			arguments(Output)
+				isRunning (1,1) logical
+				id (1,:) char
+				response
+			end
 			isRunning = false; id = ''; response = [];
 			request = matlab.net.http.RequestMessage(obj.http_get, obj.headers);
 			updateURL = obj.baseURI;

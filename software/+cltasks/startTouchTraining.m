@@ -163,7 +163,8 @@ function startTouchTraining(in)
 				if c(quitKey); r.keepRunning = false; break; end
 			end
 			%% ============================== check logic of task result
-			r.vblFinal = GetSecs;
+			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+			r.vblFinal = flip(sM);
 			if r.anyTouch
 				r.trialN = r.trialN + 1; 
 			end
@@ -179,16 +180,19 @@ function startTouchTraining(in)
 			%% ============================== Wait for release
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			if in.debug; drawText(sM,'Please release touchscreen...'); end
-			vbl = flip(sM);
+			svbl = flip(sM);
 			while isTouch(tM)
 				now = WaitSecs(0.5);
-				fprintf("Subject holding screen AFTER trial end %.1fsecs...\n",now-vbl);
+				fprintf("Subject holding screen AFTER trial end %.1fsecs...\n",now-svbl);
 			end
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			flip(sM);
 
 			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
+
+			%% ============================== inter-trial pause
+			WaitSecs('YieldSecs',in.ITI-(GetSecs-r.vblFinal));
 
 		end % while keepRunning
 

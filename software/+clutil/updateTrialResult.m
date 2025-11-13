@@ -195,6 +195,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		rtarget.mvRect = r.rRect;
 		rtarget.angleOut = 0;
 		rtarget.alphaOut = 0;
+		adelta = 0.02;
 		for i = 0:frames
 			inc = sin(i*0.25)/2;
 			rtarget.angleOut = rtarget.angleOut + (inc * 5);
@@ -204,8 +205,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			if in.debug && ~isempty(r.txt); drawText(sM,r.txt); end
 			draw(rtarget);
 			flip(sM);
-			rtarget.alphaOut = rtarget.alphaOut + 0.02;
-			if rtarget.alphaOut > 0.5; rtarget.alphaOut = 0.5; end
+			rtarget.alphaOut = rtarget.alphaOut + adelta;
+			if rtarget.alphaOut > 0.5; adelta = -adelta; end
 		end
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
 		flip(sM);

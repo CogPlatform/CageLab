@@ -1,5 +1,8 @@
 classdef status < handle
+	% manages the status API in cogmoteGO: https://cogmotego.apifox.cn/get-exps-status
+
 	properties
+		% server IP and port
 		ip = '127.0.0.1'
 		port = 9012
 	end
@@ -19,8 +22,8 @@ classdef status < handle
 	methods
 		%% constructor
 		function obj = status(ip, port)
-			if exist('ip','var'); obj.ip = ip; end
-			if exist('port','var'); obj.port = port; end
+			if exist('ip','var') && ~isempty(ip); obj.ip = ip; end
+			if exist('port','var') && ~isempty(port); obj.port = port; end
 		end
 
 		%% get baseURI

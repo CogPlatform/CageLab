@@ -17,20 +17,23 @@ classdef status < handle
 	end
 
 	methods
+		%% constructor
 		function obj = status(ip, port)
 			if exist('ip','var'); obj.ip = ip; end
 			if exist('port','var'); obj.port = port; end
 		end
 
+		%% get baseURI
 		function baseURI = get.baseURI(obj)
 			baseURI = matlab.net.URI(sprintf('http://%s:%i', obj.ip, obj.port));
 		end
 
+		%% update status
 		function response = updateStatus(obj, isRunning, id)
 			arguments(Input)
 				obj (1,1) status
-				isRunning (1,1) logical = []
-				id (1,:) char = []
+				isRunning (1,1) logical = logical([])
+				id (1,:) char = ''
 			end
 			arguments(Output)
 				response
@@ -46,16 +49,17 @@ classdef status < handle
 			response = obj.sendRequest(request, updateURL);
 		end
 
+		%% set status to true
 		function response = updateStatusToRunning(obj)
-			msg = struct('is_running', true);
-			response = obj.updateStatus(msg);
+			response = obj.updateStatus(true);
 		end
 
+		%% set status to false
 		function response = updateStatusToStopped(obj)
-			msg = struct('is_running', false);
-			response = obj.updateStatus(msg);
+			response = obj.updateStatus(false);
 		end
 
+		%% get status
 		function [isRunning, id, response] = getStatus(obj)
 			arguments(Input)
 				obj
@@ -77,6 +81,7 @@ classdef status < handle
 	end
 
 	methods (Access = private)
+		%% send request
 		function response = sendRequest(~, request, url)
 			try
 				response = request.send(url);

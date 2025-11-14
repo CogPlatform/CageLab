@@ -4,22 +4,27 @@ function r = initTrialVariables(r)
 	%> @param r The current trial result structure.
 	%> @return r The updated trial result structure with initialised values.
 
-	r.summary = '';
+	% keep task running?
+	r.keepRunning = true;
+	% loop and results
 	r.loopN = r.loopN + 1;
 	r.result = -1;
 	r.value = NaN;
-	r.keepRunning = true;
+	% touch parameters
 	r.touchInit = '';
 	r.touchResponse = '';
 	r.anyTouch = false;
 	r.hldtime = false;
+	% times
 	r.vblInit = NaN;
 	r.vblFinal = NaN;
 	r.stimOnsetTime = NaN;
 	r.reactionTime = NaN;
 	r.firstTouchTime = NaN;
-	r.txt = '';
 	r.sampleTime = NaN;
 	r.delayTime = NaN;
-
+	% text
+	r.summary = '';
+	r.txt = '';
+	
 end

@@ -1,5 +1,9 @@
 function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
-	%[s, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = +clutils.initialise(in, bgName);
+	%[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
+	% INITIALISE orchestrates the CageLab runtime by configuring display/audio/touch hardware,
+	% instantiating stimulus and reward managers, preparing Alyx bookkeeping, and returning the
+	% state structs (`sv`, `r`, `dt`, etc.) required for downstream task control.
+	
 	arguments (Input)
 		in struct
 		bgName (1,:) char {mustBeNonempty} % background image filename
@@ -23,8 +27,10 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	
 	windowed = [];
 	sf = [];
-
+	% Provide defaults for optional Psychtoolbox window overrides used in debug mode.
 	%% =========================== debug mode?
+	% When no full PTB screen is available, fall back to a windowed context so development
+	% can proceed without physical rig hardware.
 	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
 		if IsLinux || IsOSX
 			sf = kPsychGUIWindow; windowed = [0 0 1600 900]; 
@@ -35,14 +41,16 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	
 	% initial config for PTB
 	PsychDefaultSetup(2);
+	% Prevent the OS from blanking the display or entering power-save while experiments run.
 	try 
 		!xset -dpms s off
 	end
 	
 	%% ============================ screen & background
-	sM = screenManager('screen', in.screen,'blend', true,...
+	% Create the main screen manager and optional smart background image that matches rig geometry.
+	sM = screenManager('screen', in.screen,'blend', opts.useBlending,...
 		'pixelsPerCm', in.density, 'distance', in.distance,...
-		'disableSyncTests', true, 'hideFlash', true, ...
+		'disableSyncTests', opts.disableSync, 'hideFlash', true, ...
 		'backgroundColour', in.bg,'windowed', windowed,'specialFlags', sf);
 	if in.smartBackground
 		sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
@@ -50,12 +58,14 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		sbg = [];
 	end
 
-	%% s============================ stimuli
-	rtarget = imageStimulus('size', 2, 'colour', [0 1 0], 'filePath', 'star.png');
-	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.8,...
+	%% ============================ stimuli
+	% Instantiate the on-screen reward target and fixation stimuli with default positions/sizes.
+	rtarget = imageStimulus('size', 2, 'colour', [0.2 1 0], 'filePath', 'heptagon.png');
+	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.5,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
 	%% ============================ audio
+	% Prepare the audio manager, respecting silent-mode/debug flags, and preload feedback beeps.
 	aM = audioManager('device',in.audioDevice);
 	if in.debug; aM.verbose = true; end
 	if in.audioVolume == 0 || in.audio == false
@@ -67,6 +77,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	end
 	
 	%% ============================touch
+	% Configure the touch manager (real or dummy) and align negation/verbosity with session settings.
 	tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
 		'deviceName',in.touchDeviceName,'exclusionZone',in.exclusionZone,...
 		'drainEvents',in.drainEvents,'trackID',in.trackID);
@@ -75,6 +86,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	if in.debug || in.verbose; tM.verbose = true; end
 
 	%% ============================reward
+	% Pump manager runs in dummy mode when hardware rewards are disabled.
 	if in.reward
 		dummy = false;
 	else %dummy mode pass true to constructor
@@ -83,6 +95,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	rM = PTBSimia.pumpManager(dummy);
 	
 	%% ============================setup
+	% Open the display, size the background stimulus to the current rig, and present initial text.
 	sv = open(sM); % open screen
 	if in.smartBackground
 		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
@@ -108,6 +121,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	start(tM);
 
 	%% ================================ save file name
+	% Set up Alyx context locally (even when the struct was passed remotely) and derive save paths.
 	% but remember alyx comes from remote machine, need to regenerate
 	% paths.
 	if isfield(in,'alyx') && isa(in.alyx,'alyxManager')
@@ -129,6 +143,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	fprintf('===>>> CageLab Save: %s', in.saveName);
 
 	%% ================================ touch data
+	% Seed the touch-data log with session metadata so downstream tasks can append trial info.
 	dt = touchData();
 	dt.name = in.alyxName;
 	dt.subject = in.name;
@@ -148,6 +163,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	dt.info.settings = in;
 
 	%% ============================ settings
+	% Lock keyboard input to the quit key, reduce verbosity, and set OS-level priority/cursor state.
 	quitKey = KbName('escape');
 	RestrictKeysForKbCheck(quitKey);
 	Screen('Preference','Verbosity',4);
@@ -160,14 +176,15 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	if isempty(hname); hname = 'unknown'; end
 
 	%% ============================ run variables
+	% r aggregates runtime status used by task loops, Alyx syncing, and remote control hooks.
 	r = [];
 	r.hostname = hname;
 	r.saveName = in.saveName;
 	r.version = clutil.version;
-	r.alyx = alyx;
+	r.alyx = alyx; % alyx manager object
 	r.alyxPath = in.alyxPath;
 	r.alyxName = in.alyxName;
-	r.sessionID = in.sessionID;
+	r.sessionID = in.sessionID; % alyx session ID
 	if in.remote
 		r.remote = true;
 		r.zmq = in.zmq;
@@ -175,20 +192,20 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		r.remote = false;
 		r.zmq = [];
 	end
-	try in = rmfield(in,'zmq'); end
-	r.broadcast = matmoteGO.broadcast();
-	r.status = matmoteGO.status();
+	try in = rmfield(in,'zmq'); end % clean up input struct
+	r.broadcast = matmoteGO.broadcast(); % initialize data broadcast object
+	r.status = matmoteGO.status(); % initialize experiment status object
 	r.keepRunning = true;
-	r.phase = in.phase;
-	r.correctRate = NaN;
-	r.correctRateRecent = NaN;
-	r.loopN = 0;
-	r.trialN = 0;
-	r.trialW = 0;
-	r.phaseN = 0;
-	r.phaseMax = r.phase;
-	r.stimulus = 1;
-	r.randomRewardTimer = GetSecs;
+	r.phase = in.phase; % phase of the experiment for those with automatic progression
+	r.correctRate = NaN; % overall correct rate
+	r.correctRateRecent = NaN; % recent correct rate
+	r.loopN = 0; % number of loops completed
+	r.trialN = 0; % number of trials initiated
+	r.trialW = 0; % number of trials won
+	r.phaseN = 0; 
+	r.phaseMax = r.phase; % maximum phase number
+	r.stimulus = 1; % current stimulus index
+	r.randomRewardTimer = GetSecs; % timer for random rewards
 	r.rRect = rtarget.mvRect;
 	r.result = -1;
 	r.value = NaN;
@@ -202,11 +219,13 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	r.startTime = NaN;
 	r.endTime = NaN;
 	
-	%% enable task status to cogmoteGO
+	%% task status set to true for cogmoteGO
+	% Update CogmoteGO dashboards so operators know the task is live before the first trial.
 	currentStatus = r.status.updateStatusToRunning();
+	disp('===>>> CogmoteGO Task Status: ');
 	disp(currentStatus.Body.Data);
 
 	%% broadcast the initial status to cogmoteGO
+	% Push an initial status packet so remote monitors have the starting state.
 	clutil.broadcastTrial(in, r, dt, true);
-
 end

@@ -2,15 +2,18 @@ classdef status < handle
 	properties
 		ip = '127.0.0.1'
 		port = 9012
-		basePath = {'api', 'status'};
-		headers = [matlab.net.http.field.ContentTypeField("application/json")];
-		http_get = matlab.net.http.RequestMethod.GET;
-		http_patch = matlab.net.http.RequestMethod.PATCH;
 	end
 
 	properties(Dependent=true, GetAccess=public)
 		% depends in ip and port
 		baseURI
+	end
+
+	properties (Constant, Access = private)
+		basePath = {'api', 'status'};
+		headers = [matlab.net.http.field.ContentTypeField("application/json")];
+		http_get = matlab.net.http.RequestMethod.GET;
+		http_patch = matlab.net.http.RequestMethod.PATCH;
 	end
 
 	methods

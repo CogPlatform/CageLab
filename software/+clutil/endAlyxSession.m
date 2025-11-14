@@ -41,7 +41,7 @@ try
 	%% upload the files to MINIO AWS server
 	secrets = alyx.getSecrets;
 	if ~isempty(secrets.AWS_ID)
-		aws = awsManager(secrets.AWS_ID,secrets.AWS_KEY, session.dataRepo);
+		aws = awsManager(secrets.AWS_ID,secrets.AWS_KEY, session.dataURL);
 		bucket = lower(session.labName);
 		aws.checkBucket(bucket);
 		for ii = 1:length(filenames)
@@ -56,7 +56,8 @@ try
 			aws.copyFiles(filenames{ii}, bucket, key);
 		end
 	else
-		warning('To upload Alyx files you need to set setSecrets: AWS_ID and AWS_KEY!!!'); 
+		warning('To upload Alyx files you need to set setSecrets: AWS_ID and AWS_KEY!!!');
+		warning('YOU MUST UPLOAD MANUALLY NOW!!!'); 
 	end
 catch ME
 	getReport(ME)

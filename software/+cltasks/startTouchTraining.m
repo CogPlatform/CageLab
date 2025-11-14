@@ -112,10 +112,9 @@ function startTouchTraining(in)
 			if in.debug; drawText(sM,'Please release touchscreen...'); end
 			vbl = flip(sM); vbls = vbl;
 			while isTouch(tM)
-				fprintf("Subject holding screen before trial start")
-				now = WaitSecs(0.5);
 				fprintf("Subject holding screen before trial start %.1fsecs...\n",now-vbls);
-				if now - vbl > 1
+				now = WaitSecs('YieldSecs',0.5);
+				if now - vbls > 1
 					drawBackground(sM,[1 0 0]);
 					flip(sM);
 				end
@@ -181,9 +180,15 @@ function startTouchTraining(in)
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			if in.debug; drawText(sM,'Please release touchscreen...'); end
 			svbl = flip(sM);
+			blue = 0;
 			while isTouch(tM)
-				now = WaitSecs(0.5);
+				now = WaitSecs(0.2);
 				fprintf("Subject holding screen AFTER trial end %.1fsecs...\n",now-svbl);
+				if now - svbl > 1
+					drawBackground(sM,[1 blue 1]);
+					flip(sM);
+					blue = abs(~blue);
+				end
 			end
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			flip(sM);

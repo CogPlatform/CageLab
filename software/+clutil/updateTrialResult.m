@@ -73,7 +73,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		r.summary = 'incorrect';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
-		r.correctRate = getCorrectRate();
+		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
 		drawBackground(sM,[1 0 0]);
@@ -95,7 +95,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		r.summary = 'unknown';
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
-		r.correctRate = getCorrectRate();
+		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
 		if in.debug; drawText(sM,r.txt); end
@@ -115,11 +115,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	%% ================================ logic for training starcase
 	r.phaseMax = max(r.phaseMax, r.phase);
 	if matches(in.task, 'train') && r.trialN >= in.stepForward
-		fprintf('===> Performance: %.1f @ Phase: %i\n', r.correctRate, r.phase);
+		fprintf('===> Performance: Recent: %.1f Overall: %.1f @ Phase: %i\n', r.correctRateRecent, r.correctRate, r.phase);
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
-			if r.correctRate >= in.stepPercent
+			if r.correctRateRecent >= in.stepPercent
 				r.phase = r.phase + 1;
-			elseif r.correctRate <= in.stepBackPercent
+			elseif r.correctRateRecent <= in.stepBackPercent
 				r.phase = r.phase - 1;
 			end
 			if r.phase < (r.phaseMax - in.phaseMaxBack)
@@ -128,7 +128,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			r.phaseN = 0;
 			r.trialW = 0;
 			if r.phase < 1; r.phase = 1; end
-			if r.phase > 36; r.phase = 36; end
+			if r.phase > r.totalPhases; r.phase = r.totalPhases; end
 			if matches(in.task, 'Simple') && r.phase > 19; r.phase = 19; end
 			fprintf('===> Step Phase update: %i\n',r.phase);
 		end

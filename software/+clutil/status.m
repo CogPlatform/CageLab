@@ -1,5 +1,6 @@
 classdef status < handle
-	% manages the status API in cogmoteGO: https://cogmotego.apifox.cn/get-exps-status
+	% manages the status API in cogmoteGO: 
+	% https://cogmotego.apifox.cn/get-exps-status
 
 	properties
 		% server IP and port

@@ -48,9 +48,9 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	
 	%% ============================ screen & background
 	% Create the main screen manager and optional smart background image that matches rig geometry.
-	sM = screenManager('screen', in.screen,'blend', opts.useBlending,...
+	sM = screenManager('screen', in.screen,'blend', in.useBlending,...
 		'pixelsPerCm', in.density, 'distance', in.distance,...
-		'disableSyncTests', opts.disableSync, 'hideFlash', true, ...
+		'disableSyncTests', in.disableSync, 'hideFlash', true, ...
 		'backgroundColour', in.bg,'windowed', windowed,'specialFlags', sf);
 	if in.smartBackground
 		sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
@@ -117,7 +117,12 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 
 	setup(fix, sM);
 	setup(tM, sM);
-	createQueue(tM);
+	try
+		createQueue(tM);
+	catch ME
+		try displayInfo(tM); end
+		rethrow(ME);
+	end
 	start(tM);
 
 	%% ================================ save file name

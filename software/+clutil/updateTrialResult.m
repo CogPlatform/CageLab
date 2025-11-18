@@ -154,21 +154,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	end
 
 	%% ================================== check if a command was sent from control system
-	if ~isempty(r.zmq) && r.zmq.poll('in')
-		[cmd, dat] = r.zmq.receiveCommand();
-		if ischar(cmd); cmd = string(cmd); end
-		fprintf('\n---> Update trial result: received command:\n');
-		disp(cmd);
-		if ~isempty(dat) && isstruct(dat) && isfield(dat,'timeStamp')
-			fprintf('---> Command sent %.1f secs ago\n',GetSecs-dat.timeStamp);
-		end
-		if ~isempty(cmd) 
-			if (isstring(cmd) && matches(cmd,'exittask')) || (isfield(cmd,'command') && matches(cmd.command,'exittask'))
-				fprintf('---> Exit task Triggered...\n\n');
-				r.keepRunning = false; return;
-			end
-		end
-	end
+	r = clutil.checkMessages(r);
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	function txt = getResultsText()

@@ -33,104 +33,102 @@ function startTouchTraining(in)
 
 		%% ============================ phase table
 		sz = linspace(in.maxSize, in.minSize, 15);
-		p = [];
-		% SIZE
+		phases = [];
+		%------------------ SIZE
 		for pn = 1:length(sz)
-			p(pn).size = sz(pn); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = [0 0];
+			phases(pn).size = sz(pn); phases(pn).hold = 0.0; phases(pn).rel = 3; phases(pn).pos = [0 0];
 		end
-		pn = length(p) + 1;
-		% POSITION
-		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
-		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 5; pn = pn + 1;
-		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 7; pn = pn + 1;
-		p(pn).size = sz(end); p(pn).hold = 0.0; p(pn).rel = 3; p(pn).pos = 11; pn = pn + 1;
+		pn = length(phases) + 1;
+		%------------------ POSITION
+		phases(pn).size = sz(end); phases(pn).hold = 0.0; phases(pn).rel = 3; phases(pn).pos = 3; pn = pn + 1;
+		phases(pn).size = sz(end); phases(pn).hold = 0.0; phases(pn).rel = 3; phases(pn).pos = 5; pn = pn + 1;
+		phases(pn).size = sz(end); phases(pn).hold = 0.0; phases(pn).rel = 3; phases(pn).pos = 7; pn = pn + 1;
+		phases(pn).size = sz(end); phases(pn).hold = 0.0; phases(pn).rel = 3; phases(pn).pos = 11; pn = pn + 1;
 		if matches(in.task, 'Simple') % simple task
-			if r.phase > length(p); r.phase = length(p); end
+			if r.phase > length(phases); r.phase = length(phases); end
 		else
-			% HOLD
+			%------------------ HOLD
 			hl = linspace(0.01, 0.4, 12);
 			for hld = hl
-				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = 3; p(pn).pos = 3; pn = pn + 1;
+				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = 3; phases(pn).pos = 3; pn = pn + 1;
 			end
-			% RELEASE
+			%------------------ RELEASE
 			rl = linspace(3, 1, 6);
 			for rel = hl
-				p(pn).size = sz(end); p(pn).hold = hld; p(pn).rel = rel; p(pn).pos = 3; pn = pn + 1;
+				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = rel; phases(pn).pos = 3; pn = pn + 1;
 			end
-			p(pn).size = sz(end); p(pn).hold = [0.5 1.2]; p(pn).rel = 1; p(pn).pos = 7;
-			if r.phase > length(p); r.phase = length(p); end
+			phases(pn).size = sz(end); phases(pn).hold = [0.5 1.2]; phases(pn).rel = 1; phases(pn).pos = 7;
+			if r.phase > length(phases); r.phase = length(phases); end
 		end
-		r.totalPhases = length(p);
+		r.totalPhases = length(phases);
 		fprintf('===> Total phases: %i\n', r.totalPhases);
-		disp(p);
+		disp(phases);
 		disp('=====================================');
 
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TASK
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOOP
 		while r.keepRunning
-			if r.phase > length(p); r.phase = length(p); end
-			if length(p(r.phase).pos) == 2
-				x = p(r.phase).pos(1);
-				y = p(r.phase).pos(2);
+
+			% get values from p phases structure
+			if r.phase > length(phases); r.phase = length(phases); end
+			if length(phases(r.phase).pos) == 2
+				x = phases(r.phase).pos(1);
+				y = phases(r.phase).pos(2);
 			else
-				x = randi(p(r.phase).pos(1));
+				x = randi(phases(r.phase).pos(1));
 				if rand > 0.5; x = -x; end
-				y = randi(p(r.phase).pos(1));
+				y = randi(phases(r.phase).pos(1));
 				y = y / r.aspect;
 				if rand > 0.5; y = -y; end
 			end
-			if length(p(r.phase).hold) == 2
-				hold = randi(p(r.phase).hold .* 1e3) / 1e3;
+			if length(phases(r.phase).hold) == 2
+				hold = randi(phases(r.phase).hold .* 1e3) / 1e3;
 			else
-				hold = p(r.phase).hold(1);
+				hold = phases(r.phase).hold(1);
 			end
 			if isa(target,'imageStimulus') && target.circularMask == false
-				radius = [p(r.phase).size/2 p(r.phase).size/2];
+				radius = [phases(r.phase).size/2 phases(r.phase).size/2];
 			else
-				radius = p(r.phase).size / 2;
+				radius = phases(r.phase).size / 2;
 			end
 			
-			% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
-			tM.updateWindow(x, y, radius,...
-				[], [], [], in.trialTime, hold, p(r.phase).rel);
+			% update touch target
+			% updateWindow(tM,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
+			updateWindow(tM, x, y, radius,...
+				[], [], [], in.trialTime, hold, phases(r.phase).rel);
+			reset(tM); flush(tM);
 
+			% update visual target
 			target.xPositionOut = x;
 			target.yPositionOut = y;
-			target.sizeOut = p(r.phase).size;
+			target.sizeOut = phases(r.phase).size;
 			if isa(target,'imageStimulus')
 				target.selectionOut = randi(target.nImages);
 				r.stimulus = target.selectionOut;
 			end
 			update(target);
 
+			% reset trial variables held in r structure
 			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
 
 			%% ============================== Wait for release
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			if in.debug; drawText(sM,'Please release touchscreen...'); end
-			vbl = flip(sM); vbls = vbl;
-			while isTouch(tM)
-				fprintf("Subject holding screen before trial start %.1fsecs...\n",now-vbls);
-				now = WaitSecs('YieldSecs',0.5);
-				if now - vbls > 1
-					drawBackground(sM,[1 0 0]);
-					flip(sM);
-				end
-			end
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			flip(sM);
+			ensureTouchRelease(false);
 
 			%% ============================== Get ready to start trial
 			if r.loopN == 1; dt.data.startTime = GetSecs; end
 			fprintf('\n===> START %s %s: %i - %i -- phase %i stim %i rewards %i\n', in.session.subjectName, upper(in.task), r.loopN, r.trialN+1, r.phase, r.stimulus, dt.data.rewards);
-			%fprintf('===> Touch Params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
-			%	sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
-			%	sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...
-			%	sprintf("<%.2f>",tM.window.hold), sprintf("<%.1f>",tM.window.release));
-			reset(tM);
-			flush(tM);
+			if in.debug
+				fprintf('===> Touch Params X: %.1f Y: %.1f Size: %.1f Init: %.2f Hold: %.2f Release: %.2f\n', ...
+					sprintf("<%.1f>",tM.window.X), sprintf("<%.1f>",tM.window.Y),...
+					sprintf("<%.1f>",tM.window.radius), sprintf("<%.2f>",tM.window.init),...
+					sprintf("<%.2f>",tM.window.hold), sprintf("<%.1f>",tM.window.release));
+			end
+
+			% reset the touch window
+			reset(tM); flush(tM);
+
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			vbl = flip(sM); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
@@ -161,6 +159,7 @@ function startTouchTraining(in)
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
 			end
+			
 			%% ============================== check logic of task result
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			r.vblFinal = flip(sM);
@@ -169,29 +168,15 @@ function startTouchTraining(in)
 			end
 			r.value = hld;
 			if fail || hld == -100 || matches(r.touchResponse,'no')
-				r.result = 0;
+				r.result = 0; % incorrect
 			elseif matches(r.touchResponse,'yes')
-				r.result = 1;
+				r.result = 1; % correct
 			else
-				r.result = -1;
+				r.result = -1; %unknown error
 			end
 
-			%% ============================== Wait for release
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			if in.debug; drawText(sM,'Please release touchscreen...'); end
-			svbl = flip(sM);
-			blue = 0;
-			while isTouch(tM)
-				now = WaitSecs(0.2);
-				fprintf("Subject holding screen AFTER trial end %.1fsecs...\n",now-svbl);
-				if now - svbl > 1
-					drawBackground(sM,[1 blue 1]);
-					flip(sM);
-					blue = abs(~blue);
-				end
-			end
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			flip(sM);
+			%% ============================== Ensure release of touch screen
+			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
@@ -215,4 +200,31 @@ function startTouchTraining(in)
 		try ShowCursor; end
 		sca;
 	end
-end
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% make sure the subject is NOT touching the screen
+	function ensureTouchRelease(afterResult)
+		if ~exist('afterResult','var'); afterResult = false; end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if in.debug; drawText(sM,'Please release touchscreen...'); end
+		svbl = flip(sM); blue = 0;
+		if ~afterResult; when="BEFORE"; else when="AFTER"; end
+		while isTouch(tM)
+			now = WaitSecs(0.2);
+			fprintf("Subject holding screen %s trial end %.1fsecs...\n", when, now-svbl);
+			if now - svbl >= 1
+				drawBackground(sM,[1 blue 1]);
+				flip(sM);
+				blue = abs(~blue);
+			end
+			if afterResult && now - svbl >= 2
+				r.result = -1;
+				fprintf("INCORRECT: Subject kept holding screen %s trial for %.1fsecs...\n", when, now-svbl);
+				break;
+			end
+		end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		flip(sM);
+	end
+
+end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

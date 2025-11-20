@@ -351,12 +351,11 @@ classdef theConductor < optickaCore
 		% ===================================================================
 			stop = false; stopMATLAB = false;
 			me.timeStamp = GetSecs;
-			sM = screenManager('backgroundColour',[0.12 0.12 0.12], ...
-				'disableSyncTests', true, 'hideFlash', true);
+			sM = screenManager('backgroundColour',[0.1 0.1 0.1], ...
+				'disableSyncTests', true);
 			quitKey = KbName('escape');
 			RestrictKeysForKbCheck(quitKey);
 			Priority(1);
-			
 			fprintf('\n\n===> theConductor V%s: Starting command receive loop... ===\n\n', me.version);
 			while ~stop
 				% configure screen hiding
@@ -459,7 +458,6 @@ classdef theConductor < optickaCore
 						else
 							replyData = data; % Send back the data we received
 						end
-						replyData = data; % Send back the data we received
 
 					case 'gettime'
 						replyData(1).comment = "theConductor Timing Test";
@@ -491,6 +489,24 @@ classdef theConductor < optickaCore
 							replyData = {'you did not pass a frameSize value...'};
 						end
 						replyCommand = 'syncbuffer_ack';
+
+					case 'enablesleep'
+						try
+							system('xset s 300 dpms 600 0 0');
+							fprintf('\n===> theConductor: Enable display sleep.\n');
+							replyCommand = 'enable-sleep';
+							replyData = {'Sleep Enabled'};
+						end
+
+					case 'disablesleep'
+						try
+							fprintf('\n===> theConductor: Disable display sleep.\n');
+							replyCommand = 'disable-sleep';
+							replyData = {'Sleep Disabled'};
+							system('xset s off -dpms ');
+							system('xdotool key shift');
+							system('xdotool mousedown 1');
+						end
 
 					case 'hidedesktop'
 						me.hideScreen = true;
@@ -534,7 +550,7 @@ classdef theConductor < optickaCore
 				if runCommand && isstruct(data) && isfield(data,'command')
 					command = data.command;
 
-					if me.hideScreen && contains(command,{'startTouch','startMatch','startDrag'})
+					if me.hideScreen && contains(command,'start')
 						me.enableHidden = true;
 						close(sM);
 					end
@@ -598,7 +614,7 @@ classdef theConductor < optickaCore
 					if ~isempty(c); system('powerprofilesctl set performance');end
 				end
 				try
-					system('xset -dpms s off');
+					system('xset s ');
 				end
 			end
 		end

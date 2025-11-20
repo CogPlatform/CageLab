@@ -17,7 +17,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	% ================================= lets check the results:
 
 	%% ================================ no touch and first training phases, give some random rewards
-	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 4
+	if r.anyTouch == false && matches(in.task, 'train') && r.phase <= 3
 		tt = vblEnd - r.randomRewardTimer;
 		if in.randomReward > 0 && (tt >= in.randomReward) && (rand > (1-in.randomProbability))
 			WaitSecs(rand/2);
@@ -41,7 +41,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% ================================ no touch, just wait a bit
 	elseif r.anyTouch == false
-		WaitSecs(0.5+rand);
+		WaitSecs(1+rand);
 
 	%% ================================ correct
 	elseif r.result == 1
@@ -144,8 +144,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	%% ================================== broadcast the trial to cogmoteGO
 	clutil.broadcastTrial(in, r, dt, true);
 
-	%% ================================== save copy of data every 5 trials just in case of crash
-	if mod(r.trialN, 3)
+	%% ================================== save copy of data every 2 trials just in case of crash
+	if mod(r.trialN, 2)
 		tt=tic;
 		save(r.saveName, 'dt', 'r', 'in', 'tM', '-v7.3');
 		disp('=========================================');

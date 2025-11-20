@@ -48,21 +48,22 @@ function startTouchTraining(in)
 			if r.phase > length(phases); r.phase = length(phases); end
 		else
 			%------------------ HOLD
-			hl = linspace(0.01, 0.4, 12);
-			for hld = hl
+			
+			for hld = linspace(0.01, 0.4, 12)
 				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = 3; phases(pn).pos = 3; pn = pn + 1;
 			end
 			%------------------ RELEASE
-			rl = linspace(3, 1, 6);
-			for rel = hl
+			
+			for rel = linspace(3, 1, 6)
 				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = rel; phases(pn).pos = 3; pn = pn + 1;
 			end
 			phases(pn).size = sz(end); phases(pn).hold = [0.5 1.2]; phases(pn).rel = 1; phases(pn).pos = 7;
 			if r.phase > length(phases); r.phase = length(phases); end
 		end
 		r.totalPhases = length(phases);
+		r.phases = phases;
 		fprintf('===> Total phases: %i\n', r.totalPhases);
-		disp(phases);
+		disp(struct2table(phases));
 		disp('=====================================');
 
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TASK

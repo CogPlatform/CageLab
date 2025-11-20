@@ -53,7 +53,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		'disableSyncTests', in.disableSync, 'hideFlash', true, ...
 		'backgroundColour', in.bg,'windowed', windowed,'specialFlags', sf);
 	if in.smartBackground
-		sbg = imageStimulus('alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
+		sbg = imageStimulus('crop','stretch','alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
 	else 
 		sbg = [];
 	end

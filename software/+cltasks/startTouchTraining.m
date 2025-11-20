@@ -29,6 +29,10 @@ function startTouchTraining(in)
 		if in.debug; target.verbose = true; end
 
 		%% ============================ custom stimuli setup
+		fix.sizeOut = 8; fix.xPositionOut = 0; 
+		fix.yPositionOut = -10; fix.type = 'flash';
+		fix.alpha = 1;
+		update(fix);
 		setup(target, sM);
 
 		%% ============================ phase table
@@ -50,12 +54,12 @@ function startTouchTraining(in)
 			%------------------ HOLD
 			
 			for hld = linspace(0.01, 0.4, 12)
-				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = 3; phases(pn).pos = 3; pn = pn + 1;
+				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = 3; phases(pn).pos = 5; pn = pn + 1;
 			end
 			%------------------ RELEASE
 			
 			for rel = linspace(3, 1, 6)
-				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = rel; phases(pn).pos = 3; pn = pn + 1;
+				phases(pn).size = sz(end); phases(pn).hold = hld; phases(pn).rel = rel; phases(pn).pos = 5; pn = pn + 1;
 			end
 			phases(pn).size = sz(end); phases(pn).hold = [0.5 1.2]; phases(pn).rel = 1; phases(pn).pos = 7;
 			if r.phase > length(phases); r.phase = length(phases); end
@@ -137,6 +141,7 @@ function startTouchTraining(in)
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
+				if r.hldtime && r.phase > 31; draw(fix); end
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(sM, txt);
 					[xy] = sM.toPixels([tM.x tM.y]);
@@ -161,10 +166,11 @@ function startTouchTraining(in)
 				if c(quitKey); r.keepRunning = false; break; end
 			end
 			
-			%% ============================== check logic of task result
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			r.vblFinal = flip(sM);
-			if r.anyTouch
+			
+			%% ============================== check logic of task result
+			if r.anyTouch %correct or incorrect touch
 				r.trialN = r.trialN + 1; 
 			end
 			r.value = hld;
@@ -192,14 +198,18 @@ function startTouchTraining(in)
 	catch ME
 		getReport(ME)
 		try reset(target); end %#ok<*TRYNC>
+		try close(target); end
+		try close(fix); end
+		try close(rtarget); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end
 		try ListenChar(0); end
+		try RestrictKeysForKbCheck([]); end
 		try ShowCursor; end
-		sca;
+		rethrow(ME);
 	end
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -218,7 +228,7 @@ function startTouchTraining(in)
 				flip(sM);
 				blue = abs(~blue);
 			end
-			if afterResult && now - svbl >= 2
+			if afterResult && now - svbl >= 3
 				r.result = -1;
 				fprintf("INCORRECT: Subject kept holding screen %s trial for %.1fsecs...\n", when, now-svbl);
 				break;

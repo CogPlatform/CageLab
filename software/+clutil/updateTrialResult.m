@@ -98,9 +98,10 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
+		drawBackground(sM,[1 0 0]);
 		if in.debug; drawText(sM,r.txt); end
-		if ~isempty(sbg); draw(sbg); end
 		flip(sM);
+		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
 		
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1; 
@@ -114,7 +115,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% ================================ logic for training starcase
 	r.phaseMax = max(r.phaseMax, r.phase);
-	if matches(in.task, 'train') && r.trialN >= in.stepForward
+	if contains(in.taskType, 'training') && r.trialN >= in.stepForward
 		fprintf('===> Performance: Recent: %.1f Overall: %.1f @ Phase: %i\n', r.correctRateRecent, r.correctRate, r.phase);
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
 			if r.correctRateRecent >= in.stepPercent
@@ -151,6 +152,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		disp('=========================================');
 		fprintf('===> Saving data to %s in %.2fsecs\n', r.saveName, toc(tt));
 		disp('=========================================');
+		save("~/ongoingTaskRun.mat", 'dt', '-v7.3');
 	end
 
 	%% ================================== check if a command was sent from control system

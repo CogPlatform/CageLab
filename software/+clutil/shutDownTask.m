@@ -77,12 +77,14 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%  Send data to Alyx if enabled
 	if in.useAlyx
-		in.session.dataBucket = 'Minio-CognitionPlatform';
-		in.session.dataRepo = 'http://172.16.102.77:9000';
+		%in.session.dataBucket = 'Minio-CognitionPlatform';
+		%in.session.dataRepo = 'http://172.16.102.77:9000';
 		[in.session, success] = clutil.initAlyxSession(r, in.session);
 		if success
 			in.session = clutil.endAlyxSession(r, in.session, "PASS");
 		end
 	end
 	diary off
+
+	try system('xset s 300 dpms 600 0 0'); end
 end

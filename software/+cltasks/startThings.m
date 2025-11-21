@@ -20,7 +20,6 @@ function startThings(in)
 	%   in.fixWindow = 4; % fixation window size in degrees
 
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
-	
 	bgName = 'creammarbleD.jpg';
 	prefix = 'OOO';
 	in.sampleY = in.distractorY;
@@ -30,11 +29,11 @@ function startThings(in)
 		[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
-		
 		object = clutil.getThingsImages(in);
 
 		% for training use only
-		pedestal = discStimulus('size', in.objectSize + 2,'colour',[1 1 0.5],'alpha',0.5,'yPosition',in.sampleY);
+		pedestal = discStimulus('size', in.objectSize + 2,'colour',[1 1 0.5],...
+			'alpha',in.pedestalOpacity,'yPosition',in.sampleY);
 
 		% our three samples
 		sampleA = imageStimulus('size', in.objectSize, 'randomiseSelection', false,...
@@ -43,7 +42,7 @@ function startThings(in)
 		sampleC = clone(sampleA);
 		
 		samples = metaStimulus('stimuli',{pedestal, sampleA, sampleB, sampleC});
-		samples.edit(1:3,'yPosition', in.sampleY);
+		samples.edit(1:4,'yPosition', in.sampleY);
 		samples{2}.xPosition = -in.objectSep;
 		samples{3}.xPosition = 0;
 		samples{4}.xPosition = +in.objectSep;
@@ -56,6 +55,14 @@ function startThings(in)
 		setup(fix, sM); % our init trial touch marker
 		setup(samples, sM);
 		hide(samples); % hide all stimuli at start
+
+		%% ============================ training parameters
+		dAlpha = linspace(0,1,20);
+		pAlpha = linspace(1,0,20);
+		for ii = 1:20
+			phases(ii).dAlpha = dAlpha(ii);
+			phases(ii).pAlpha = pAlpha(ii);
+		end
 
 		%% ============================ training mode parameters
 		switch in.taskType
@@ -88,12 +95,14 @@ function startThings(in)
 
 			switch in.taskType
 				case 'training 1'
+					samples{1}.alphaOut = phases(r.phase).pAlpha;
 					A = randi(3);
 					B = A; while B == A; B = randi(3); end
 					ooo = [A A B];
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
-					al = [0.25 0.25 0.25]; al(choice) = 1;
+					alpha = repmat(phases(r.phase).dAlpha,1,3);
+					alpha(choice) = 1;
 					samples.fixationChoice = choice + 1;
 					samples{1}.xPositionOut = samples{choice + 1}.xPosition;
 					samples{2}.filePath = images(ooo(1));
@@ -102,24 +111,30 @@ function startThings(in)
 					samples{2}.colourOut = colours{ooo(1)};
 					samples{3}.colourOut = colours{ooo(2)};
 					samples{4}.colourOut = colours{ooo(3)};
-					samples{2}.alphaOut = al(1);
-					samples{3}.alphaOut = al(2);
-					samples{4}.alphaOut = al(3);
+					samples{2}.alphaOut = alpha(1);
+					samples{3}.alphaOut = alpha(2);
+					samples{4}.alphaOut = alpha(3);
 					samples{2}.angleOut = randi(360);
 					samples{3}.angleOut = randi(360);
 					samples{4}.angleOut = randi(360);
 					showSet(samples, 1); % show all stimuli with pedestal
 				case 'training 2'
+					samples{1}.alphaOut = phases(r.phase).pAlpha;
 					A = randi(3);
 					B = A; while B == A; B = randi(3); end
 					ooo = [A A B];
 					ooo = ooo(randperm(3));
 					choice = find(ooo == B);
+					alpha = repmat(phases(r.phase).dAlpha,1,3);
+					alpha(choice) = 1;
 					samples.fixationChoice = choice+1;
 					samples{1}.xPositionOut = samples{choice+1}.xPosition;
 					samples{2}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(1));
 					samples{3}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(2));
 					samples{4}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(3));
+					samples{2}.alphaOut = alpha(1);
+					samples{3}.alphaOut = alpha(2);
+					samples{4}.alphaOut = alpha(3);
 					showSet(samples, 1); % show all stimuli with pedestal
 				case 'training 3'
 
@@ -138,12 +153,18 @@ function startThings(in)
 			txt = '';
 			fail = false; hld = false;
 
+			%% ============================== Wait for release
+			ensureTouchRelease(false);
+
 			%% ============================== Initiate a trial with a touch target
 			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, quitKey, dt);
 
-			%% ============================== start the actual task
+			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			% ============================== start the actual task
 			if matches(string(r.touchInit),"yes")
+				
 				% update trial number as we enter actal trial
+				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
 
 				%% ================================== update the touch windows for correct targets
@@ -161,6 +182,8 @@ function startThings(in)
 				r.vblInit = vbl + sv.ifi; %start is actually next flip
 				syncTime(tM, r.vblInit);
 
+				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 				while isempty(r.touchResponse) && vbl <= (r.vblInit + in.trialTime)
 					if ~isempty(sbg); draw(sbg); end
 					draw(samples);
@@ -170,7 +193,7 @@ function startThings(in)
 						Screen('glPoint', sM.win, [1 0 0], xy(1), xy(2), 10);
 					end
 					vbl = flip(sM);
-					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHoldRelease(tM,'yes','no');
+					[r.touchResponse, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM,'yes','no');
 					if tch
 						r.reactionTime = vbl - r.vblInit;
 						r.anyTouch = true;
@@ -179,34 +202,30 @@ function startThings(in)
 						r.touchResponse, tM.x, tM.y, hld, r.hldtime, rel, reli, ...
 						se, fail, tch, tM.window.radius,tM.window.init, ...
 						tM.window.hold,tM.window.release,tM.window.X, ...
-						tM.window.Y); end
+						tM.window.Y); 
+					end
 					[~,~,c] = KbCheck();
 					if c(quitKey); r.keepRunning = false; break; end
 				end
+				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 			end
 			
-			%% ============================== check logic of task result
 			r.vblFinal = GetSecs;
 			r.value = hld;
+			
+			%% ============================== check logic of task result
 			if fail || hld == -100 || matches(r.touchResponse,'no') || matches(r.touchInit,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
 				r.result = 1;
-				r.trialN = r.trialN + 1;
 			else
 				r.result = -1;
 			end
 
-			%% ============================== Wait for release, 
-			% stops subject just holding on the screen
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			if in.debug; drawText(sM,'Please release touchscreen...'); end
-			flip(sM);
-			while isTouch(tM)
-				WaitSecs(0.5);
-			end
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			flip(sM);
+			%% ============================== Wait for release
+			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
@@ -220,13 +239,43 @@ function startThings(in)
 		try reset(samples); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(rtarget); end
+		try reset(sbg); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
 		try close(aM); end
 		try Priority(0); end
 		try ListenChar(0); end
+		try RestrictKeysForKbCheck([]); end
 		try ShowCursor; end
-		sca;
+		rethrow(ME)
 	end
+
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% make sure the subject is NOT touching the screen
+	function ensureTouchRelease(afterResult)
+		if ~exist('afterResult','var'); afterResult = false; end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if in.debug; drawText(sM,'Please release touchscreen...'); end
+		svbl = flip(sM); blue = 0;
+		if ~afterResult; when="BEFORE"; else when="AFTER"; end
+		while isTouch(tM)
+			now = WaitSecs(0.2);
+			fprintf("Subject holding screen %s trial end %.1fsecs...\n", when, now-svbl);
+			if now - svbl >= 1
+				drawBackground(sM,[1 blue 1]);
+				flip(sM);
+				blue = abs(~blue);
+			end
+			if afterResult && now - svbl >= 3
+				r.result = -1;
+				fprintf("INCORRECT: Subject kept holding screen %s trial for %.1fsecs...\n", when, now-svbl);
+				break;
+			end
+		end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		flip(sM);
+	end
+
 end

@@ -111,7 +111,7 @@ function startMatchToSample(in)
 		end
 
 		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
 			pedestal.xPositionOut = 0;
 			pedestal.yPositionOut = in.sampleY;
@@ -206,9 +206,13 @@ function startMatchToSample(in)
 			update(targets);
 			update(delayDistractors);
 
+			%% ============================== initialise trial variables
 			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
+
+			%% ============================== Wait for release
+			ensureTouchRelease(false);
 
 			%% =============================== timers for sample and delay
 			%  sampleTime and delayTime can be single or range values
@@ -226,8 +230,10 @@ function startMatchToSample(in)
 			%% Initiate a trial with a touch target
 			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, quitKey, dt);
 
-			%% start the actual task
+			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			% ===============================start the actual task
 			if matches(string(r.touchInit),"yes")
+				
 				% update trial number as we enter actal trial
 				r.trialN = r.trialN + 1;
 				r.touchResponse = '';
@@ -299,9 +305,10 @@ function startMatchToSample(in)
 				end
 			end
 			
-			%% ============================== check logic of task result
 			r.vblFinal = GetSecs;
 			r.value = hld;
+
+			%% ============================== check logic of task result
 			if fail || hld == -100 || matches(r.touchResponse,'no') || matches(r.touchInit,'no')
 				r.result = 0;
 			elseif matches(r.touchResponse,'yes')
@@ -311,14 +318,7 @@ function startMatchToSample(in)
 			end
 
 			%% ============================== Wait for release
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			if in.debug; drawText(s,'Please release touchscreen...'); end
-			flip(sM);
-			while isTouch(tM)
-				WaitSecs(0.5);
-			end
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
-			flip(sM);
+			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
 			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
@@ -332,13 +332,41 @@ function startMatchToSample(in)
 		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(targets); end
+		try reset(sbg); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
 		try close(a); end
 		try Priority(0); end
 		try ListenChar(0); end
+		try RestrictKeysForKbCheck([]); end
 		try ShowCursor; end
-		sca;
+		rethrow(ME)
+	end
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% make sure the subject is NOT touching the screen
+	function ensureTouchRelease(afterResult)
+		if ~exist('afterResult','var'); afterResult = false; end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if in.debug; drawText(sM,'Please release touchscreen...'); end
+		svbl = flip(sM); blue = 0;
+		if ~afterResult; when="BEFORE"; else when="AFTER"; end
+		while isTouch(tM)
+			now = WaitSecs(0.2);
+			fprintf("Subject holding screen %s trial end %.1fsecs...\n", when, now-svbl);
+			if now - svbl >= 1
+				drawBackground(sM,[1 blue 1]);
+				flip(sM);
+				blue = abs(~blue);
+			end
+			if afterResult && now - svbl >= 3
+				r.result = -1;
+				fprintf("INCORRECT: Subject kept holding screen %s trial for %.1fsecs...\n", when, now-svbl);
+				break;
+			end
+		end
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		flip(sM);
 	end
 end

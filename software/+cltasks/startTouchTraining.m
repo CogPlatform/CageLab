@@ -12,6 +12,7 @@ function startTouchTraining(in)
 	if ~exist('in','var') || isempty(in); in = clutil.checkInput(); end
 	bgName = 'abstract1.jpg';
 	prefix = 'TT';
+	in.taskType = 'training';
 	
 	try
 		%% ============================subfunction for shared initialisation
@@ -113,7 +114,7 @@ function startTouchTraining(in)
 			end
 			update(target);
 
-			% reset trial variables held in r structure
+			%% ============================== initialise trial variables
 			r = clutil.initTrialVariables(r);
 			txt = '';
 			fail = false; hld = false;
@@ -138,6 +139,9 @@ function startTouchTraining(in)
 			vbl = flip(sM); 
 			r.vblInit = vbl + sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
+			
+			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
 				if ~isempty(sbg); draw(sbg); end
 				if ~r.hldtime; draw(target); end
@@ -165,6 +169,8 @@ function startTouchTraining(in)
 				[~,~,c] = KbCheck();
 				if c(quitKey); r.keepRunning = false; break; end
 			end
+			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
 			r.vblFinal = flip(sM);

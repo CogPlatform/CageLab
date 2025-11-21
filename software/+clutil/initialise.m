@@ -41,10 +41,10 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	
 	% initial config for PTB
 	PsychDefaultSetup(2);
+	
 	% Prevent the OS from blanking the display or entering power-save while experiments run.
-	try 
-		!xset -dpms s off
-	end
+	try system('xdotool key shift'); end
+	try system('xset dpms force on; xset s off'); end
 	
 	%% ============================ screen & background
 	% Create the main screen manager and optional smart background image that matches rig geometry.

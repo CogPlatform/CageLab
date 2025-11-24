@@ -3,6 +3,7 @@
 
 sl=(cogmoteGO.service theConductor.service mediamtx.service obs.service obs-fix.service toggleInput.service)
 for s in $sl; do
+	echo "Stopping $s"
 	systemctl --user stop $s
 done
 

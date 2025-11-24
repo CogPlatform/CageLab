@@ -115,7 +115,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 
 	%% ================================ logic for training starcase
 	r.phaseMax = max(r.phaseMax, r.phase);
-	if contains(in.taskType, 'training') && r.trialN >= in.stepForward
+	if contains(lower(in.taskType), 'training') && r.trialN >= in.stepForward
 		fprintf('===> Performance: Recent: %.1f Overall: %.1f @ Phase: %i\n', r.correctRateRecent, r.correctRate, r.phase);
 		if r.phaseN >= in.stepForward && length(dt.data.result) > in.stepForward
 			if r.correctRateRecent >= in.stepPercent

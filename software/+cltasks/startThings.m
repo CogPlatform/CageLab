@@ -57,18 +57,19 @@ function startThings(in)
 		hide(samples); % hide all stimuli at start
 
 		%% ============================ training parameters
-		dAlpha = linspace(0,1,20);
-		pAlpha = linspace(1,0,20);
+		r.totalPhases = 20;
+		dAlpha = linspace(0,1,r.totalPhases);
+		pAlpha = linspace(1,0,r.totalPhases);
 		for ii = 1:20
 			phases(ii).dAlpha = dAlpha(ii);
 			phases(ii).pAlpha = pAlpha(ii);
 		end
-		if in.phase > 20 || ~in.useStaircase
+		if in.phase > r.totalPhases || ~in.useStaircase
 			r.phase = 20;
 			phases(20).dAlpha = in.distractorOpacity;
 			phases(20).pAlpha = in.pedestalOpacity;
 		end
-
+		
 		%% ============================ training mode parameters
 		switch in.taskType
 			case 'training 1'

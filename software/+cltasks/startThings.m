@@ -63,6 +63,11 @@ function startThings(in)
 			phases(ii).dAlpha = dAlpha(ii);
 			phases(ii).pAlpha = pAlpha(ii);
 		end
+		if in.phase > 20 || ~in.useStaircase
+			r.phase = 20;
+			phases(20).dAlpha = in.distractorOpacity;
+			phases(20).pAlpha = in.pedestalOpacity;
+		end
 
 		%% ============================ training mode parameters
 		switch in.taskType
@@ -92,7 +97,7 @@ function startThings(in)
 		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
-
+			if in.phase > 20; r.phase = 20; end
 			switch in.taskType
 				case 'training 1'
 					samples{1}.alphaOut = phases(r.phase).pAlpha;

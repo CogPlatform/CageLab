@@ -203,6 +203,9 @@ function startTouchTraining(in)
 
 	catch ME
 		getReport(ME)
+		try r.status.updateStatusToStopped();end
+		try clutil.broadcastTrial(in, r, dt, false); end
+		try system('xset s 300 dpms 600 0 0'); end
 		try reset(target); end %#ok<*TRYNC>
 		try close(target); end
 		try close(fix); end

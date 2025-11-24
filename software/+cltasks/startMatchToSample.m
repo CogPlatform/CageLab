@@ -329,6 +329,9 @@ function startMatchToSample(in)
 
 	catch ME
 		getReport(ME)
+		try r.status.updateStatusToStopped();end
+		try clutil.broadcastTrial(in, r, dt, false); end
+		try system('xset s 300 dpms 600 0 0'); end
 		try reset(rtarget); end %#ok<*TRYNC>
 		try reset(fix); end
 		try reset(targets); end

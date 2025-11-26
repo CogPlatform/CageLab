@@ -1,9 +1,10 @@
 #!/usr/bin/env zsh
 # a script to stop all cage lab services gracefully
 
-sl=(cogmoteGO.service theConductor.service mediamtx.service obs.service obs-fix.service toggleInput.service)
+sl=(cogmoteGO.service theConductor.service mediamtx.service obs.service)
 for s in $sl; do
 	echo "Stopping $s"
 	systemctl --user stop $s
 done
 
+echo "All cage lab services stopped."

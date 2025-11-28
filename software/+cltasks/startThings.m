@@ -40,12 +40,12 @@ function startThings(in)
 			'yPosition',in.sampleY);
 		sampleB = clone(sampleA);
 		sampleC = clone(sampleA);
-		
+		positions = [-in.objectSep 0 in.objectSep];
 		samples = metaStimulus('stimuli',{pedestal, sampleA, sampleB, sampleC});
 		samples.edit(1:4,'yPosition', in.sampleY);
-		samples{2}.xPosition = -in.objectSep;
-		samples{3}.xPosition = 0;
-		samples{4}.xPosition = +in.objectSep;
+		samples{2}.xPosition = positions(1);
+		samples{3}.xPosition = positions(2);
+		samples{4}.xPosition = positions(3);
 		samples.fixationChoice = 2:4;
 		samples.stimulusSets{1} = 1:4; % all stimuli
 		samples.stimulusSets{2} = 1:2; % single stimulus set with pedestal + sampleA
@@ -84,11 +84,11 @@ function startThings(in)
 				colours = {};
 				samples.edit(2:4,'randomiseSelection',true);
 			case 'training 3'
-				images = ["heptagon.png", "rect1.png", "circle.png"];
-				colours = {[1 0 0],[0 1 0],[0 0 1]};
-				samples.edit(2:4,'randomiseSelection',false);
-				in.doNegation = false;
-				tM.window.doNegation = false;
+				pedestal.sizeOut = in.objectSize + 4;
+				pfix = ["animate" "inanimate"];
+				images = [];
+				colours = [];
+				samples.edit(2:4,'randomiseSelection',true);
 			otherwise
 				images = [];
 				colours = [];
@@ -98,19 +98,21 @@ function startThings(in)
 		%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		while r.keepRunning
-			if in.phase > 20; r.phase = 20; end
+			if r.phase > 20; r.phase = 20; end
+			xpos = positions(randperm(3)); % randomise the x position
+			%samples{2}.xPositionOut = xpos(1);
+			%samples{3}.xPositionOut = xpos(2);
+			%samples{4}.xPositionOut = xpos(3);
 			switch in.taskType
 				case 'training 1'
+					if r.phase>10;in.doNegation = false;tM.window.doNegation = false;end
 					samples{1}.alphaOut = phases(r.phase).pAlpha;
-					A = randi(3);
-					B = A; while B == A; B = randi(3); end
-					ooo = [A A B];
-					ooo = ooo(randperm(3));
-					choice = find(ooo == B);
+					[choice, ooo] = randomTriplet();
 					alpha = repmat(phases(r.phase).dAlpha,1,3);
 					alpha(choice) = 1;
 					samples.fixationChoice = choice + 1;
-					samples{1}.xPositionOut = samples{choice + 1}.xPosition;
+					xChoice = sM.toDegrees(samples{choice+1}.xPositionOut,'x');
+					samples{1}.xPositionOut = xChoice;
 					samples{2}.filePath = images(ooo(1));
 					samples{3}.filePath = images(ooo(2));
 					samples{4}.filePath = images(ooo(3));
@@ -126,15 +128,12 @@ function startThings(in)
 					showSet(samples, 1); % show all stimuli with pedestal
 				case 'training 2'
 					samples{1}.alphaOut = phases(r.phase).pAlpha;
-					A = randi(3);
-					B = A; while B == A; B = randi(3); end
-					ooo = [A A B];
-					ooo = ooo(randperm(3));
-					choice = find(ooo == B);
+					[choice, ooo] = randomTriplet();
 					alpha = repmat(phases(r.phase).dAlpha,1,3);
 					alpha(choice) = 1;
 					samples.fixationChoice = choice+1;
-					samples{1}.xPositionOut = samples{choice+1}.xPosition;
+					xChoice = sM.toDegrees(samples{choice+1}.xPositionOut,'x');
+					samples{1}.xPositionOut = xChoice;
 					samples{2}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(1));
 					samples{3}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(2));
 					samples{4}.filePath = string(in.folder) + filesep + "fractals" + filesep + pfix(ooo(3));
@@ -142,17 +141,38 @@ function startThings(in)
 					samples{3}.alphaOut = alpha(2);
 					samples{4}.alphaOut = alpha(3);
 					showSet(samples, 1); % show all stimuli with pedestal
+					update(samples);
 				case 'training 3'
-
+					pfix = pfix(randperm(2));
+					[choice, ooo, others] = randomTriplet();
+					cidx = choice + 1; oidx = others + 1;
+					alpha = repmat(phases(r.phase).dAlpha,1,3);
+					alpha(choice) = 1;
+					samples.fixationChoice = choice+1;
+					xChoice = samples{cidx}.xPositionOut / sM.ppd;
+					samples{1}.xPositionOut = xChoice;
+					update(samples{1});
+					samples{1}.alphaOut = phases(r.phase).pAlpha;
+					samples{2}.alphaOut = alpha(1);
+					samples{3}.alphaOut = alpha(2);
+					samples{4}.alphaOut = alpha(3);
+					samples{cidx}.filePath = string(in.folder) + filesep + pfix(1);
+					update(samples{cidx});
+					samples{oidx(1)}.filePath = string(in.folder) + filesep + pfix(2);
+					update(samples{oidx(1)});
+					samples{oidx(2)}.filePath = samples{oidx(1)}.currentFile;
+					update(samples{oidx(2)});
+					showSet(samples, 1); % show all stimuli with pedestal
 				otherwise
 					samples{2}.filePath = object.trials{r.trialN+1, "A"};
 					samples{3}.filePath = object.trials{r.trialN+1, "B"};
 					samples{4}.filePath = object.trials{r.trialN+1, "C"};
 					showSet(samples, 3); % show all stimuli without pedestal
 					samples.fixationChoice = 2:4;
+					update(samples);
 			end
 			
-			update(samples);
+			
 
 			%% ============================== initialise trial variables
 			r = clutil.initTrialVariables(r);
@@ -261,6 +281,17 @@ function startThings(in)
 	end
 
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% randomise 3 items with one selected
+	function [choice, ooo, others] = randomTriplet()
+		A = randi(3); 
+		B = A; while B == A; B = randi(3); end
+		ooo = [A A B];
+		ooo = ooo(randperm(3));
+		choice = find(ooo == B);
+		others = [1 2 3];
+		others = others(others~=choice);
+	end
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% make sure the subject is NOT touching the screen
 	function ensureTouchRelease(afterResult)

@@ -31,7 +31,7 @@ function [r, dt, vblInit] = initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 			Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
 		end
 		vbl = flip(s);
-		[r.touchInit, hld, r.hldtime, rel, reli, se, fail, tch] = testHold(tM, 'yes', 'no');
+		[r.touchInit, hld, r.hldtime, ~, ~, ~, fail, tch] = testHold(tM, 'yes', 'no');
 		if tch
 			r.anyTouch = true; 
 			dt.data.times.initTouch(r.trialN+1) = vbl;

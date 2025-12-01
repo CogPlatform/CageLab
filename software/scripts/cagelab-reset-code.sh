@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-ul=(~/Code/Psychtoolbox ~/Code/opticka ~/Code/CageLab  ~/Code/Setup ~/Code/matmoteGO ~/Code/PTBSimia ~/Code/matlab-jzmq)
+ul=(~/Code/Psychtoolbox ~/Code/opticka ~/Code/CageLab ~/Code/Setup ~/Code/matmoteGO ~/Code/PTBSimia ~/Code/matlab-jzmq)
 
 for dir in $ul; do
 	if [[ -d $dir && -d $dir/.git ]]; then
@@ -12,7 +12,7 @@ for dir in $ul; do
 			git reset --hard $upstream
 		else
 			git reset --hard
-		end
+		fi
 		git clean -fdx
 		popd >/dev/null
 	else

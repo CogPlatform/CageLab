@@ -24,13 +24,18 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		saveName (1,:) char
 		in struct
 	end
+
+	%% ========================== get hostname
+	[~,hname] = system('hostname');
+	hname = strip(hname);
+	if isempty(hname); hname = 'unknown'; end
 	
-	windowed = [];
-	sf = [];
 	% Provide defaults for optional Psychtoolbox window overrides used in debug mode.
 	%% =========================== debug mode?
 	% When no full PTB screen is available, fall back to a windowed context so development
 	% can proceed without physical rig hardware.
+	windowed = [];
+	sf = [];
 	if (in.screen == 0 || max(Screen('Screens'))==0) && in.debug
 		if IsLinux || IsOSX
 			sf = kPsychGUIWindow; windowed = [0 0 1600 900]; 
@@ -106,8 +111,8 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		end
 		draw(sbg);
 	end
-	
-	drawTextNow(sM,['Initialising CageLab V' clutil.version '...']);
+	lines = string(in.task+" "+in.command+" - CageLab V"+clutil.version+" on "+hname+" @ "+string(datetime('now')));
+	drawTextNow(sM,char(lines(1)));
 	
 	rtarget.size = 5;
 	rtarget.xPosition = sv.rightInDegrees - 4;
@@ -147,12 +152,16 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	saveName = in.saveName;
 	fprintf('===>>> CageLab Save: %s', in.saveName);
 
+	lines(2) = in.saveName;
+	lines(3) = in.diaryName;
+	writelines(lines, "~/cagelab-start.txt");
+
 	%% ================================ touch data
 	% Seed the touch-data log with session metadata so downstream tasks can append trial info.
 	dt = touchData();
 	dt.name = in.alyxName;
 	dt.subject = in.name;
-	dt.data(1).comment = [in.task ' ' in.command ' - CageLab V' clutil.version];
+	dt.data(1).comment = lines(1);
 	dt.data(1).result = [];
 	dt.data(1).random = 0;
 	dt.data(1).rewards = 0;
@@ -175,10 +184,6 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		
 	if ~in.debug; Priority(1); end
 	if ~in.debug || ~in.dummy; HideCursor; end
-
-	[~,hname] = system('hostname');
-	hname = strip(hname);
-	if isempty(hname); hname = 'unknown'; end
 
 	%% ============================ run variables
 	% r aggregates runtime status used by task loops, Alyx syncing, and remote control hooks.

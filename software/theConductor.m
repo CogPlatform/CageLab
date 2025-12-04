@@ -20,6 +20,8 @@ classdef theConductor < optickaCore
 		loopTime = 0.1
 		%> hide the OS screen when conductor runs?
 		hideScreen = false
+		%> hide screen colour
+		hideColour = [0.7 1 0.2]
 		%> more log output to command window?
 		verbose = true
 	end
@@ -351,7 +353,7 @@ classdef theConductor < optickaCore
 		% ===================================================================
 			stop = false; stopMATLAB = false;
 			me.timeStamp = GetSecs;
-			sM = screenManager('backgroundColour',[0.1 0.1 0.1], ...
+			sM = screenManager('backgroundColour',me.hideColour, ...
 				'disableSyncTests', true);
 			quitKey = KbName('escape');
 			RestrictKeysForKbCheck(quitKey);
@@ -510,6 +512,7 @@ classdef theConductor < optickaCore
 
 					case 'hidedesktop'
 						me.hideScreen = true;
+						me.enableHidden = false;
 						try open(sM); flip(sM); end
 						fprintf('\n===> theConductor: Hiding desktop screen.\n');
 						replyCommand = 'hide-desktop';
@@ -566,7 +569,6 @@ classdef theConductor < optickaCore
 							eval([command '(data)']);
 						end
 						fprintf('===> theConductor run finished in %.3f secs for: %s\n\n', toc(tt), command);
-						drawnow;
 					catch ME
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
 						try system('toggleInput disable ILITEK-TP'); end
@@ -615,7 +617,10 @@ classdef theConductor < optickaCore
 					if ~isempty(c); system('powerprofilesctl set performance');end
 				end
 				try
-					system('xset s ');
+					system('xset s 300 dpms 600 0 0');
+				end
+				try 
+					system('toggleInput disable'); 
 				end
 			end
 		end

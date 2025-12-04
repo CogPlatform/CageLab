@@ -569,6 +569,7 @@ classdef theConductor < optickaCore
 						drawnow;
 					catch ME
 						warning('===> theConductor: run command failed: %s %s', ME.identifier, ME.message);
+						try system('toggleInput disable ILITEK-TP'); end
 					end
 
 					if me.hideScreen && me.enableHidden

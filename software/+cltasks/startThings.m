@@ -160,8 +160,13 @@ function startThings(in)
 					update(samples{cidx});
 					samples{oidx(1)}.filePath = string(in.folder) + filesep + pfix(2);
 					update(samples{oidx(1)});
-					samples{oidx(2)}.filePath = samples{oidx(1)}.currentFile;
-					update(samples{oidx(2)});
+					if contains(in.trainingSet,"set a")
+						samples{oidx(2)}.filePath = samples{oidx(1)}.currentFile;
+						update(samples{oidx(2)});
+					else
+						samples{oidx(2)}.filePath = string(in.folder) + filesep + pfix(2);
+						update(samples{oidx(2)});
+					end
 					showSet(samples, 1); % show all stimuli with pedestal
 				otherwise
 					samples{2}.filePath = object.trials{r.trialN+1, "A"};

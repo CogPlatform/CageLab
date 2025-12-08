@@ -26,7 +26,9 @@ function startThings(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
+		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
+		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
 
 		%% ============================task specific figures
 		object = clutil.getThingsImages(in);
@@ -188,7 +190,7 @@ function startThings(in)
 			ensureTouchRelease(false);
 
 			%% ============================== Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, r.quitKey, dt);
 
 			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			% ============================== start the actual task
@@ -236,8 +238,8 @@ function startThings(in)
 						tM.window.Y); 
 					end
 					[~,~,c] = KbCheck();
-					if c(quitKey); r.keepRunning = false; break; end
-					if c(shotKey); sM.captureScreen; end
+					if c(r.quitKey); r.keepRunning = false; break; end
+					if c(r.shotKey); sM.captureScreen; end
 				end
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

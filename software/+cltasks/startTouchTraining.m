@@ -16,7 +16,9 @@ function startTouchTraining(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
-		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in] = clutil.initialise(in, bgName, prefix);
+		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
+		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
+		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
 		
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
@@ -167,8 +169,8 @@ function startTouchTraining(in)
 						tM.window.radius,tM.window.init,tM.window.hold,tM.window.release);
 				end
 				[~,~,c] = KbCheck();
-				if c(quitKey); r.keepRunning = false; break; end
-				if c(shotKey); sM.captureScreen; end
+				if c(r.quitKey); r.keepRunning = false; break; end
+				if c(r.shotKey); sM.captureScreen; end
 			end
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,7 +195,7 @@ function startTouchTraining(in)
 			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
 
 			%% ============================== inter-trial pause
 			WaitSecs('YieldSecs',in.ITI-(GetSecs-r.vblFinal));
@@ -214,7 +216,7 @@ function startTouchTraining(in)
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
-		try close(a); end
+		try close(aM); end
 		try Priority(0); end
 		try ListenChar(0); end
 		try RestrictKeysForKbCheck([]); end

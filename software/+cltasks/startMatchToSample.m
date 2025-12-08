@@ -34,7 +34,9 @@ function startMatchToSample(in)
 
 	try
 		%% ============================subfunction for shared initialisation
-		[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName] = clutil.initialise(in, bgName, prefix);
+		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
+		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
+		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
 
 		%% ============================task specific figures
 		switch lower(in.object)
@@ -228,7 +230,7 @@ function startMatchToSample(in)
 			end
 
 			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, quitKey, dt);
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, r.quitKey, dt);
 
 			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			% ===============================start the actual task
@@ -301,8 +303,8 @@ function startMatchToSample(in)
 						tM.window.hold,tM.window.release,tM.window.X, ...
 						tM.window.Y); end
 					[~,~,c] = KbCheck();
-					if c(quitKey); r.keepRunning = false; break; end
-					if c(shotKey); sM.captureScreen; end
+					if c(r.quitKey); r.keepRunning = false; break; end
+					if c(r.shotKey); sM.captureScreen; end
 				end
 			end
 			
@@ -322,7 +324,7 @@ function startMatchToSample(in)
 			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a);
+			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
 
 		end % while keepRunning
 		target = [];
@@ -340,7 +342,7 @@ function startMatchToSample(in)
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
-		try close(a); end
+		try close(aM); end
 		try Priority(0); end
 		try ListenChar(0); end
 		try RestrictKeysForKbCheck([]); end

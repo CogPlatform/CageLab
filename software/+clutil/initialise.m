@@ -1,4 +1,4 @@
-function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
+function [sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 	%[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
 	% INITIALISE orchestrates the CageLab runtime by configuring display/audio/touch hardware,
 	% instantiating stimulus and reward managers, preparing Alyx bookkeeping, and returning the
@@ -10,25 +10,24 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		prefix (1,:) char = '' % prefix to add to save name
 	end
 	arguments (Output)
-		sM (1,1) screenManager
-		sv struct
-		r struct
-		sbg % can be [] or imageStimulus; leave untyped to allow empty
-		rtarget (1,1) imageStimulus
-		fix (1,1) discStimulus
+		sM (1,1) screenManager % screen manager object
 		aM (1,1) audioManager
 		rM (1,1) PTBSimia.pumpManager
 		tM (1,1) touchManager
+		r struct % ongoing task parameters and variables
 		dt (1,1) touchData
-		quitKey (1,1) double
-		saveName (1,:) char
 		in struct
 	end
+
+	%% ============================ run variables
+	% r aggregates runtime status used by task loops, Alyx syncing, and remote control hooks.
+	r = [];
 
 	%% ========================== get hostname
 	[~,hname] = system('hostname');
 	hname = strip(hname);
 	if isempty(hname); hname = 'unknown'; end
+	r.hostname = hname;
 	
 	% Provide defaults for optional Psychtoolbox window overrides used in debug mode.
 	%% =========================== debug mode?
@@ -58,15 +57,15 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		'disableSyncTests', in.disableSync, 'hideFlash', true, ...
 		'backgroundColour', in.bg,'windowed', windowed,'specialFlags', sf);
 	if in.smartBackground
-		sbg = imageStimulus('crop','stretch','alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
+		r.sbg = imageStimulus('crop','stretch','alpha', 1, 'filePath', [in.folder filesep 'background' filesep bgName]);
 	else 
-		sbg = [];
+		r.sbg = [];
 	end
 
 	%% ============================ stimuli
 	% Instantiate the on-screen reward target and fixation stimuli with default positions/sizes.
-	rtarget = imageStimulus('size', 2, 'colour', [0.2 1 0], 'filePath', 'heptagon.png');
-	fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.5,...
+	r.rtarget = imageStimulus('size', 2, 'colour', [0.2 1 0], 'filePath', 'heptagon.png');
+	r.fix = discStimulus('size', in.initSize, 'colour', [1 1 0.5], 'alpha', 0.5,...
 			'xPosition', in.initPosition(1),'yPosition', in.initPosition(2));
 	
 	%% ============================ audio
@@ -80,7 +79,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		beep(aM,in.correctBeep,0.1,in.audioVolume);
 		beep(aM,in.incorrectBeep,0.1,in.audioVolume);
 	end
-	
+
 	%% ============================touch
 	% Configure the touch manager (real or dummy) and align negation/verbosity with session settings.
 	tM = touchManager('isDummy',in.dummy,'device',in.touchDevice,...
@@ -101,32 +100,38 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	
 	%% ============================setup
 	% Open the display, size the background stimulus to the current rig, and present initial text.
-	sv = open(sM); % open screen
+	r.sv = open(sM); % open screen
 	if in.smartBackground
-		sbg.size = max([sv.widthInDegrees sv.heightInDegrees]);
-		setup(sbg, sM);
-		if sbg.heightD < sv.heightInDegrees
-			sbg.sizeOut = sbg.sizeOut + (sv.heightInDegrees - sbg.heightD);
-			update(sbg);
+		r.sbg.size = max([r.sv.widthInDegrees r.sv.heightInDegrees]);
+		setup(r.sbg, sM);
+		if r.sbg.heightD < r.sv.heightInDegrees
+			r.sbg.sizeOut = r.sbg.sizeOut + (r.sv.heightInDegrees - r.sbg.heightD);
+			update(r.sbg);
 		end
-		draw(sbg);
+		draw(r.sbg);
 	end
 	lines = string(in.task+" "+in.command+" - CageLab V"+clutil.version+" on "+hname+" @ "+string(datetime('now')));
 	drawTextNow(sM,char(lines(1)));
 	
-	rtarget.size = 5;
-	rtarget.xPosition = sv.rightInDegrees - 4;
-	rtarget.yPosition = sv.topInDegrees + 4;
-	setup(rtarget, sM);
-	in.rRect = rtarget.mvRect;
+	r.rtarget.size = 5;
+	r.rtarget.xPosition = r.sv.rightInDegrees - 4;
+	r.rtarget.yPosition = r.sv.topInDegrees + 4;
+	setup(r.rtarget, sM);
+	in.rRect = r.rtarget.mvRect;
 
-	setup(fix, sM);
+	setup(r.fix, sM);
 	setup(tM, sM);
 	try
 		createQueue(tM);
 	catch ME
 		try displayInfo(tM); end
-		rethrow(ME);
+	end
+	try
+		reset(tM);WaitSecs(1);
+		createQueue(tM);
+	catch ME
+		fprintf('Tried to create touch queue twice and failed!\n');
+		rethrow(ME)
 	end
 	start(tM);
 
@@ -149,7 +154,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	in.saveName = [ in.alyxPath filesep 'opticka.raw.' prefix in.alyxName '.mat'];
 	in.diaryName = [ in.alyxPath filesep '_matlab_diary.' prefix in.alyxName '.log'];
 	diary(in.diaryName);
-	saveName = in.saveName;
+	r.saveName = in.saveName;
 	fprintf('===>>> CageLab Save: %s', in.saveName);
 
 	lines(2) = in.saveName;
@@ -173,7 +178,7 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	dt.data(1).times.taskRT = [];
 
 	if isempty(dt.info); dt.info(1).name = dt.name; end
-	dt.info.screenVals = sv;
+	dt.info.screenVals = r.sv;
 	dt.info.settings = in;
 
 	%% ============================ settings
@@ -181,15 +186,13 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	quitKey = KbName('escape');
 	shotKey = KbName('F1');
 	RestrictKeysForKbCheck([quitKey shotKey]);
-	Screen('Preference','Verbosity',4);
-		
+	Screen('Preference','Verbosity',4);	
 	if ~in.debug; Priority(1); end
 	if ~in.debug || ~in.dummy; HideCursor; end
 
 	%% ============================ run variables
 	% r aggregates runtime status used by task loops, Alyx syncing, and remote control hooks.
-	r = [];
-	r.hostname = hname;
+	r.comment = lines;
 	r.saveName = in.saveName;
 	r.version = clutil.version;
 	r.alyx = alyx; % alyx manager object
@@ -203,28 +206,29 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 		r.remote = false;
 		r.zmq = [];
 	end
+	r.quitKey = quitKey;
+	r.shotKey = shotKey;
 	try in = rmfield(in,'zmq'); end % clean up input struct
 	r.broadcast = matmoteGO.broadcast(); % initialize data broadcast object
 	r.status = matmoteGO.status(); % initialize experiment status object
 	r.keepRunning = true;
 	r.phase = in.phase; % phase of the experiment for those with automatic progression
 	r.phaseinit = r.phase;
-	r.totalPhases = r.phase;
+	r.totalPhases = NaN;
+	r.phaseMax = r.phase; % maximum phase number in this session
 	r.correctRate = NaN; % overall correct rate
 	r.correctRateRecent = NaN; % recent correct rate
 	r.loopN = 0; % number of loops completed
 	r.trialN = 0; % number of trials initiated
 	r.trialW = 0; % number of trials won
 	r.phaseN = 0; 
-	r.phaseMax = r.phase; % maximum phase number
 	r.stimulus = 1; % current stimulus index
 	r.randomRewardTimer = GetSecs; % timer for random rewards
-	r.rRect = rtarget.mvRect;
+	r.rRect = r.rtarget.mvRect;
 	r.result = -1;
 	r.value = NaN;
 	r.txt = '';
-	r.aspect = sv.widthInDegrees / sv.heightInDegrees;
-	r.quitKey = quitKey;
+	r.aspect = r.sv.widthInDegrees / r.sv.heightInDegrees;
 	r.vblInit = NaN;
 	r.vblFinal = NaN;
 	r.reactionTime = NaN;

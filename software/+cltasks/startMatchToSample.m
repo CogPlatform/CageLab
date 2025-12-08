@@ -302,6 +302,7 @@ function startMatchToSample(in)
 						tM.window.Y); end
 					[~,~,c] = KbCheck();
 					if c(quitKey); r.keepRunning = false; break; end
+					if c(shotKey); sM.captureScreen; end
 				end
 			end
 			

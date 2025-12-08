@@ -6,6 +6,7 @@ classdef status < handle
 		% server IP and port
 		ip = '127.0.0.1'
 		port = 9012
+		verbose = true;
 	end
 
 	properties(Dependent=true, GetAccess=public)
@@ -77,7 +78,9 @@ classdef status < handle
 			request = matlab.net.http.RequestMessage(obj.http_get, obj.headers);
 			updateURL = obj.baseURI;
 			updateURL.Path = obj.basePath;
+			oldv = me.verbose; me.verbose = false;
 			response = obj.sendRequest(request, updateURL);
+			me.verbose = oldv; % Restore the original verbosity setting
 			if isempty(response); return; end
 			try isRunning = response.Body.Data.is_running; end
 			try id = response.Body.Data.id; end
@@ -86,11 +89,11 @@ classdef status < handle
 
 	methods (Access = private)
 		%% send request
-		function response = sendRequest(~, request, url)
+		function response = sendRequest(obj, request, url)
 			try
 				response = request.send(url);
 			catch exception
-				disp("Error: Failed to send request - " + exception.message);
+				if obj.verbose; disp("clutil.status Error: Failed to send request - " + exception.message); end
 				response = [];
 			end
 		end

@@ -32,7 +32,7 @@ function startThings(in)
 		object = clutil.getThingsImages(in);
 
 		% for training use only
-		pedestal = discStimulus('size', in.objectSize + 2,'colour',[1 1 0.5],...
+		pedestal = discStimulus('size', in.objectSize + 3.5,'colour',[1 1 0.5],...
 			'alpha',in.pedestalOpacity,'yPosition',in.sampleY);
 
 		% our three samples
@@ -237,6 +237,7 @@ function startThings(in)
 					end
 					[~,~,c] = KbCheck();
 					if c(quitKey); r.keepRunning = false; break; end
+					if c(shotKey); sM.captureScreen; end
 				end
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

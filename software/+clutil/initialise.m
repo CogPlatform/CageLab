@@ -179,7 +179,8 @@ function [sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] =
 	%% ============================ settings
 	% Lock keyboard input to the quit key, reduce verbosity, and set OS-level priority/cursor state.
 	quitKey = KbName('escape');
-	RestrictKeysForKbCheck(quitKey);
+	shotKey = KbName('F1');
+	RestrictKeysForKbCheck([quitKey shotKey]);
 	Screen('Preference','Verbosity',4);
 		
 	if ~in.debug; Priority(1); end

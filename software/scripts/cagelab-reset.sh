@@ -5,4 +5,6 @@ systemctl --user stop cogmoteGO.service && systemctl --user stop theConductor.se
 systemctl --user daemon-reload
 sleep 0.5s
 systemctl --user start cogmoteGO.service && systemctl --user start theConductor.service
-toggleInput disable # disable touch screen in case it was enabled
+echo "theConductor and cogmoteGO restarted."
+echo "If you have a touch screen, we will try to disable it..."
+DISPLAY=:0 toggleInput disable # disable touch screen in case it was enabled

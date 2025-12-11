@@ -78,9 +78,9 @@ classdef status < handle
 			request = matlab.net.http.RequestMessage(obj.http_get, obj.headers);
 			updateURL = obj.baseURI;
 			updateURL.Path = obj.basePath;
-			oldv = me.verbose; me.verbose = false;
-			response = obj.sendRequest(request, updateURL);
-			me.verbose = oldv; % Restore the original verbosity setting
+			oldv = obj.verbose; obj.verbose = false;
+			try response = obj.sendRequest(request, updateURL); end
+			obj.verbose = oldv; % Restore the original verbosity setting
 			if isempty(response); return; end
 			try isRunning = response.Body.Data.is_running; end
 			try id = response.Body.Data.id; end

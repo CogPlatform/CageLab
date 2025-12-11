@@ -14,7 +14,7 @@ for dir in $ul; do
 			git reset --hard
 		fi
 		git clean -fdx
-		git pull --force
+		git pull --force --all --prune
 		popd >/dev/null
 	else
 		echo ">>> Skipping $dir (not a git repo)"

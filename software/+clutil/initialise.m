@@ -48,7 +48,8 @@ function [sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 	
 	% Prevent the OS from blanking the display or entering power-save while experiments run.
 	try system('xdotool key shift'); end
-	try system('xset dpms force on; xset s off'); end
+	try system('xset s off'); end
+	try system('xset dpms force on'); end
 	
 	%% ============================ screen & background
 	% Create the main screen manager and optional smart background image that matches rig geometry.
@@ -159,7 +160,7 @@ function [sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 
 	lines(2) = in.saveName;
 	lines(3) = in.diaryName;
-	writelines(lines, "~/cagelab-start.txt");
+	writelines(lines, "~/cagelab-start.txt", WriteMode="append");
 
 	%% ================================ touch data
 	% Seed the touch-data log with session metadata so downstream tasks can append trial info.
@@ -187,7 +188,7 @@ function [sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 	shotKey = KbName('F1');
 	RestrictKeysForKbCheck([quitKey shotKey]);
 	Screen('Preference','Verbosity',4);	
-	if ~in.debug; Priority(1); end
+	if ~in.debug; Priority(MaxPriority(sM.win)); end
 	if ~in.debug || ~in.dummy; HideCursor; end
 
 	%% ============================ run variables

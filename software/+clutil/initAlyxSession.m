@@ -29,9 +29,12 @@ function [session, success] = initAlyxSession(r, session)
 
 	if ~isempty(url)
 		success = true;
+		session.initialised = true;
 		session.sessionURL = url;
 		fprintf('≣≣≣≣⊱ Alyx File Path: %s \n\t  Alyx URL: %s...\n', alyx.paths.ALFPath, session.sessionURL);
 	else
+		session.sessionURL = '';
+		session.initialised = false;
 		success = false;
 		warning('≣≣≣≣⊱ Failed to init Alyx File Path: %s\n',alyx.paths.ALFPath);
 	end

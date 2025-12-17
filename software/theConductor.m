@@ -87,7 +87,8 @@ classdef theConductor < optickaCore
 			me.version = clutil.version;
 			try setupPTB(me); end
 
-			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose);
+			me.zmq = jzmqConnection('type', 'REP', 'address', me.address,'port', me.port, 'verbose', me.verbose,...
+				'readTimeOut', 5000, 'writeTimeOut', 5000);
 
 			if me.runNow; run(me); end
 
@@ -125,7 +126,7 @@ classdef theConductor < optickaCore
 		end
 
 		% ===================================================================
-		function createProxy(me)
+		function success = createProxy(me)
 		%> @brief Create a command proxy with cogmoteGO via HTTP API.
 		%> @details This method constructs a HTTP POST request to create a
 		%>   command proxy with the cogmoteGO service. It sends the request
@@ -145,37 +146,36 @@ classdef theConductor < optickaCore
 			msg = struct('nickname', 'matlab', 'hostname', 'localhost', "port", me.port);
 			msgBody = matlab.net.http.MessageBody(msg);
 			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, me.headers, msgBody);
-			
+
+			% just in case a previous run didn't clean up:
+			resetProxy(me);
+
 			% send request
+			success = false;
 			maxRetries = 15;
 			for retry = 1:maxRetries
 				response = me.sendRequest(request, cmdProxyUrl);
 				if ~isempty(response)
-					me.handleResponse(response);
-					break;
+					result = me.handleResponse(response);
+					if result == "created" || result == "ok"
+						success = true;
+						break;
+					end
 				else
 					if retry == maxRetries
 						error('request failed, reached maximum retry count (%d times)', maxRetries);
 					elseif retry > 5
-						try 
-							if IsLinux
-								!systemctl --user restart cogmoteGO
-							else
-								!cogmoteGO service start
-							end
-						catch ME
-							warning('Failed to restart cogmoteGO service: %s...', ME.message);
-						end
+						resetProxy(me);
 					else
 						warning('request failed, retrying (%d/%d)', retry, maxRetries);
 					end
-					WaitSecs(2);
+					WaitSecs(0.5);
 				end
 			end
 		end
 
 		% ===================================================================
-		function closeProxy(me)
+		function success = closeProxy(me)
 		%> @brief Close the command proxy with cogmoteGO via HTTP API.
 		%> @details This method constructs a HTTP DELETE request to close
 		%>   the command proxy with the cogmoteGO service. It sends the
@@ -193,7 +193,40 @@ classdef theConductor < optickaCore
 			
 			% send request
 			response = me.sendRequest(request, cmdProxyUrl);
-			me.handleResponse(response);
+			result = me.handleResponse(response);
+			if result == "ok"
+				success = true;
+			else
+				success = false;
+			end
+		end
+
+		% ===================================================================
+		function isOpen = checkProxy(me)
+		%> @brief Close the command proxy with cogmoteGO via HTTP API.
+		%> @details This method constructs a HTTP DELETE request to close
+		%>   the command proxy with the cogmoteGO service. It sends the
+		%>   request to the specified base URI and path, including the
+		%>   necessary headers. The method processes the response to
+		%>   determine if the request was successful.
+		%> @note Ensure that the cogmoteGO service is running and accessible
+		%>   at the specified base URI and path.
+		% ===================================================================
+			% create the URL for the request
+			cmdProxyUrl = me.baseURI;
+			cmdProxyUrl.Path = me.basePath;
+
+			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.GET);
+			
+			% send request
+			response = me.sendRequest(request, cmdProxyUrl);
+			result = me.handleResponse(response);
+			if result == "ok"
+				isOpen = true;
+			else
+				try disp(response.Body.Data.error); end
+				isOpen = false;
+			end
 		end
 		
 		% ===================================================================
@@ -213,8 +246,8 @@ classdef theConductor < optickaCore
 		%>   request is properly formatted.
 		% ===================================================================
 			opts = matlab.net.http.HTTPOptions;
-			opts.ConnectTimeout = 5;
-			opts.ResponseTimeout = 10;
+			opts.ConnectTimeout = 2;
+			opts.ResponseTimeout = 5;
 			opts.UseProxy = false;
 			try
 				response = request.send(uri, opts);
@@ -225,7 +258,7 @@ classdef theConductor < optickaCore
 		end
 		
 		% ===================================================================
-		function response = handleResponse(~, response)
+		function result = handleResponse(~, response)
 		%> @brief Handle the HTTP response based on its status code.
 		%> @param response A `matlab.net.http.ResponseMessage` object containing
 		%>   the response from the server.
@@ -243,14 +276,19 @@ classdef theConductor < optickaCore
 			
 			switch response.StatusCode
 				case matlab.net.http.StatusCode.OK
+					result = "ok";
 					disp('===> theConductor: OK')
 				case matlab.net.http.StatusCode.Created
-					disp('===> theConductor: Command Proxy Created')
+					result = "created";
+					disp('===> theConductor: Created')
 				case matlab.net.http.StatusCode.Conflict
+					result = "conflict";
 					warning("theConductor:endpointExists", "Endpoint already exists");
 				case matlab.net.http.StatusCode.BadRequest
+					result = "badrequest";
 					warning("thieConductor:invalidRequest", "Message from cogmoteGO: %s", response.Body.show());
 				case matlab.net.http.StatusCode.NotFound
+					result = "notfound";
 					warning("theConductor:invalidEndpoint", "Endpoint not found");
 			end
 		end
@@ -316,7 +354,7 @@ classdef theConductor < optickaCore
 		%>   server and release associated resources.
 		% ===================================================================
 			me.isRunning = false;
-			try closeProxy(me); end
+			try resetProxy(me); end
 			try close(me.zmq); end
 		end
 		
@@ -337,6 +375,57 @@ classdef theConductor < optickaCore
 	end
 
 	methods (Access = protected)
+
+		% ===================================================================
+		function success = isCogmoteGO(me)
+		%> @brief Check if the cogmoteGO service is running.
+		%> @details This method constructs a HTTP GET request to check the
+		%>   health status of the cogmoteGO service. It sends the request
+		%>   to the specified base URI and path, including the necessary
+		%>   headers. The method processes the response to determine if
+		%>   the service is running and healthy.
+		%> @note Ensure that the cogmoteGO service is running and accessible
+		%>   at the specified base URI and path.
+		% ===================================================================
+			cmdProxyUrl = me.baseURI;
+			cmdProxyUrl.Path = ["api" "health"];
+
+			request = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.GET);
+			
+			% send request
+			response = me.sendRequest(request, cmdProxyUrl);
+			result = me.handleResponse(response);
+			if result == "ok"
+				success = true;
+			else
+				success = false;
+			end
+		end
+
+		% ===================================================================
+		function resetProxy(me)
+		%> @brief Reset the command proxy with cogmoteGO via HTTP API.
+		%> @details This method first closes the existing command proxy
+		%>   using `closeProxy(me)` and if not successful, tries with curl then restarts service
+		% ==================================================================
+			success = closeProxy(me);
+			if ~success
+				warning('theConductor:resetProxy','Could not close proxy, trying with curl');
+				system('/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/api/cmds/proxies"');
+				if isCogmoteGO(me) == false
+					warning('theConductor:resetProxy','cogmoteGO not running, trying to restart service');
+					try 
+						if IsLinux
+							!systemctl --user restart cogmoteGO
+						else
+							!cogmoteGO service start
+						end
+					catch ME
+						warning('Failed to restart cogmoteGO service: %s...', ME.message);
+					end
+				end
+			end
+		end
 
 		% ===================================================================
 		function process(me)

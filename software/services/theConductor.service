@@ -19,7 +19,7 @@ Environment=PATH=%h/.pixi/bin:%h/.local/bin:%h/bin:/usr/local/MATLAB/R2024a/bin:
 # our main command
 ExecStart=/usr/local/MATLAB/R2024a/bin/matlab -nosplash -nodesktop -r "c = theConductor('loopTime',0.1); run(c);"
 # we MUST release the proxy manually using curl on stop
-ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/cmds/proxies"
+ExecStopPost=/usr/bin/curl --location --request DELETE "http://127.0.0.1:9012/api/cmds/proxies"
 Restart=always
 RestartSec=15
 #CPUSchedulingPolicy=rr

@@ -1,6 +1,6 @@
-function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
+function shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
 	arguments
-		s (1,1) screenManager
+		sM (1,1) screenManager
 		sbg % can be [] or imageStimulus; leave untyped to allow empty
 		fix (1,1) discStimulus
 		set % typically metaStimulus; may be []
@@ -16,14 +16,10 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	
 	%% final drawing
 	if ~isempty(sbg); draw(sbg); end
-	drawTextNow(s, 'FINISHED!');
+	drawTextNow(sM, 'FINISHED!');
 
 	%% change status for cogmoteGO
 	currentStatus = r.status.updateStatusToStopped();
-	disp(currentStatus.Body.Data);
-
-	%% final broadcast to cogmoteGO
-	clutil.broadcastTrial(in, r, dt, false);
 
 	%% reset and close stims and devices
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
@@ -38,7 +34,7 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	r.zmq = [];
 	r.broadcast = [];
 
-	try close(s); end
+	try close(sM); end
 	try close(tM); end
 	try close(rM); end
 
@@ -67,24 +63,43 @@ function shutDownTask(s, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, i
 	disp('=========================================');
 	dt.info.runInfo = r;
 	dt.info.settings = in;
-	save(r.saveName, 'dt', 'r', 'in', 'tM', 's', '-v7.3');
+	save(r.saveName, 'dt', 'r', 'in', 'tM', 'sM', '-v7.3');
 	save("~/lastTaskRun.mat", 'dt', '-v7.3');
 	disp('Done (and a copy of touch data saved to ~/lastTaskRun.mat)!!!');
 	if in.remote == false; try dt.plotData; end; end
 	disp(' . '); disp(' . '); disp(' . ');
 	WaitSecs('YieldSecs',0.1);
+	writelines("Session ended: " + string(datetime('now')), "~/cagelab-start.txt", WriteMode="append");
 
 	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%  Send data to Alyx if enabled
+	err = "";
 	if in.useAlyx
-		%in.session.dataBucket = 'Minio-CognitionPlatform';
-		%in.session.dataRepo = 'http://172.16.102.77:9000';
-		[in.session, success] = clutil.initAlyxSession(r, in.session);
+		if in.initAlyxAtStart
+			success = isfield(in.session,'initialised') && in.session.initialised;
+		else
+			[in.session, success] = clutil.initAlyxSession(r, in.session);
+		end
 		if success
-			in.session = clutil.endAlyxSession(r, in.session, "PASS");
+			[in.session, err] = clutil.endAlyxSession(r, in.session, "PASS");
+		else
+			err = "Could not initialize Alyx session.";
 		end
 	end
+
+
+	%% final broadcast to cogmoteGO
+	clutil.broadcastTrial(in, r, dt, false);
+
+	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% wrap up
 	diary off
+	r.comments(end+1) = "Shut down task.";
+	if err ~= ""
+		r.comments(end+1) = "Alyx Error: " + err;
+		writelines(["Alyx Error: " + err, " "], "~/cagelab-start.txt", WriteMode="append");
+		error(err);
+	end
 
 	try system('xset s 300 dpms 600 0 0'); end
 end

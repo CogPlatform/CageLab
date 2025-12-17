@@ -1,4 +1,4 @@
 function ver = version()
-% version - returns the version of the CLUTIL software
+% version - returns the version of the CageLab software
 
-ver = '1.0.31';
+ver = '1.0.32';

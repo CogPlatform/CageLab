@@ -46,6 +46,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	%% ================================ correct
 	elseif r.result == 1
 		r.summary = 'correct';
+		r.comments(end+1) = r.summary;
 		if in.reward
 			giveReward(rM, in.rewardTime);
 			dt.data.rewards = dt.data.rewards + 1;
@@ -71,6 +72,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	%% ================================ incorrect
 	elseif r.result == 0
 		r.summary = 'incorrect';
+		r.comments(end+1) = r.summary;
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
@@ -89,10 +91,29 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
 		r.randomRewardTimer = GetSecs;
+	%% ================================ easy trial
+	elseif r.result == -10
+		r.summary = 'easy-trial';
+		dt.data.easyTrials = dt.data.easyTrials + 1;
+		r.comments(end+1) = r.summary;
+		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
+			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
+		[r.correctRateRecent, r.correctRate] = getCorrectRate();
+		r.txt = getResultsText();
+
+		if in.debug; drawText(sM,r.txt); end
+		flip(sM);
+
+		fprintf('===> EASY TRIAL :-| %s\n',r.txt);
+		
+		WaitSecs('YieldSecs',in.timeOut);
+		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
+		r.randomRewardTimer = GetSecs;
 
 	%% ================================ otherwise
 	else
 		r.summary = 'unknown';
+		r.comments(end+1) = r.summary;
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
@@ -113,7 +134,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		r.randomRewardTimer = GetSecs;
 	end
 
-	%% ================================ logic for training starcase
+	%% ================================ logic for training staircase
 	r.phaseMax = max(r.phaseMax, r.phase);
 	if contains(lower(in.taskType), 'training') && r.trialN >= in.stepForward
 		fprintf('===> Performance: Recent: %.1f Overall: %.1f @ Phase: %i\n', r.correctRateRecent, r.correctRate, r.phase);
@@ -130,7 +151,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			r.trialW = 0;
 			if r.phase < 1; r.phase = 1; end
 			if r.phase > r.totalPhases; r.phase = r.totalPhases; end
-			if matches(in.task, 'Simple') && r.phase > 19; r.phase = 19; end
 			fprintf('===> Step Phase update: %i\n',r.phase);
 		end
 	end
@@ -187,8 +207,6 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		for i = 0:frames
 			inc = sin(i*0.25)/2;
 			rtarget.angleOut = rtarget.angleOut + (inc * 5);
-			%rect = ScaleRect(rtarget.mvRect, inc, inc);
-			%rtarget.mvRect = CenterRect(rect,s.screenVals.winRect);
 			if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
 			if in.debug && ~isempty(r.txt); drawText(sM,r.txt); end
 			draw(rtarget);

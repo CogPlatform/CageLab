@@ -1,12 +1,16 @@
 function broadcastTrial(in, r, dt, isRunning)
-arguments (Input)
-	in struct
-	r struct
-	dt touchData
-	isRunning logical = false
-end
+	% BROADCASTTRIAL Sends trial and session telemetry to the broadcast server.
+	%   BROADCASTTRIAL(IN, R, DT, ISRUNNING) packages trial performance metrics,
+	%   timing information, and session metadata into a structure and transmits
+	%   it using the broadcast interface stored in R.
+	arguments (Input)
+		in struct
+		r struct
+		dt touchData
+		isRunning logical = false
+	end
 
-r.broadcast.send(struct('task',in.task,'name',in.name,'is_running',isRunning,...
+	r.broadcast.send(struct('task',in.task,'name',in.name,'is_running',isRunning,...
 		'loop_id',r.loopN,'trial_id',r.trialN,...
 		'rewards',dt.data.rewards, ...
 		'correct_rate_last10', r.correctRateRecent, 'correct_rate', r.correctRate,...

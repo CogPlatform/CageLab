@@ -1,5 +1,21 @@
 function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
-	
+	% UPDATETRIALRESULT Processes the outcome of a trial, updates data, and provides feedback.
+	%
+	% Inputs:
+	%   in      - Configuration structure with task and reward parameters.
+	%   dt      - Data structure containing trial results and timing information.
+	%   r       - Current trial state and result structure.
+	%   rtarget - Target object for reward animations.
+	%   sbg     - Background sprite object (can be empty).
+	%   sM      - Screen manager for display and flipping.
+	%   tM      - Texture manager for managing visual assets.
+	%   rM      - Reward manager for controlling reward delivery.
+	%   a       - Audio object for feedback sounds.
+	%
+	% Outputs:
+	%   dt      - Updated data structure.
+	%   r       - Updated trial result structure.
+
 	%% ================================ blank display
 	if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
 	vblEnd = flip(sM);
@@ -39,11 +55,11 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			WaitSecs(0.75+rand);
 		end
 
-	%% ================================ no touch, just wait a bit
+		%% ================================ no touch, just wait a bit
 	elseif r.anyTouch == false
 		WaitSecs(1+rand);
 
-	%% ================================ correct
+		%% ================================ correct
 	elseif r.result == 1
 		r.summary = 'correct';
 		r.comments(end+1) = r.summary;
@@ -60,16 +76,16 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		animateRewardTarget(1);
 
 		fprintf('===> CORRECT :-) %s\n',r.txt);
-		
+
 		r.phaseN = r.phaseN + 1;
 		r.trialW = 0;
-		
+
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
 		flip(sM);
 		WaitSecs(0.1);
 		r.randomRewardTimer = GetSecs;
 
-	%% ================================ incorrect
+		%% ================================ incorrect
 	elseif r.result == 0
 		r.summary = 'incorrect';
 		r.comments(end+1) = r.summary;
@@ -82,16 +98,16 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		if in.debug; drawText(sM,r.txt); end
 		flip(sM);
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
-		
+
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
 
 		fprintf('===> FAIL :-( %s\n',r.txt);
-		
+
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
 		r.randomRewardTimer = GetSecs;
-	%% ================================ easy trial
+		%% ================================ easy trial
 	elseif r.result == -10
 		r.summary = 'easy-trial';
 		dt.data.easyTrials = dt.data.easyTrials + 1;
@@ -105,12 +121,12 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		flip(sM);
 
 		fprintf('===> EASY TRIAL :-| %s\n',r.txt);
-		
+
 		WaitSecs('YieldSecs',in.timeOut);
 		if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end; flip(sM);
 		r.randomRewardTimer = GetSecs;
 
-	%% ================================ otherwise
+		%% ================================ otherwise
 	else
 		r.summary = 'unknown';
 		r.comments(end+1) = r.summary;
@@ -123,9 +139,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		if in.debug; drawText(sM,r.txt); end
 		flip(sM);
 		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
-		
+
 		r.phaseN = r.phaseN + 1;
-		r.trialW = r.trialW + 1; 
+		r.trialW = r.trialW + 1;
 
 		fprintf('===> UNKNOWN :-| %s\n',r.txt);
 
@@ -145,7 +161,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 				r.phase = r.phase - 1;
 			end
 			if r.phase < (r.phaseMax - in.phaseMaxBack)
-				r.phase = r.phaseMax - in.phaseMaxBack; 
+				r.phase = r.phaseMax - in.phaseMaxBack;
 			end
 			r.phaseN = 0;
 			r.trialW = 0;
@@ -191,7 +207,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		if length(dt.data.result) >= in.stepForward
 			recent = dt.data.result(end - (in.stepForward-1):end);
 			recent = length(find(recent == 1)) / length(recent);
-		else 
+		else
 			recent = NaN;
 		end
 	end

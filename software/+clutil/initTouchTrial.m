@@ -1,5 +1,25 @@
 function [r, dt, vblInit] = initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
-	
+	% INITTOUCHTRIAL Initializes a touch trial.
+	%   [R, DT, VBLINIT] = INITTOUCHTRIAL(R, IN, TM, SBG, S, FIX, QUITKEY, DT)
+	%   initializes a touch trial by setting up the touch window and waiting for
+	%   a touch to occur.
+	arguments (Input)
+		r struct
+		in struct
+		tM touchManager
+		sb struct
+		s struct
+		fix struct
+		quitKey char
+		dt struct
+	end
+
+	arguments (Output)
+		r struct
+		dt struct
+		vblInit double
+	end
+
 	% reset touch window for initial touch
 	% updateWindow(me,X,Y,radius,doNegation,negationBuffer,strict,init,hold,release)
 	tM.updateWindow(in.initPosition(1), in.initPosition(2),fix.size/2,...
@@ -33,7 +53,7 @@ function [r, dt, vblInit] = initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt)
 		vbl = flip(s);
 		[r.touchInit, hld, r.hldtime, ~, ~, ~, fail, tch] = testHold(tM, 'yes', 'no');
 		if tch
-			r.anyTouch = true; 
+			r.anyTouch = true;
 			dt.data.times.initTouch(r.trialN+1) = vbl;
 			dt.data.times.initRT(r.trialN+1) = vbl - vblInit;
 		end

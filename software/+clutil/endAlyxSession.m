@@ -1,6 +1,16 @@
 function [session, error] = endAlyxSession(r, session, result)
-	%ENDALYXSESSION Summary of this function goes here
-	%   Detailed explanation goes here
+	%ENDALYXSESSION End an Alyx session for the current experiment.
+	%   [session, error] = ENDALYXSESSION(r, session, result) finalizes
+	%   an Alyx session and uploads registered files to the MINIO AWS server.
+	%
+	%   Inputs:
+	%       r       - Struct containing the alyxManager and path information.
+	%       session - Struct containing session metadata (subject, lab, etc.).
+	%       result  - String indicating the result of the experiment (e.g., "PASS", "FAIL").
+	%
+	%   Outputs:
+	%       session - Updated session struct with finalization status and URL.
+	%       error   - String containing any error messages.
 	arguments (Input)
 		r struct
 		session struct
@@ -29,11 +39,11 @@ function [session, error] = endAlyxSession(r, session, result)
 	try
 		%% register the files to ALYX
 		[datasets, filenames] = alyx.registerALFFiles(alyx.paths, session);
-			
-		
+
+
 		fprintf('≣≣≣≣⊱ Added Files to ALYX Session: %s\n', alyx.sessionURL);
 		try arrayfun(@(ss)disp([ss.name ' - bytes: ' num2str(ss.file_size)]),datasets); end
-		
+
 		%% get the ALYX UUID for each file registered
 		uuids = {};
 		if length(datasets) == length(filenames)

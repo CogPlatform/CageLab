@@ -1,5 +1,16 @@
 function [in, keepRunning] = checkMessages(in)
-% check if a command was sent from control system
+	% CHECKMESSAGES Checks for and processes messages from the control system.
+	%   [IN, KEEPRUNNING] = CHECKMESSAGES(IN) checks for and processes messages
+	%   from the control system using the ZMQ connection stored in IN.
+	arguments (Input)
+		in struct
+	end
+
+	arguments (Output)
+		in struct
+		keepRunning logical
+	end
+
 	if isstruct(in) && isfield(in,'zmq') && isa(in.zmq,'jzmqConnection') && poll(in.zmq, 'in')
 		[cmd, dat] = receiveCommand(in.zmq, false);
 		if ischar(cmd); cmd = string(cmd); end
@@ -10,10 +21,10 @@ function [in, keepRunning] = checkMessages(in)
 		end
 		replyCommand = 'unknown';
 		replyData = {''};
-		if ~isempty(cmd) 
+		if ~isempty(cmd)
 			if (isstring(cmd) && matches(cmd,'exittask')) || (isfield(cmd,'command') && matches(cmd.command,'exittask'))
 				fprintf('---> Exit task Triggered...\n\n');
-				keepRunning = false; 
+				keepRunning = false;
 				in.keepRunning = keepRunning;
 				replyCommand = 'exittask_reply';
 				replyData = {'ok'};

@@ -1,6 +1,15 @@
 function [session, success] = initAlyxSession(r, session)
-%INITALYXSESSION.M init a alyx session
-%   Detailed explanation goes here
+%INITALYXSESSION Initialize an Alyx session for the current experiment.
+%   [session, success] = INITALYXSESSION(r, session) registers or updates
+%   a session record in the Alyx database using the manager stored in 'r'.
+%
+%   Inputs:
+%       r       - Struct containing the alyxManager and path information.
+%       session - Struct containing session metadata (subject, lab, etc.).
+%
+%   Outputs:
+%       session - Updated session struct with initialization status and URL.
+%       success - Logical flag indicating if the session was successfully created.
 	arguments (Input)
 		r struct
 		session struct = []

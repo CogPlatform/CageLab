@@ -1,25 +1,27 @@
 # How to Use Alyx with CageLab
 
-Alyx is an experiment database made by International Brain Lab. While alyx is mostly focused on neuroscience tasks in mice, it can be generalised to other species as it supports generic JSON fields, and the core structure across species is more similar that the differences anyway. We use TWO componenets:
+Alyx is an experiment database made by International Brain Lab. While alyx is mostly focused on neuroscience tasks in mice, it can be generalised to other species as it supports generic JSON fields, and the core structure across species is more similar that the differences anyway. We use TWO services:
 
-1) Alyx database — register subjects, labs, experimenters, projects and tasks; each time a session is run record the experiment metadata and link to the binary experiment files.
-2) S3 data store ([Minio](https://minio.org) server) — copy raw binary and text experiment files saved by each session linked to the Alyx session metadata. Searching in Alyx can recover the files saved in the S3 data store.
+* Alyx database — register subjects, labs, experimenters, projects and tasks; each time a session is run record the experiment metadata and link to the binary experiment files.
+* AWS/S3 data store ([Minio](https://minio.org) server) — copy raw binary and text experiment files saved by each session linked to the Alyx session metadata. Searching in Alyx can recover the files saved in the S3 data store.
 
-In CageLab GUI there are two main interactions with Alyx:
+------
 
-1) Login and query settings in the database.
-2) Setup session data and enable CageLAb to add the session to the database.
+In the CageLab GUI there are two main interactions with Alyx:
 
-# Setting up the Database
+1) Login / query the database. Not linked to an experiment session.
+2) Setup session data and enable CageLbb to add the session to the database. THe session is added by the remote system, not the control computer.
+
+# BEFORE STARTING: Setting up the Database
 
 > [!IMPORTANT] 
 > You **MUST** ensure the Alyx database is setup with the core items you will use to run the session: `Subjects`, `Users`, `Labs`, `Locations`, `Projects`
 
 ![alt text](Images/alyx-page.png)
 
-Before running sessions, ensure that the items you will specify exist in the Alyx database, login to your Alyx (e.g. http://172.16.102.30:8000 ) and edit the database to add the Subjects, the Users (Researcher), the Lab, and the projects the tasks will be assigned to.
+Before running any sessions, ensure that the items you will use exist in the Alyx database, login to your Alyx web interface (e.g. http://172.16.102.30:8000 ) and edit the database to add the `Subjects`, the `Users` (Researcher), the `Lab`, and the `Projects` the sessions will be linked to.
 
-# CageLab: Logging in and running queries
+# CageLab: (1) Logging in and running queries
 
 CageLab allows you to enter your Alyx IP/port and user name and then login:
 
@@ -46,7 +48,7 @@ Note that you are logged in from your computer. This is nothing to do with a rem
 
 A full list of all the queries you can perform is available from the Alyx database itself: http://172.16.102.30:8000/docs/ 
 
-# CageLab: Running a Session
+# CageLab: (2) Running a Session
 
 ![Enable Alyx](Images/alyx-enabled.png)
 

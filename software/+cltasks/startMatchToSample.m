@@ -35,7 +35,7 @@ function startMatchToSample(in)
 	try
 		%% ============================subfunction for shared initialisation
 		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
-		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
+		%[sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
 
 		%% ============================task specific figures
@@ -253,7 +253,7 @@ function startMatchToSample(in)
 							r.touchResponse = 'no';
 							break
 						end
-						[~,~,c] = KbCheck(); if c(quitKey); r.keepRunning = false; break; end
+						[~,~,c] = KbCheck(); if c(r.quitKey); r.keepRunning = false; break; end
 					end
 					% delay time
 					vblInit = vbl + sv.ifi;

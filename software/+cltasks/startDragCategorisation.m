@@ -58,8 +58,9 @@ function startDragCategorisation(in)
 			txt = '';
 			fail = false; hld = false;
 			
-			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, s, fix, quitKey, dt);
+			%% ============================== Initiate a trial with a touch target
+			% [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sM, dt);
 
 			%% Success at initiation
 			if matches(string(r.touchInit),"yes")

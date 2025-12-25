@@ -178,8 +178,6 @@ function startThings(in)
 					samples.fixationChoice = 2:4;
 					update(samples);
 			end
-			
-			
 
 			%% ============================== initialise trial variables
 			r = clutil.initTrialVariables(r);
@@ -190,7 +188,8 @@ function startThings(in)
 			ensureTouchRelease(false);
 
 			%% ============================== Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, r.quitKey, dt);
+			% [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sM, dt);
 
 			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			% ============================== start the actual task

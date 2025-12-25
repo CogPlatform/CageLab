@@ -7,8 +7,8 @@ function [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
 	arguments (Input)
 		r struct % run struct
 		in struct % input struct
-		tM touchManager
-		sM screenManager
+		tM touchManager % touchManager
+		sM screenManager % screen manager
 		dt struct % data struct
 	end
 

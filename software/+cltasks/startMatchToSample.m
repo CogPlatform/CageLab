@@ -229,8 +229,9 @@ function startMatchToSample(in)
 				r.delayTime = in.delayTime(1) + (in.delayTime(2)-in.delayTime(1))*rand;
 			end
 
-			%% Initiate a trial with a touch target
-			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sbg, sM, fix, r.quitKey, dt);
+			%% ============================== Initiate a trial with a touch target
+			% [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
+			[r, dt, r.vblInitT] = clutil.initTouchTrial(r, in, tM, sM, dt);
 
 			%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			% ===============================start the actual task

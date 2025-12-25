@@ -1,34 +1,31 @@
-function shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r)
+function shutDownTask(dt, in, r, sM, tM, rM, aM)
+% shutDownTask(dt, in, r, sM, tM, rM, aM)
 	arguments
-		sM (1,1) screenManager
-		sbg % can be [] or imageStimulus; leave untyped to allow empty
-		fix (1,1) discStimulus
-		set % typically metaStimulus; may be []
-		target % [] or imageStimulus
-		rtarget (1,1) imageStimulus
-		tM (1,1) touchManager
-		rM (1,1) PTBSimia.pumpManager
-		saveName (1,:) char
 		dt (1,1) touchData
 		in struct
 		r struct
+		sM (1,1) screenManager
+		tM (1,1) touchManager
+		rM (1,1) PTBSimia.pumpManager
+		aM (1,1) audioManager
 	end
 	
 	%% final drawing
-	if ~isempty(sbg); draw(sbg); end
+	if isfield('r',' sbg') && ~isempty(r.sbg); draw(r.sbg); end
 	drawTextNow(sM, 'FINISHED!');
 
 	%% change status for cogmoteGO
 	currentStatus = r.status.updateStatusToStopped();
 
 	%% reset and close stims and devices
+	try RestrictKeysForKbCheck([]); end
 	try ListenChar(0); Priority(0); ShowCursor; end %#ok<*TRYNC>
 	try touchManager.enableTouchDevice(tM.deviceName, "disable"); end
-	if exist('sbg','var') && ~isempty(sbg); try reset(sbg); end; end
-	if exist('fix','var') && ~isempty(fix); try reset(fix); end; end
-	if exist('set','var') && ~isempty(set); try reset(set); end; end
-	if exist('target','var') && ~isempty(target); try reset(target); end; end
-	if exist('rtarget','var') && ~isempty(rtarget); try reset(rtarget); end; end
+	if isfield('r',' sbg') && ~isempty(r.sbg); try reset(r.sbg); end; end
+	if isfield('r', 'fix') && ~isempty(r.fix); try reset(r.fix); end; end
+	if isfield('r', 'set') && ~isempty(r.set); try reset(r.set); end; end
+	if isfield('r', 'target') && ~isempty(r.target); try reset(r.target); end; end
+	if isfield('r', 'rtarget') && ~isempty(r.rtarget); try reset(r.rtarget); end; end
 	
 	in.zmq = [];
 	r.zmq = [];
@@ -37,12 +34,13 @@ function shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, 
 	try close(sM); end
 	try close(tM); end
 	try close(rM); end
+	try close(aM); end
 
 	%% show some basic results
 	try
 		disp('');
 		disp('==================================================');
-		fprintf('===> Data for %s\n', saveName)
+		fprintf('===> Data for %s\n', r.saveName)
 		disp('==================================================');
 		tVol = (9.38e-4 * in.rewardTime) * dt.data.rewards;
 		fVol = (9.38e-4 * in.rewardTime) * dt.data.random;
@@ -88,8 +86,8 @@ function shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, 
 	end
 
 
-	%% final broadcast to cogmoteGO
-	clutil.broadcastTrial(in, r, dt, false);
+	%% ================================== broadcast the end data to cogmoteGO
+	try clutil.broadcastTrial(in, r, dt, false); end
 
 	%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% wrap up
@@ -101,5 +99,5 @@ function shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, 
 		error(err);
 	end
 
-	try system('xset s 300 dpms 600 0 0'); end
+	if IsLinux; try system('xset s 300 dpms 600 0 0'); end; end
 end

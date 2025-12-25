@@ -1,20 +1,29 @@
-function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
+function [dt, r] = updateTrialResult(in, dt, r, sM, tM, rM, aM)
 	% UPDATETRIALRESULT Processes the outcome of a trial, updates data, and provides feedback.
 	%
 	% Inputs:
 	%   in      - Configuration structure with task and reward parameters.
 	%   dt      - Data structure containing trial results and timing information.
 	%   r       - Current trial state and result structure.
-	%   rtarget - Target object for reward animations.
-	%   sbg     - Background sprite object (can be empty).
 	%   sM      - Screen manager for display and flipping.
-	%   tM      - Texture manager for managing visual assets.
+	%   tM      - Touch manager for managing visual assets.
 	%   rM      - Reward manager for controlling reward delivery.
-	%   a       - Audio object for feedback sounds.
+	%   aM       - Audio object for feedback sounds.
 	%
 	% Outputs:
 	%   dt      - Updated data structure.
 	%   r       - Updated trial result structure.
+	arguments(Input)
+		in struct
+		dt touchData
+		r struct
+		sM (1,1) screenManager % screen manager object
+		tM (1,1) touchManager
+		rM (1,1) PTBSimia.pumpManager
+		aM (1,1) audioManager
+	end
+
+	sbg = r.sbg; rtarget = r.rtarget; 
 
 	%% ================================ blank display
 	if ~isempty(sbg); draw(sbg); else; drawBackground(sM,in.bg); end
@@ -44,7 +53,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			dt.data.rewards = dt.data.rewards + 1;
 			dt.data.random = dt.data.random + 1;
 			fprintf('===> RANDOM REWARD :-)\n');
-			beep(a,in.correctBeep,0.1,in.audioVolume);
+			beep(aM,in.correctBeep,0.1,in.audioVolume);
 			WaitSecs(0.75+rand);
 			r.randomRewardTimer = GetSecs;
 		else
@@ -67,7 +76,8 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 			giveReward(rM, in.rewardTime);
 			dt.data.rewards = dt.data.rewards + 1;
 		end
-		beep(a, in.correctBeep, 0.1, in.audioVolume);
+		beep(aM, in.correctBeep, 0.1, in.audioVolume);
+		% update(me,result,phase,trials,rt,stimulus,info,xAll,yAll,tAll,value)
 		update(dt, true, r.phase, r.trialN, r.reactionTime, r.stimulus,...
 			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
@@ -89,15 +99,16 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 	elseif r.result == 0
 		r.summary = 'incorrect';
 		r.comments(end+1) = r.summary;
+		% update(me,result,phase,trials,rt,stimulus,info,xAll,yAll,tAll,value)
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
-			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
+			r.summary, tM.xAll, tM.yAll, (tM.tAll-tM.queueTime), r.value);
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
 		drawBackground(sM,[1 0 0]);
 		if in.debug; drawText(sM,r.txt); end
 		flip(sM);
-		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
+		beep(aM, in.incorrectBeep, 0.5, in.audioVolume);
 
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;
@@ -112,8 +123,9 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		r.summary = 'easy-trial';
 		dt.data.easyTrials = dt.data.easyTrials + 1;
 		r.comments(end+1) = r.summary;
+		% update(me,result,phase,trials,rt,stimulus,info,xAll,yAll,tAll,value)
 		update(dt, false, r.phase, r.trialN, r.reactionTime, r.stimulus,...
-			r.summary, tM.xAll, tM.yAll, tM.tAll-tM.queueTime, r.value);
+			r.summary, tM.xAll, tM.yAll, (tM.tAll-tM.queueTime), r.value);
 		[r.correctRateRecent, r.correctRate] = getCorrectRate();
 		r.txt = getResultsText();
 
@@ -138,7 +150,7 @@ function [dt, r] = updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, a)
 		drawBackground(sM,[1 0 0]);
 		if in.debug; drawText(sM,r.txt); end
 		flip(sM);
-		beep(a, in.incorrectBeep, 0.5, in.audioVolume);
+		beep(aM, in.incorrectBeep, 0.5, in.audioVolume);
 
 		r.phaseN = r.phaseN + 1;
 		r.trialW = r.trialW + 1;

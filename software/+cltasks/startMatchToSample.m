@@ -34,9 +34,8 @@ function startMatchToSample(in)
 
 	try
 		%% ============================subfunction for shared initialisation
-		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
 		%[sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
-		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
+		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
 
 		%% ============================task specific figures
 		switch lower(in.object)
@@ -97,7 +96,7 @@ function startMatchToSample(in)
 		delayDistractors.edit(1:3,'yPosition',in.sampleY);
 
 		%% ============================ custom stimuli setup
-		setup(fix, sM);
+		setup(r.fix, sM);
 		setup(targets, sM);
 		setup(delayDistractors, sM);
 		show(delayDistractors);
@@ -242,10 +241,10 @@ function startMatchToSample(in)
 				r.touchResponse = '';
 
 				if matches(in.task,["dmts","dnts"])
-					vbl = GetSecs; vblInit = vbl + sv.ifi;
+					vbl = GetSecs; vblInit = vbl + r.sv.ifi;
 					% sample time
 					while vbl <= vblInit + r.sampleTime
-						if ~isempty(sbg); draw(sbg); end
+						if ~isempty(r.sbg); draw(r.sbg); end
 						draw(targets);
 						if in.debug; drawText(sM, 'Sample period...'); end
 						vbl = flip(sM);
@@ -256,9 +255,9 @@ function startMatchToSample(in)
 						[~,~,c] = KbCheck(); if c(r.quitKey); r.keepRunning = false; break; end
 					end
 					% delay time
-					vblInit = vbl + sv.ifi;
+					vblInit = vbl + r.sv.ifi;
 					while vbl <= vblInit + r.delayTime
-						if ~isempty(sbg); draw(sbg); end
+						if ~isempty(r.sbg); draw(r.sbg); end
 						if in.delayDistractors; draw(delayDistractors); end
 						vbl = flip(sM);
 						if isTouch(tM)
@@ -281,11 +280,11 @@ function startMatchToSample(in)
 				%% Get our start time
 				vbl = GetSecs;
 				r.stimOnsetTime = vbl;
-				r.vblInit = vbl + sv.ifi; %start is actually next flip
+				r.vblInit = vbl + r.sv.ifi; %start is actually next flip
 				syncTime(tM, r.vblInit);
 
 				while isempty(r.touchResponse) && vbl <= (r.vblInit + in.trialTime)
-					if ~isempty(sbg); draw(sbg); end
+					if ~isempty(r.sbg); draw(r.sbg); end
 					draw(targets);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 						drawText(sM, txt);
@@ -325,22 +324,25 @@ function startMatchToSample(in)
 			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
+			% [dt, r] = updateTrialResult(in, dt, r, sM, tM, rM, aM)
+			[dt, r] = clutil.updateTrialResult(in, dt, r, sM, tM, rM, aM);
 
 		end % while keepRunning
-		target = [];
-		clutil.shutDownTask(sM, sbg, fix, targets, target, rtarget, tM, rM, saveName, dt, in, r);
+		
+		%% ================================ Shut down session
+		% shutDownTask(dt, in, r, sM, tM, rM, aM)
+		clutil.shutDownTask(dt, in, r, sM, tM, rM, aM);
 
 	catch ME
 		getReport(ME)
-		try writelines(sprintf("Error: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
+		try writelines(sprintf("Error MTS: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
 		try r.status.updateStatusToStopped();end
 		try clutil.broadcastTrial(in, r, dt, false); end
 		try system('xset s 300 dpms 600 0 0'); end
-		try reset(rtarget); end %#ok<*TRYNC>
-		try reset(fix); end
+		try reset(r.rtarget); end %#ok<*TRYNC>
+		try reset(r.fix); end
 		try reset(targets); end
-		try reset(sbg); end
+		try reset(r.sbg); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
@@ -356,7 +358,7 @@ function startMatchToSample(in)
 	% make sure the subject is NOT touching the screen
 	function ensureTouchRelease(afterResult)
 		if ~exist('afterResult','var'); afterResult = false; end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		if in.debug; drawText(sM,'Please release touchscreen...'); end
 		svbl = flip(sM); blue = 0;
 		if ~afterResult; when="BEFORE"; else when="AFTER"; end
@@ -374,7 +376,7 @@ function startMatchToSample(in)
 				break;
 			end
 		end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		flip(sM);
 	end
 end

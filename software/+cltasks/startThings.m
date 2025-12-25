@@ -27,8 +27,7 @@ function startThings(in)
 	try
 		%% ============================subfunction for shared initialisation
 		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
-		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
-		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
+		%[sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 
 		%% ============================task specific figures
 		object = clutil.getThingsImages(in);
@@ -54,7 +53,7 @@ function startThings(in)
 		samples.stimulusSets{3} = 2:4; % samples only
 
 		%% ============================ custom stimuli setup
-		setup(fix, sM); % our init trial touch marker
+		setup(r.fix, sM); % our init trial touch marker
 		setup(samples, sM);
 		hide(samples); % hide all stimuli at start
 
@@ -208,16 +207,16 @@ function startThings(in)
 				repmat(in.targetHoldTime,1,length(x)), ones(1,length(x)));
 
 				%% Get our start time
-				if ~isempty(sbg); draw(sbg); end
+				if ~isempty(r.sbg); draw(r.sbg); end
 				vbl = flip(sM);
 				r.stimOnsetTime = vbl;
-				r.vblInit = vbl + sv.ifi; %start is actually next flip
+				r.vblInit = vbl + r.sv.ifi; %start is actually next flip
 				syncTime(tM, r.vblInit);
 
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 				%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 				while isempty(r.touchResponse) && vbl <= (r.vblInit + in.trialTime)
-					if ~isempty(sbg); draw(sbg); end
+					if ~isempty(r.sbg); draw(r.sbg); end
 					draw(samples);
 					if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 						drawText(sM, txt);
@@ -261,22 +260,25 @@ function startThings(in)
 			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
+			% [dt, r] = updateTrialResult(in, dt, r, sM, tM, rM, aM)
+			[dt, r] = clutil.updateTrialResult(in, dt, r, sM, tM, rM, aM);
 
 		end % while keepRunning
-		target = [];
-		clutil.shutDownTask(sM, sbg, fix, samples, target, rtarget, tM, rM, saveName, dt, in, r);
+		
+		%% ================================ Shut down session
+		% shutDownTask(dt, in, r, sM, tM, rM, aM)
+		clutil.shutDownTask(dt, in, r, sM, tM, rM, aM);
 
 	catch ME
 		getReport(ME)
-		try writelines(sprintf("Error: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
+		try writelines(sprintf("Error Things: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
 		try r.status.updateStatusToStopped();end
 		try clutil.broadcastTrial(in, r, dt, false); end
 		try system('xset s 300 dpms 600 0 0'); end
 		try reset(samples); end %#ok<*TRYNC>
-		try reset(fix); end
-		try reset(rtarget); end
-		try reset(sbg); end
+		try reset(r.fix); end
+		try reset(r.rtarget); end
+		try reset(r.sbg); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
@@ -304,7 +306,7 @@ function startThings(in)
 	% make sure the subject is NOT touching the screen
 	function ensureTouchRelease(afterResult)
 		if ~exist('afterResult','var'); afterResult = false; end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		if in.debug; drawText(sM,'Please release touchscreen...'); end
 		svbl = flip(sM); blue = 0;
 		if ~afterResult; when="BEFORE"; else when="AFTER"; end
@@ -322,7 +324,7 @@ function startThings(in)
 				break;
 			end
 		end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		flip(sM);
 	end
 

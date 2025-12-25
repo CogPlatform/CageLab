@@ -1,5 +1,5 @@
 function [sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
-	%[sM, sv, r, sbg, rtarget, fix, aM, rM, tM, dt, quitKey, saveName, in] = initialise(in, bgName, prefix)
+	%[sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 	% INITIALISE orchestrates the CageLab runtime by configuring display/audio/touch hardware,
 	% instantiating stimulus and reward managers, preparing Alyx bookkeeping, and returning the
 	% state structs (`sv`, `r`, `dt`, etc.) required for downstream task control.

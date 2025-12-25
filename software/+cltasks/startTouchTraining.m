@@ -16,9 +16,8 @@ function startTouchTraining(in)
 	
 	try
 		%% ============================subfunction for shared initialisation
+		%[sM, aM, rM, tM, r, dt, in] = initialise(in, bgName, prefix)
 		[sM, aM, rM, tM, r, dt, in] = clutil.initialise(in, bgName, prefix);
-		%[sM, sv, r, sbg, rtarget, fix, a, rM, tM, dt, quitKey, saveName, in]
-		sv = r.sv;sbg = r.sbg;rtarget = r.rtarget;fix = r.fix;saveName = r.saveName;
 		
 		%% ============================task specific figures
 		if matches(in.stimulus, 'Picture')
@@ -32,10 +31,10 @@ function startTouchTraining(in)
 		if in.debug; target.verbose = true; end
 
 		%% ============================ custom stimuli setup
-		fix.sizeOut = 8; fix.xPositionOut = 0; 
-		fix.yPositionOut = -10; fix.type = 'flash';
-		fix.alpha = 1;
-		update(fix);
+		r.fix.sizeOut = 8; r.fix.xPositionOut = 0; 
+		r.fix.yPositionOut = -10; r.fix.type = 'flash';
+		r.fix.alpha = 1;
+		update(r.fix);
 		setup(target, sM);
 
 		%% ============================ phase table
@@ -137,17 +136,17 @@ function startTouchTraining(in)
 			% reset the touch window
 			reset(tM); flush(tM);
 
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+			if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 			vbl = flip(sM); 
-			r.vblInit = vbl + sv.ifi; %start is actually next flip
+			r.vblInit = vbl + r.sv.ifi; %start is actually next flip
 			syncTime(tM, r.vblInit);
 			
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			while isempty(r.touchResponse) && vbl < r.vblInit + in.trialTime
-				if ~isempty(sbg); draw(sbg); end
+				if ~isempty(r.sbg); draw(r.sbg); end
 				if ~r.hldtime; draw(target); end
-				if r.hldtime && r.phase > 31; draw(fix); end
+				if r.hldtime && r.phase > 31; draw(r.fix); end
 				if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
 					drawText(sM, txt);
 					[xy] = sM.toPixels([tM.x tM.y]);
@@ -175,7 +174,7 @@ function startTouchTraining(in)
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			
-			if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+			if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 			r.vblFinal = flip(sM);
 			
 			%% ============================== check logic of task result
@@ -195,25 +194,28 @@ function startTouchTraining(in)
 			ensureTouchRelease(true);
 
 			%% ============================== update this trials reults
-			[dt, r] = clutil.updateTrialResult(in, dt, r, rtarget, sbg, sM, tM, rM, aM);
+			% [dt, r] = updateTrialResult(in, dt, r, sM, tM, rM, aM)
+			[dt, r] = clutil.updateTrialResult(in, dt, r, sM, tM, rM, aM);
 
 			%% ============================== inter-trial pause
 			WaitSecs('YieldSecs',in.ITI-(GetSecs-r.vblFinal));
 
 		end % while keepRunning
 
-		clutil.shutDownTask(sM, sbg, fix, set, target, rtarget, tM, rM, saveName, dt, in, r);
+		%% ================================ Shut down session
+		% shutDownTask(dt, in, r, sM, tM, rM, aM)
+		clutil.shutDownTask(dt, in, r, sM, tM, rM, aM);
 
 	catch ME
 		getReport(ME)
-		try writelines(sprintf("Error: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
+		try writelines(sprintf("Error Touch: " + ME.Message), "~/cagelab-start.txt", WriteMode="append"); end
 		try r.status.updateStatusToStopped();end
 		try clutil.broadcastTrial(in, r, dt, false); end
 		try system('xset s 300 dpms 600 0 0'); end
 		try reset(target); end %#ok<*TRYNC>
 		try close(target); end
-		try close(fix); end
-		try close(rtarget); end
+		try close(r.fix); end
+		try close(r.rtarget); end
 		try close(sM); end
 		try close(tM); end
 		try close(rM); end
@@ -229,7 +231,7 @@ function startTouchTraining(in)
 	% make sure the subject is NOT touching the screen
 	function ensureTouchRelease(afterResult)
 		if ~exist('afterResult','var'); afterResult = false; end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		if in.debug; drawText(sM,'Please release touchscreen...'); end
 		svbl = flip(sM); blue = 0;
 		if ~afterResult; when="BEFORE"; else when="AFTER"; end
@@ -247,7 +249,7 @@ function startTouchTraining(in)
 				break;
 			end
 		end
-		if ~isempty(sbg); draw(sbg); else; drawBackground(sM, in.bg); end
+		if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(sM, in.bg); end
 		flip(sM);
 	end
 

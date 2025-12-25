@@ -9,12 +9,12 @@ function [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
 		in struct % input struct
 		tM touchManager % touchManager
 		sM screenManager % screen manager
-		dt struct % data struct
+		dt touchData % touch data class
 	end
 
 	arguments (Output)
 		r struct % updated run struct
-		dt struct % updated data struct
+		dt touchData % touch data class
 		vblInit double % VBL time at init start
 	end
 

@@ -39,14 +39,14 @@ function [r, dt, vblInit] = initTouchTrial(r, in, tM, sM, dt)
 	flush(tM);
 
 	if ~isempty(r.sbg); draw(r.sbg); else; drawBackground(s, in.bg); end
-	vbl = flip(sM); vblInit = vbl + s.screenVals.ifi;
+	vbl = flip(sM); vblInit = vbl + sM.screenVals.ifi;
 	dt.data.times.initStart(r.trialN+1) = vblInit;
 	while isempty(r.touchInit) && vbl < vblInit + 5
 		if ~isempty(r.sbg); draw(r.sbg); end
 		if ~r.hldtime; draw(r.fix); end
 		if in.debug && ~isempty(tM.x) && ~isempty(tM.y)
-			xy = s.toPixels([tM.x tM.y]);
-			Screen('glPoint', s.win, [1 0 0], xy(1), xy(2), 10);
+			xy = sM.toPixels([tM.x tM.y]);
+			Screen('glPoint', sM.win, [1 0 0], xy(1), xy(2), 10);
 		end
 		vbl = flip(sM);
 		[r.touchInit, hld, r.hldtime, ~, ~, ~, fail, tch] = testHold(tM, 'yes', 'no');
